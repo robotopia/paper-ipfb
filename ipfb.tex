@@ -44,8 +44,15 @@
 \end{frontmatter}
 
 
-\section{INTRODUCTION }
+\section{INTRODUCTION}
 \label{sec:intro}
+
+Some of the most exciting advances in time-domain astronomy have only been made possible by pushing the capabilities of latest generation telescopes to be sensitive to signals of shorter and shorter duration.
+The serendipitous discovery of pulsars in the late 1960's is perhaps the prototypical example.
+Another more recent example is the continuing effort to detect nanohertz gravitational waves by means of pulsar timing arrays (CITATIONS), which requires the continual monitoring of millisecond pulsars (MSPs) with microsecond accuracy.
+Pulsars are also known to exhibit temporal structures on microsecond and even nanosecond time scales, providing major clues for the underlying radio emission mechanism.
+Similarly, fast radio bursts (FRBs) have been shown to exhibit temporal sub-millisecond structures that either point to the intrinsic emission mechanism or to interesting propagation effects occurring in the intergalactic medium (CITATIONS).
+All of these examples serve to illustrate the scientifically important and still largely untapped parameter space that is only accessible to telescopes equipped with a sufficiently high time resolution observing mode.
 
 The Murchison Widefield Array \citep[MWA;][]{Tingay2013} is a low-frequency ($\sim80$ to $300\,$MHz) aperture array telescope located at the Murchison Radio Observatory (MRO) in Western Australia.
 Now in its second phase of development \citep[Phase II;][]{Wayth2018}, it consists of 256 `tiles' (sets of $4\times4$ cross-dipole antennas) distributed over an area approximately $5.3\,$km in diameter, 128 of which can be used at a single time to form an interferometer.
@@ -53,7 +60,7 @@ Originally conceived as an imaging telescope (which requires only the time-avera
 This system has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars \citep[e.g.][]{Oronsaye2015,McSweeney2017,Bhat2018}.
 
 Although the tile voltages are sampled at a (Nyquist) rate of $655.36\,$MHz, these data undergo several stages of processing before finally being written to disk.
-After low-noise filtering and digitising the raw signal, they are subject to a two-stage frequency analysis filter, which trades time resolution for increased frequency resolution.
+After low-noise filtering and digitising the raw signal, they are subjected to a two-stage frequency analysis filter, which trades time resolution for increased frequency resolution.
 In the MWA's case, both stages of the analysis filter were implemented as polyphase filterbanks \citep[PFBs;][\dots]{Harris2011,Prabu2015}.
 The first stage (`coarse') PFB reduces the effecting sampling rate by a factor of 512, resulting in an array of complex-valued samples with $1.28\,$MHz resolution in frequency and $\sim0.8\,\mu$s in time.
 In the second stage (`fine') PFB, each $1.28\,$MHz (i.e. `coarse') further increases the frequency resolution (and decreases the time resolution) by a factor of 128, resulting in samples $10\,$kHz wide (in frequency) and $100\,\mu$s long (in time).
