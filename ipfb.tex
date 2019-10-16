@@ -2,7 +2,7 @@
 
 \usepackage{graphicx}
 
-\title[MWA Beamformer PFB Inversion]{MWA Beamformer PFB Inversion}
+\title[MWA tied-array processing IV]{MWA tied-array processing IV: Microsecond time resolution via PFB synthesis}
 
 %%% SAMPLE %%%
 %% Please note that the command \and is not supported in \author.
@@ -12,8 +12,9 @@
 %}%
 %%% END SAMPLE %%%
 
-\author[McSweeney et al.]{S. J. McSweeney$^1$, Author2, \dots
-\affil{$^1$CIRA, Curtin University}%
+\author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, I. Morrison$^1$
+\affil{$^1$International Centre for Radio Astronomy Research (ICRAR), GPO Box U1987, Perth, WA 6845, Australia}%
+\affil{$^2$CSIRO Astronomy and Space Science, PO Box 76, Epping, NSW 1710, Australia}
 }
 
 \jid{PASA}
@@ -38,7 +39,7 @@
 \end{abstract}
 
 \begin{keywords}
-keyword1 -- keyword2 -- keyword3 -- keyword4 -- keyword5
+    instrumentation: interferometers -- pulsars: general -- techniques: interferometric
 \end{keywords}
 \end{frontmatter}
 
@@ -46,7 +47,10 @@ keyword1 -- keyword2 -- keyword3 -- keyword4 -- keyword5
 \section{INTRODUCTION }
 \label{sec:intro}
 
-Here is a citation: \citep{Harris2011}.
+The Murchison Widefield Array \citep[MWA;][]{Tingay2013} is a low-frequency ($\sim80$-$300\,$MHz) aperture array telescope situated in remote Western Australia.
+Now in its second phase of development \citep[Phase II;][]{Wayth2018}, it consists of 256 `tiles' (sets of $4\times4$ cross-dipole antennas) distributed over an area roughly $5.3\,$km in diameter, 128 of which can be used at a single time to form an interferometer.
+Originally conceived as an imaging telescope (which requires only the time-averaged cross-correlation products of the tiles, or `visibilities', to be retained on disk), it was subsequently augmented with the functionality to capture the raw complex voltages of each tile, known as the Voltage Capture System \citep[VCS;][]{Tremblay2015}.
+This system (with its accompanying implementation, described in further detail below) has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars \citep[e.g.][]{Oronsaye2015,McSweeney2017,Bhat2018}.
 
 %%% SAMPLE %%%
 %\begin{table}
