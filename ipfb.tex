@@ -2,7 +2,7 @@
 
 \usepackage{graphicx}
 
-\title[MWA tied-array processing IV]{MWA tied-array processing IV: Microsecond time resolution via PFB synthesis}
+\title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via synthesis filterbank}
 
 %%% SAMPLE %%%
 %% Please note that the command \and is not supported in \author.
@@ -12,7 +12,7 @@
 %}%
 %%% END SAMPLE %%%
 
-\author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, I. Morrison$^1$
+\author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$
 \affil{$^1$International Centre for Radio Astronomy Research (ICRAR), GPO Box U1987, Perth, WA 6845, Australia}%
 \affil{$^2$CSIRO Astronomy and Space Science, PO Box 76, Epping, NSW 1710, Australia}
 }
@@ -47,10 +47,16 @@
 \section{INTRODUCTION }
 \label{sec:intro}
 
-The Murchison Widefield Array \citep[MWA;][]{Tingay2013} is a low-frequency ($\sim80$-$300\,$MHz) aperture array telescope situated in remote Western Australia.
-Now in its second phase of development \citep[Phase II;][]{Wayth2018}, it consists of 256 `tiles' (sets of $4\times4$ cross-dipole antennas) distributed over an area roughly $5.3\,$km in diameter, 128 of which can be used at a single time to form an interferometer.
+The Murchison Widefield Array \citep[MWA;][]{Tingay2013} is a low-frequency ($\sim80$ to $300\,$MHz) aperture array telescope located at the Murchison Radio Observatory (MRO) in Western Australia.
+Now in its second phase of development \citep[Phase II;][]{Wayth2018}, it consists of 256 `tiles' (sets of $4\times4$ cross-dipole antennas) distributed over an area approximately $5.3\,$km in diameter, 128 of which can be used at a single time to form an interferometer.
 Originally conceived as an imaging telescope (which requires only the time-averaged cross-correlation products of the tiles, or `visibilities', to be retained on disk), it was subsequently augmented with the functionality to capture the raw complex voltages of each tile, known as the Voltage Capture System \citep[VCS;][]{Tremblay2015}.
-This system (with its accompanying implementation, described in further detail below) has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars \citep[e.g.][]{Oronsaye2015,McSweeney2017,Bhat2018}.
+This system has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars \citep[e.g.][]{Oronsaye2015,McSweeney2017,Bhat2018}.
+
+Although the tile voltages are sampled at a (Nyquist) rate of $655.36\,$MHz, these data undergo several stages of processing before finally being written to disk.
+After low-noise filtering and digitising the raw signal, they are subject to a two-stage frequency analysis filter, which trades time resolution for increased frequency resolution.
+In the MWA's case, both stages of the analysis filter were implemented as polyphase filterbanks \citep[PFBs;][\dots]{Harris2011,Prabu2015}.
+The first stage (`coarse') PFB reduces the effecting sampling rate by a factor of 512, resulting in an array of complex-valued samples with $1.28\,$MHz resolution in frequency and $\sim0.8\,\mu$s in time.
+In the second stage (`fine') PFB, each $1.28\,$MHz (i.e. `coarse') further increases the frequency resolution (and decreases the time resolution) by a factor of 128, resulting in samples $10\,$kHz wide (in frequency) and $100\,\mu$s long (in time).
 
 %%% SAMPLE %%%
 %\begin{table}
