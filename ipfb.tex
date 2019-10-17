@@ -2,7 +2,7 @@
 
 \usepackage{graphicx}
 
-\title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via synthesis filterbank}
+\title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via a synthesis filter}
 
 %%% SAMPLE %%%
 %% Please note that the command \and is not supported in \author.
@@ -48,22 +48,56 @@
 \label{sec:intro}
 
 Some of the most exciting advances in time-domain astronomy have only been made possible by pushing the capabilities of latest generation telescopes to be sensitive to signals of shorter and shorter duration.
-The serendipitous discovery of pulsars in the late 1960's is perhaps the prototypical example.
-Another more recent example is the continuing effort to detect nanohertz gravitational waves by means of pulsar timing arrays (CITATIONS), which requires the continual monitoring of millisecond pulsars (MSPs) with microsecond accuracy.
-Pulsars are also known to exhibit temporal structures on microsecond and even nanosecond time scales, providing major clues for the underlying radio emission mechanism.
+The serendipitous discovery of pulsars in the late 1960's is perhaps the prototypical example \citep{Hewish1968}.
+In more recent times, the ongoing effort to detect nanohertz gravitational waves by means of pulsar timing arrays requires the continual monitoring of the times of arrival (TOAs) of millisecond pulsars (MSPs) with microsecond accuracy (CITATIONS).
+Pulsars are also known to exhibit temporal structures on microsecond and even nanosecond time scales, providing major clues for the underlying radio emission mechanism (CITATIONS).
 Similarly, fast radio bursts (FRBs) have been shown to exhibit temporal sub-millisecond structures that either point to the intrinsic emission mechanism or to interesting propagation effects occurring in the intergalactic medium (CITATIONS).
 All of these examples serve to illustrate the scientifically important and still largely untapped parameter space that is only accessible to telescopes equipped with a sufficiently high time resolution observing mode.
 
 The Murchison Widefield Array \citep[MWA;][]{Tingay2013} is a low-frequency ($\sim80$ to $300\,$MHz) aperture array telescope located at the Murchison Radio Observatory (MRO) in Western Australia.
 Now in its second phase of development \citep[Phase II;][]{Wayth2018}, it consists of 256 `tiles' (sets of $4\times4$ cross-dipole antennas) distributed over an area approximately $5.3\,$km in diameter, 128 of which can be used at a single time to form an interferometer.
 Originally conceived as an imaging telescope (which requires only the time-averaged cross-correlation products of the tiles, or `visibilities', to be retained on disk), it was subsequently augmented with the functionality to capture the raw complex voltages of each tile, known as the Voltage Capture System \citep[VCS;][]{Tremblay2015}.
-This system has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars \citep[e.g.][]{Oronsaye2015,McSweeney2017,Bhat2018}.
+This system has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars.
 
 Although the tile voltages are sampled at a (Nyquist) rate of $655.36\,$MHz, these data undergo several stages of processing before finally being written to disk.
-After low-noise filtering and digitising the raw signal, they are subjected to a two-stage frequency analysis filter, which trades time resolution for increased frequency resolution.
+After preliminary filtering and digitisation, the raw voltages are subjected to a two-stage frequency analysis filter, which trades time resolution for increased frequency resolution.
 In the MWA's case, both stages of the analysis filter were implemented as polyphase filterbanks \citep[PFBs;][\dots]{Harris2011,Prabu2015}.
-The first stage (`coarse') PFB reduces the effecting sampling rate by a factor of 512, resulting in an array of complex-valued samples with $1.28\,$MHz resolution in frequency and $\sim0.8\,\mu$s in time.
-In the second stage (`fine') PFB, each $1.28\,$MHz (i.e. `coarse') further increases the frequency resolution (and decreases the time resolution) by a factor of 128, resulting in samples $10\,$kHz wide (in frequency) and $100\,\mu$s long (in time).
+The first stage (`coarse') PFB reduces the effecting sampling rate by a factor of 512, resulting in an array of complex-valued samples with $1.28\,$MHz resolution in frequency (`coarse' channels) and $\sim0.8\,\mu$s in time.
+In the second stage (`fine') PFB, each coarse channel is further split into $128 \times 10\,$kHz `fine' channels at the cost of decreasing the time resolution to $100\,\mu$s.
+
+In the current MWA system design, only the latter time resolution data product (i.e. $100\,\mu$s) is made available to the user.
+While this is sufficient for many pulsar studies \citep[e.g.][]{Oronsaye2015,McSweeney2017,Bhat2018}, it is nevertheless too coarse for many science applications involving MSPs.
+In principle, the original higher time resolution can be recovered from the channelised output (either approximately or exactly) by means of a \textit{synthesis filter}, which acts as an `inverse' operation to the analysis filter.
+The conditions under which the original time series can be exactly reproduced depends on the choice of analysis and synthesis filters.
+
+Here, we describe the synthesis filter that is implemented as the (optional) final stage of the tied-array beamforming pipeline, the former stages of which are described in detail in \citet[][hereafter Paper I]{Ord2019} and \citet[][hereafter Paper II]{Xue2019}.
+The synthesis filter is applied to the fine-channel output of the beamformer, and recovers the coarse channel time series.
+That is, it effectively `undoes' the fine PFB, increasing the available time resolution to $\sim 0.8\,\mu$s.
+A brief review of PFBs in general, and their particular implementation in the case of the MWA, are given in \S\ref{sec:pfb}.
+The design of the synthesis filter is described in \S\ref{sec:ipfb}, including a discussion of its fidelity, i.e., the appearance of any temporal and spectral artefacts introduced by the synthesis filter itself.
+Finally, the practical use of this functionality is demonstrated through two examples: observations of the MSPs J2241$-$5236 and J0437$-$4715.
+
+\section{Polyphase filterbanks (PFBs)}
+\label{sec:pfb}
+
+PFBs are a type of analysis filter, designed to extract spectral information out of discrete time series data.
+They can be considered a generalisation of the more familiar Discrete Fourier Transform (DFT), and are designed to overcome the dual problems of uneven frequency response and spectral leakage inherent in the application of DFTs to finite length data sets.
+They are well described in standard texts \citep{Crochiere1983,Harris2004,Oppenheim2009}; a clear and concise review of PFBs in the context of radio astronomy is given in \citet{Harris2011}.
+Therefore, only a brief review of the salient features are given below, in order to lay out the notation used in this paper and to prepare the reader for what follows.
+
+\subsection{General review and mathematical description}
+
+\subsection{MWA implementation of the fine PFB}
+
+\section{Synthesis filter}
+\label{sec:ipfb}
+
+\subsection{Design}
+
+\subsection{Implementation}
+
+\subsection{Fidelity}
+
 
 %%% SAMPLE %%%
 %\begin{table}
