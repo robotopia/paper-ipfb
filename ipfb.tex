@@ -115,8 +115,7 @@ Applying the DFT to the larger set of windowed samples and subsequently \emph{do
 
 The algorithm embodied in the above strategy defines the PFB.
 It is clear that choosing a larger value for $P$ will lessen spectral leakage by the same factor, but this naturally comes at a greater computational cost, since the DFT is now applied to $M$ samples.
-However, one of the great advantages of the PFB is that the above operations of using a wider analysis wilter and downsampling the resulting spectrum are mathematically equivalent to first segmenting the windowed time series into $P$ segments (known as `taps') of size $N$, summing their respective samples element-wise, and performing a single DFT on the resulting array (now of size $N$).
-Mathematically,
+However, one of the great advantages of the PFB is that the above operations of using a wider analysis wilter and downsampling the resulting spectrum are mathematically equivalent to first segmenting the windowed time series into $P$ segments (known as `taps') of size $N$, summing their respective samples element-wise, and performing a single DFT on the resulting array (now of size $N$), i.e.
 \begin{equation}
     X[k] = \sum_{n=0}^{N-1} b[n]\,e^{-2\pi j k (n/N)},
     \label{eqn:pfb}
@@ -126,7 +125,7 @@ where
     b[n] = \sum_{\rho=0}^{P-1} h[n + N\rho]\,x[n + N\rho].
 \end{equation*}
 A short proof of the equivalence of this expression with the algorithm described above is given in \citet{Harris2011}.
-The name `polyphase' refers to the structure of $b[n]$ defined in Eq. \eqref{eqn:pfb}.
+The term `polyphase' derives from the structure of $b[n]$ defined in Eq. \eqref{eqn:pfb}.
 It is illustrated in Fig. \ref{fig:pfb}.
 \begin{figure}
     \centering
@@ -136,6 +135,8 @@ It is illustrated in Fig. \ref{fig:pfb}.
 \end{figure}
 
 \subsection{MWA implementation of the fine PFB}
+
+As the first stage
 
 \section{Synthesis filter}
 \label{sec:ipfb}
