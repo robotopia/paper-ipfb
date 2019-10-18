@@ -110,12 +110,12 @@ Note that leaving $x[n]$ ``unweighted'' is equivalent to choosing $h[n] = w_R[n]
 
 It is well known that scaling a function in the time domain produces the inverse scaling in the Fourier domain.
 This fact motivates an alternative strategy for mitigating spectral leakage.
-If more samples are available, say $M = NP$ for $P > 1$, then stretching (i.e. scaling and upsampling) the analysis filter will result in a frequency response function that is the same shape as, but $P$ times narrower than the original analysis filter.
+If more samples are available, say $M = NP$ for $P > 1$, then stretching (i.e. scaling and upsampling) the analysis filter will result in a frequency response function that is similar in shape, but $P$ times narrower than the original analysis filter.
 Applying the DFT to the larger set of windowed samples and subsequently \emph{downsampling} the resulting spectrum (by choosing every $P$th frequency bin and rejecting the rest) ensures that the original desired spectral resolution is retained, but with significantly less spectral leakage.
 
 The algorithm embodied in the above strategy defines the PFB.
-It is clear that choosing a larger value for $P$ will lessen spectral leakage by the same factor, but this naturally comes at a greater computational cost.
-However, one of the great advantages of the PFB is that the above operations of using a wider analysis wilter and downsampling the resulting spectrum are mathematically equivalent to first segmenting the windowed time series into segments (known as `taps') of size $N$, summing their respective samples element-wise, and performing a single DFT on the resulting array (still of size $N$).
+It is clear that choosing a larger value for $P$ will lessen spectral leakage by the same factor, but this naturally comes at a greater computational cost, since the DFT is now applied to $M$ samples.
+However, one of the great advantages of the PFB is that the above operations of using a wider analysis wilter and downsampling the resulting spectrum are mathematically equivalent to first segmenting the windowed time series into $P$ segments (known as `taps') of size $N$, summing their respective samples element-wise, and performing a single DFT on the resulting array (now of size $N$).
 Mathematically,
 \begin{equation}
     X[k] = \sum_{n=0}^{N-1} b[n]\,e^{-2\pi j k (n/N)},
