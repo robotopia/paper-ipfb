@@ -136,6 +136,10 @@ It is illustrated in Fig. \ref{fig:pfb}.
     \label{fig:pfb}
 \end{figure}
 
+% There is some ambiguity about whether this definition includes the correct set of phases, which differ depending on whether the filterbank is defined on [0,M) or [-M/2, M/2).
+% It may turn out there is an extra phase ramp that's needed in Eq. \eqref{eqn:filter} below.
+% See Harris et al. (2011) for a fuller discussion of this point.
+
 \subsection{MWA implementation of the fine PFB}
 
 The first stage (coarse) PFB is described in \citet{Prabu2015}, and here we only document a few details pertaining to the second stage (fine) PFB.
@@ -151,9 +155,9 @@ where
 \end{equation*}
 is the Hanning window, and
 \begin{equation*}
-    w_s[m] = \sin\bigg(\frac{\pi(m + 1 - M/2)}{N}\bigg)
+    w_s[m] = \sinc\bigg(\frac{\pi(m + 1 - M/2)}{N}\bigg)
 \end{equation*}
-is the scaled $\sinc$ function.
+is the scaled $\sinc(x) = \sin(x)/x$ function.
 It can be easily checked that $h[m]$ is defined to be symmetric around sample $m = 767 = M/2-1$.
 The analysis filter is shown in Fig. \ref{fig:filter}.
 \begin{figure}
