@@ -1,33 +1,31 @@
-from scipy import kaiser, hanning, hamming, bartlett, blackman
+from scipy import hanning
 import numpy as np
 import matplotlib.pyplot as plt
 
 fig, axs = plt.subplots(2)
 
 r = np.loadtxt("r.txt")
-rnorm = r/max(r)
+rmax = max(r)
+print("max coefficient = {0}".format(rmax))
 
-axs[0].plot(rnorm, label="True coefficients, normalised")
+P = 12 # number of taps
+N = 128 # number of output channels
+M = N*P
 
-ntaps = 12
-nsamps = 128
-N = ntaps*nsamps
-a = 6
-k = kaiser(N, a)
-axs[0].plot(kaiser(N,a), label="Kaiser {0}".format(a))
+x = (np.linspace(0, M, M, endpoint=False) - M/2 + 1)/N
 
-hn = hanning(N)
-hm = hamming(N)
-br = bartlett(N)
-bl = blackman(N)
+s = np.sinc(x)
+hn = hanning(M+1)[1:]
+r1 = s*hn*(rmax-0.125)
+rounded = np.round(r1)
 
-x = (np.linspace(0, N, N, endpoint=False) - N/2 + 1)/N
-s = np.sinc(x*12)
-r1 = s*k
-axs[0].plot(r1, label="Kaiser * sinc")
-axs[0].plot(rnorm/s, label="rnorm/sinc")
+axs[0].plot(r, label="True coefficients")
+axs[0].plot(r1, label="Hanning * sinc")
 
-axs[1].plot(r1 - rnorm, label="Residuals")
+residuals = r1 - r
+axs[1].plot(residuals, label="Residuals")
+axs[1].plot(rounded - r, label="Rounded residuals")
+print("rounded residuals: min = {0};   max = {1}".format(min(r1-r), max(r1-r)))
 
 axs[0].legend()
 axs[1].legend()

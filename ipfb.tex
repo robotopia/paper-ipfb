@@ -2,6 +2,8 @@
 
 \usepackage{graphicx}
 
+\DeclareMathOperator{\sinc}{sinc}
+
 \title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via a synthesis filter}
 
 %%% SAMPLE %%%
@@ -136,7 +138,26 @@ It is illustrated in Fig. \ref{fig:pfb}.
 
 \subsection{MWA implementation of the fine PFB}
 
-As the first stage
+The first stage (coarse) PFB is described in \citet{Prabu2015}, and here we only document a few details pertaining to the second stage (fine) PFB.
+A PFB is completely specified by (1) the number of output channels, $N$, (2) the number of taps, $P$, and (3) the analysis filter, $h[m]$, $0 \le m < M=NP$.
+For the MWA, $N=128$ (giving fine channels $10\,$kHz wide), $P=12$, and
+\begin{equation}
+    h[m] = w_H[m]\,w_s[m],
+    \label{eqn:filter}
+\end{equation}
+where
+\begin{equation*}
+    w_H[m] = \sin\bigg(\frac{\pi (m+1)}{M+1}\bigg)
+\end{equation*}
+is the Hanning window, and
+\begin{equation*}
+    w_s[m] = \sin\bigg(\frac{\pi(m + 1 - M/2)}{N}\bigg)
+\end{equation*}
+is the stretched $\sinc$ function.
+It can be easily checked that $h[m]$ is defined to be symmetric around sample $m = 767 = M/2-1$.
+
+The above specifications yield a specific frequency response, as explained in the preceding section.
+The rationale behind these particular design choices is beyond the scope of this paper---for the purposes of creating a synthesis filter, it is sufficient to know merely how the analysis filter is defined\footnote{Eq. \eqref{eqn:filter} is defined on $\mathbb{R}$, but the actual implementation on the MWA's filed-programmable gate arrays (FPGAs) defines the analysis filter coefficients on $\mathbb{Z}$. The exact implemented values of $h[m]$ can be obtained by the operation $h[m] \rightarrow \lfloor\alpha h[m]\rceil$, where $\lfloor\cdot\rceil$ denotes rounding to the nearest integer and $\alpha = 117963.875$.}.
 
 \section{Synthesis filter}
 \label{sec:ipfb}
