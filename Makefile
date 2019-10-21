@@ -1,4 +1,5 @@
-
+filter.eps: filtercoeffs.py
+	python $<
 
 pasa.cls: pasa-template-20170508.zip
 	unzip $<

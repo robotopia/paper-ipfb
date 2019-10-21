@@ -12,7 +12,8 @@ P = 12 # number of taps
 N = 128 # number of output channels
 M = N*P
 
-x = (np.linspace(0, M, M, endpoint=False) - M/2 + 1)/N
+m = np.linspace(0, M, M, endpoint=False)
+x = (m + 1 - M/2)/N
 
 s = np.sinc(x)
 hn = hanning(M+1)[1:]
@@ -30,3 +31,14 @@ print("rounded residuals: min = {0};   max = {1}".format(min(r1-r), max(r1-r)))
 axs[0].legend()
 axs[1].legend()
 plt.show()
+
+plt.plot(m, hn, 'k:', label="Hanning window")
+plt.plot(m, s, 'k--', label="Sinc function")
+plt.plot(m, s*hn, 'k-', label="Analysis filter")
+
+plt.xlabel("$m$")
+plt.ylabel("$h[m]$")
+plt.xlim([0,1536])
+
+plt.legend()
+plt.savefig("filter.eps")
