@@ -167,13 +167,12 @@ The analysis filter is shown in Fig. \ref{fig:filter}.
     \label{fig:filter}
 \end{figure}
 
-The MWA fine PFB is \textit{critically sampled}, meaning that consecutive $100\,\mu$s output samples are obtained by applying the analysis filter to blocks of samples separated by the length of a tap, i.e. $N$ samples.
+The MWA fine PFB is \textit{critically sampled}, meaning that consecutive $100\,\mu$s output samples are obtained by applying the analysis filter to blocks of samples separated by the length of one tap, i.e. $N = 128$ samples.
 This implies that each coarse channel sample becomes part of the input (i.e. a term in the sum) for $P$ consecutive fine channel samples.
-However, it should be noted that there is no redundant information.
-The term ``critically'' sampled is justified by noting that the downsampling by a factor of \dots inherent in the PFB algorithm is exactly balanced by the 
+The term ``critically'' sampled is justified by noting that the downsampling by a factor of $P$ (inherent in the PFB algorithm) is exactly counterbalanced by the inclusion of each coarse channel sample in $P$ distinct output channels, with a different weighting (filter coefficient and phase term) applied in each case.
+As discussed below, the fact that the PFB is critically sampled greatly informs the design of the synthesis filter used to reconstruct the coarse channel samples from the fine channels.
 
-The above specifications yield a specific frequency response, as explained in the preceding section.
-The rationale behind these particular design choices is beyond the scope of this paper---for the purposes of creating a synthesis filter, it is sufficient to know merely how the analysis filter is defined\footnote{Eq. \eqref{eqn:filter} is defined on $\mathbb{R}$, but the actual implementation on the MWA's filed-programmable gate arrays (FPGAs) defines the analysis filter coefficients on $\mathbb{Z}$. The exact implemented values, $h^\ast[m]$, can be obtained from $h[m]$ via $h^\ast[m] \equiv \lfloor\alpha h[m]\rceil$, where $\lfloor\cdot\rceil$ denotes rounding to the nearest integer and $\alpha = 117963.875$.}.
+The rationale behind these particular design choices is beyond the scope of this paper---for the purposes of creating a synthesis filter, it is sufficient to know merely how the analysis filter is defined\footnote{Eq. \eqref{eqn:filter} is defined on $\mathbb{R}$, but the actual implementation on the MWA's filed-programmable gate arrays (FPGAs) defines the analysis filter coefficients on $\mathbb{Z}$. The exact implemented values, $h^\ast[m]$, can be obtained from $h[m]$ via $h^\ast[m] \equiv \lfloor\alpha h[m]\rceil$, where $\lfloor\cdot\rceil$ denotes rounding to the nearest integer and $\alpha = 117963.875$.}, and the fact that the PFB is critically sampled.
 
 \section{Synthesis filter}
 \label{sec:ipfb}
