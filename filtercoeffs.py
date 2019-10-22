@@ -49,6 +49,8 @@ k = (np.arange(M) - ctr)/P * 10 # i.e. 10 kHz
 fftr = np.roll(np.abs(np.fft.fft(s*hn)), ctr)
 dB = 10*np.log10(fftr/max(fftr))
 axs[1].plot(k, dB, 'k-')
+for xshift in [-10, 10]:
+    axs[1].plot(k+xshift, dB, '--', color='#c0c0c0')
 
 axs[1].set_xlabel("$\\nu$ (kHz)")
 axs[1].set_ylabel("Normalised power (dB)")
@@ -57,6 +59,6 @@ axs[1].set_ylim([-60, 5])
 plt.grid(True)
 
 axs[0].legend(loc='upper right')
-#plt.show()
-plt.tight_layout()
-plt.savefig("filter.eps")
+plt.show()
+#plt.tight_layout()
+#plt.savefig("filter.eps")

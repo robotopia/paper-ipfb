@@ -129,7 +129,7 @@ where
 A short proof of the equivalence of this expression with the algorithm described above is given in \citet{Harris2011}.
 The term `polyphase' derives from the structure of $b[n]$ defined in Eq. \eqref{eqn:pfb}.
 It is illustrated in Fig. \ref{fig:pfb}.
-\begin{figure}
+\begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{example-image-a}
     \caption{A diagramatic representation of the PFB algorithm, as defined in Eq. \eqref{eqn:pfb}.}
@@ -160,12 +160,17 @@ is the Hanning window, and
 is the scaled $\sinc(x) = \sin(x)/x$ function.
 It can be easily checked that $h[m]$ is defined to be symmetric around sample $m = 767 = M/2-1$.
 The analysis filter is shown in Fig. \ref{fig:filter}.
-\begin{figure}
+\begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{filter}
-    \caption{Top: The coefficients of the analysis filter defined in Eq. \eqref{eqn:filter}, composed of a Hanning window multiplied to a $\sinc$ function. Bottom: The frequency response of the analysis filter, showing negligible attenuation across approximately $10\,$kHz (the bandwidth of a fine channel) and strong attenuation elsewhere.}
+    \caption{Top: The coefficients of the MWA's fine PFB analysis filter, defined in Eq. \eqref{eqn:filter}, which is composed of a Hanning window multiplied to a $\sinc$ function. Bottom: The frequency response of the analysis filter (black, solid), showing negligible attenuation across approximately $10\,$kHz (the bandwidth of a fine channel) and strong attenuation elsewhere. The frequency response is repeated for adjacent channels on either side (grey, dashed) showing crossover points at $-3\,$dB.}
     \label{fig:filter}
 \end{figure}
+
+The MWA fine PFB is \textit{critically sampled}, meaning that consecutive $100\,\mu$s output samples are obtained by applying the analysis filter to blocks of samples separated by the length of a tap, i.e. $N$ samples.
+This implies that each coarse channel sample becomes part of the input (i.e. a term in the sum) for $P$ consecutive fine channel samples.
+However, it should be noted that there is no redundant information.
+The term ``critically'' sampled is justified by noting that the downsampling by a factor of \dots inherent in the PFB algorithm is exactly balanced by the 
 
 The above specifications yield a specific frequency response, as explained in the preceding section.
 The rationale behind these particular design choices is beyond the scope of this paper---for the purposes of creating a synthesis filter, it is sufficient to know merely how the analysis filter is defined\footnote{Eq. \eqref{eqn:filter} is defined on $\mathbb{R}$, but the actual implementation on the MWA's filed-programmable gate arrays (FPGAs) defines the analysis filter coefficients on $\mathbb{Z}$. The exact implemented values, $h^\ast[m]$, can be obtained from $h[m]$ via $h^\ast[m] \equiv \lfloor\alpha h[m]\rceil$, where $\lfloor\cdot\rceil$ denotes rounding to the nearest integer and $\alpha = 117963.875$.}.
