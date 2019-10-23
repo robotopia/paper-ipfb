@@ -84,7 +84,7 @@ Finally, the practical use of this functionality is demonstrated through two exa
 
 PFBs are a type of analysis filter, designed to extract spectral information out of discrete time series data.
 They can be considered a generalisation of the more familiar discrete Fourier transform (DFT), and are designed to overcome the undesirably uneven frequency response (i.e. spectral leakage) inherent in the application of DFTs to discretely sampled time series of finite length.
-They are well described in standard texts \citep{Crochiere1983,Harris2004,Oppenheim2009}; a clear and concise review of PFBs in the context of radio astronomy is given in \citet{Harris2011}, whose notation is closely followed here.
+They are well described in standard texts \citep{Crochiere1983,Harris2004,Oppenheim2009}; a clear and concise review of PFBs in the context of radio astronomy is given in \citet{Harris2011}.
 Thus, only a brief review of the salient features is given, in order to prepare the reader for the description of the synthesis filter in the following sections.
 
 \subsection{General review and mathematical notation}
@@ -103,10 +103,13 @@ A common strategy for mitigating spectral leakage is to choose an alternative wi
 Many possible windowing functions have been identified, which in general trade the `amount' of leakage with the `location' of the leaked components.
 For our purposes, it is sufficient to note that the inevitable presence of a windowing function motivates the definition of the \textit{analysis filter}, $h[n]$, and the generalised \textit{windowed DFT}
 \begin{equation}
-    X[k] = \sum_{n=0}^{N-1} h[n]\,x[n]\,e^{-2\pi j k (n/N)},
+    X_k[m] = \sum_{n=0}^{K-1} h[n]\,x[n+mM]\,e^{-2\pi jkn/K},
     \label{eqn:wdft}
 \end{equation}
-where $j = \sqrt{-1}$ denotes the imaginary number, and it is understood that $0 \le k < N$.
+where $j = \sqrt{-1}$ denotes the imaginary number, $m$ is the time index of the channelised (output) data, and $0 \le k < K$ denotes the (fine) channel number.
+Eq. \eqref{eqn:wdft} describes the action of performing DFTs on short, windowed segments of the input time series of length $K$.
+$M$ is the amount that the window is slid along $x[n]$ between successive DFT operations.
+If $M < K$ then the windows overlap and the resulting channelisation is \textit{oversampled}; if $M = K$, then it is \textit{critically sampled}.
 The choice of $h[n]$ is motivated by the shape of its \textit{frequency response} (i.e. its Fourier pair), whose characteristics (e.g. width, location of sidelobes) might carry particular advantages in certain contexts.
 Note that leaving $x[n]$ ``unweighted'' is equivalent to choosing $h[n] = w_R[n]$.
 
@@ -143,7 +146,7 @@ It is illustrated in Fig. \ref{fig:pfb}.
 \subsection{MWA implementation of the fine PFB}
 
 The first stage (coarse) PFB is described in \citet{Prabu2015}, and here we only document a few details pertaining to the second stage (fine) PFB.
-A PFB is completely specified by (1) the number of output channels, $N$, (2) the number of taps, $P$, and (3) the analysis filter, $h[m]$, $0 \le m < M=NP$.
+A PFB is specified by (1) the number of output channels, $N$, (2) the number of taps, $P$, and (3) the analysis filter, $h[m]$, $0 \le m < M = NP = 1536$.
 For the MWA, $N=128$ (giving fine channels $10\,$kHz wide), $P=12$, and
 \begin{equation}
     h[m] = w_H[m]\,w_s[m],
@@ -163,16 +166,16 @@ The analysis filter is shown in Fig. \ref{fig:filter}.
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{filter}
-    \caption{Top: The coefficients of the MWA's fine PFB analysis filter, defined in Eq. \eqref{eqn:filter}, which is composed of a Hanning window multiplied to a $\sinc$ function. Bottom: The frequency response of the analysis filter (black, solid), showing negligible attenuation across approximately $10\,$kHz (the bandwidth of a fine channel) and strong attenuation elsewhere. The frequency response is repeated for adjacent channels on either side (grey, dashed) showing crossover points at $-3\,$dB.}
+    \caption{Top: The coefficients of the MWA's fine PFB analysis filter, defined in Eq. \eqref{eqn:filter}, which is composed of a Hanning window multiplied to a $\sinc$ function. Bottom: The frequency response of the analysis filter (black, solid), showing negligible attenuation across approximately $10\,$kHz (the bandwidth of a fine channel) and strong attenuation elsewhere. The frequency response is repeated for adjacent channels on either side (grey, dashed) showing crossover points on the channel edges at $-3\,$dB.}
     \label{fig:filter}
 \end{figure}
 
-The MWA fine PFB is \textit{critically sampled}, meaning that consecutive $100\,\mu$s output samples are obtained by applying the analysis filter to blocks of samples separated by the length of one tap, i.e. $N = 128$ samples.
+The MWA's fine PFB is \textit{critically sampled}, meaning that consecutive $100\,\mu$s output samples are obtained by applying the analysis filter to blocks of samples separated by the length of one tap, i.e. $N = 128$ samples.
 This implies that each coarse channel sample becomes part of the input (i.e. a term in the sum) for $P$ consecutive fine channel samples.
 The term ``critically'' sampled is justified by noting that the downsampling by a factor of $P$ (inherent in the PFB algorithm) is exactly counterbalanced by the inclusion of each coarse channel sample in $P$ distinct output channels, with a different weighting (filter coefficient and phase term) applied in each case.
-As discussed below, the fact that the PFB is critically sampled greatly informs the design of the synthesis filter used to reconstruct the coarse channel samples from the fine channels.
+As discussed below, the fact that the PFB is critically sampled informs the design of the synthesis filter used to reconstruct the coarse channel samples from the fine channels.
 
-The rationale behind these particular design choices is beyond the scope of this paper---for the purposes of creating a synthesis filter, it is sufficient to know merely how the analysis filter is defined\footnote{Eq. \eqref{eqn:filter} is defined on $\mathbb{R}$, but the actual implementation on the MWA's filed-programmable gate arrays (FPGAs) defines the analysis filter coefficients on $\mathbb{Z}$. The exact implemented values, $h^\ast[m]$, can be obtained from $h[m]$ via $h^\ast[m] \equiv \lfloor\alpha h[m]\rceil$, where $\lfloor\cdot\rceil$ denotes rounding to the nearest integer and $\alpha = 117963.875$.}, and the fact that the PFB is critically sampled.
+The rationale behind the particular design choices for the MWA's fine PFB is beyond the scope of this paper---for the purposes of creating a synthesis filter, it is sufficient to know merely how the analysis filter is defined\footnote{Eq. \eqref{eqn:filter} is defined on $\mathbb{R}$, but the actual implementation on the MWA's filed-programmable gate arrays (FPGAs) defines the analysis filter coefficients on $\mathbb{Z}$. The exact implemented values, $h^\ast[m]$, can be obtained from $h[m]$ via $h^\ast[m] \equiv \lfloor\alpha h[m]\rceil$, where $\lfloor\cdot\rceil$ denotes rounding to the nearest integer and $\alpha = 117963.875$.}, and the fact that the PFB is critically sampled.
 
 \section{Synthesis filter}
 \label{sec:ipfb}
