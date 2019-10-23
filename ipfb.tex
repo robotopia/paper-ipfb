@@ -89,9 +89,9 @@ Thus, only a brief review of the salient features is given, in order to prepare 
 
 \subsection{General review and mathematical notation}
 
-Like the DFT, the PFB is a transformation from the time domain, $x[n]$, to the frequency domain $X[k]$, where the $[\cdot]$ notation denotes a discretised index, and where $n,k \in \mathbb{Z}$ are the indices for time and frequency, respectively.
-Let $N$ be the number of (equally spaced) frequency channels required for some desired spectral resolution.
-Although applying a DFT to $N$ adjacent time samples will produce the desired resolution, the result will be an imperfect representation of the true spectral content of $x[n]$ because of \textit{spectral leakage}, which is when power that properly `belongs' to some particular frequency bin appears in (or, is \textit{aliased} to) other, nearby bins.
+The PFB is a transformation from the time domain, $x[n]$, to the frequency domain $X_k[m]$, where the $[\cdot]$ notation denotes a discretised index, $k$ is the channel number, and $n,m \in \mathbb{Z}$ are the time indices for the pre- and post-channelised data, respectively.
+Let $K$ be the number of (equally spaced) frequency channels required for some desired spectral resolution.
+Although applying a DFT to $N = K$ adjacent time samples in $x[n]$ will produce the desired resolution, the result will be an imperfect representation of the true spectrum because of \textit{spectral leakage}, which is when power that properly `belongs' to some particular frequency bin appears in (or, is \textit{aliased} to) other, nearby bins.
 The impossibility of perfectly eliminating spectral leakage can be seen by realising that operating on a finite-length time series is equivalent to multiplying an arbitrarily long time series with a rectangular window function,
 \begin{equation}
     w_R[n] = \begin{cases} 1, & 0 \le n < N, \\ 0, & \text{elsewhere}, \end{cases}
@@ -103,35 +103,39 @@ A common strategy for mitigating spectral leakage is to choose an alternative wi
 Many possible windowing functions have been identified, which in general trade the `amount' of leakage with the `location' of the leaked components.
 For our purposes, it is sufficient to note that the inevitable presence of a windowing function motivates the definition of the \textit{analysis filter}, $h[n]$, and the generalised \textit{windowed DFT}
 \begin{equation}
-    X_k[m] = \sum_{n=0}^{K-1} h[n]\,x[n+mM]\,e^{-2\pi jkn/K},
+    X_k[m] = \sum_{n=0}^{N-1} h[n]\,x[n+mM]\,e^{-2\pi jkn/K},
     \label{eqn:wdft}
 \end{equation}
-where $j = \sqrt{-1}$ denotes the imaginary number, $m$ is the time index of the channelised (output) data, and $0 \le k < K$ denotes the (fine) channel number.
+where $j = \sqrt{-1}$ denotes the imaginary number, $m$ is the time index of the channelised (output) data, and $0 \le k < K$ denotes the channel number.
 Eq. \eqref{eqn:wdft} describes the action of performing DFTs on short, windowed segments of the input time series of length $K$.
 $M$ is the amount that the window is slid along $x[n]$ between successive DFT operations.
 If $M < K$ then the windows overlap and the resulting channelisation is \textit{oversampled}; if $M = K$, then it is \textit{critically sampled}.
-The choice of $h[n]$ is motivated by the shape of its \textit{frequency response} (i.e. its Fourier pair), whose characteristics (e.g. width, location of sidelobes) might carry particular advantages in certain contexts.
-Note that leaving $x[n]$ ``unweighted'' is equivalent to choosing $h[n] = w_R[n]$.
+The choice of $h[n]$ is motivated by the shape of its \textit{frequency response} (i.e. its Fourier pair), whose characteristics (e.g. width, location of sidelobes) are chosen according to the advantages they carry in particular contexts.
+Leaving $x[n]$ ``unweighted'' is equivalent to choosing $h[n] = w_R[n]$, in which case Eq. \eqref{eqn:wdft} is also called the short-time Fourier transform (STFT).
+On the other hand, choosing $h[n]$ to be the $\sinc$ function will result in a frequency response that approximates a rectangular window.
 
 It is well known that scaling a function in the time domain produces the inverse scaling in the Fourier domain.
 This fact motivates an alternative strategy for mitigating spectral leakage.
-If more samples are available, say $M = NP$ for $P > 1$, then stretching (i.e. scaling and upsampling) the analysis filter will result in a frequency response function that is similar in shape, but $P$ times narrower than the original analysis filter.
-Applying the DFT to the larger set of windowed samples and subsequently \emph{downsampling} the resulting spectrum (by choosing every $P$th frequency bin and rejecting the rest) ensures that the original desired spectral resolution is retained, but with significantly less spectral leakage.
+Choosing a larger window size, $N = KP$ (for integer $P > 1$), and a corresponding wider analysis filter, will result in a frequency response function that is similar in shape, but $P$ times narrower than the original analysis filter.
+A DFT applied to the larger number of samples will naturally produce a correspondingly larger number of frequency channels, but choosing only every $P$th channel and discarding the rest (known as \textit{decimation}) ensures that the desired spectral resolution with $K$ channels is retained.
+In this way, spectral leakage can be contained arbitrarily close to the ``correct'' channel by choosing a sufficiently high value of $P$.
 
-The algorithm embodied in the above strategy defines the PFB.
-It is clear that choosing a larger value for $P$ will lessen spectral leakage by the same factor, but this naturally comes at a greater computational cost, since the DFT is now applied to $M$ samples.
-However, one of the great advantages of the PFB is that the above operations of using a wider analysis wilter and downsampling the resulting spectrum are mathematically equivalent to first segmenting the windowed time series into $P$ segments (known as `taps') of size $N$, summing their respective samples element-wise, and performing a single DFT on the resulting array (now of size $N$), i.e.
+The two-step algorithm described above (performing a windowed DFT on $N = KP$ samples and decimating the resulting spectrum) defines the PFB.
+Formally, it is equivalent to Eq. \eqref{eqn:wdft}; however, the term \textit{critically sampled} (i.e. $M = K$) implies that the $N$-length windows will now overlap.
+The term ``polyphase'' derives from the fact that each block of $K = N/P$ samples (knows as \textit{taps}) in $x[n]$ is included in multiple applications of the DFT, but appearing at a different relative phase in each case.
+
+One of the great advantages of the PFB is the existence of a mathematically equivalent but computationally efficient implementation.
+It can be shown that Eq. \eqref{eqn:wdft} is equivalent to first segmenting the windowed time series into taps, summing their respective samples element-wise, and performing a single DFT on the resulting array (now also of size $K$), i.e.
 \begin{equation}
-    X[k] = \sum_{n=0}^{N-1} b[n]\,e^{-2\pi j k (n/N)},
+    X_k[m] = \sum_{n=0}^{K-1} b[n]\,e^{-2\pi jkn/K},
     \label{eqn:pfb}
 \end{equation}
 where
 \begin{equation*}
-    b[n] = \sum_{\rho=0}^{P-1} h[n + N\rho]\,x[n + N\rho].
+    b[n] = \sum_{\rho=0}^{P-1} h[n + K\rho]\,x[n + mM + K\rho].
 \end{equation*}
-A short proof of the equivalence of this expression with the algorithm described above is given in \citet{Harris2011}.
-The term `polyphase' derives from the structure of $b[n]$ defined in Eq. \eqref{eqn:pfb}.
-It is illustrated in Fig. \ref{fig:pfb}.
+A short proof of this is given in \citet{Harris2011}.
+Eq. \eqref{eqn:pfb} is illustrated in Fig. \ref{fig:pfb}.
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{example-image-a}
@@ -146,19 +150,19 @@ It is illustrated in Fig. \ref{fig:pfb}.
 \subsection{MWA implementation of the fine PFB}
 
 The first stage (coarse) PFB is described in \citet{Prabu2015}, and here we only document a few details pertaining to the second stage (fine) PFB.
-A PFB is specified by (1) the number of output channels, $N$, (2) the number of taps, $P$, and (3) the analysis filter, $h[m]$, $0 \le m < M = NP = 1536$.
-For the MWA, $N=128$ (giving fine channels $10\,$kHz wide), $P=12$, and
+A PFB is specified by (1) the number of output channels, $K$, (2) the number of taps, $P$, and (3) the analysis filter, $h[n]$.
+For the MWA, $K = 128$ (giving fine channels $10\,$kHz wide), $P = 12$, and
 \begin{equation}
-    h[m] = w_H[m]\,w_s[m],
+    h[n] = w_H[n]\,w_s[n],
     \label{eqn:filter}
 \end{equation}
 where
 \begin{equation*}
-    w_H[m] = \sin^2\bigg(\frac{\pi (m+1)}{M+1}\bigg)
+    w_H[n] = \sin^2\bigg(\frac{\pi (n+1)}{N+1}\bigg)
 \end{equation*}
 is the Hanning window, and
 \begin{equation*}
-    w_s[m] = \sinc\bigg(\frac{\pi(m + 1 - M/2)}{N}\bigg)
+    w_s[n] = \sinc\bigg(\frac{\pi(n + 1 - N/2)}{K}\bigg)
 \end{equation*}
 is the scaled $\sinc(x) = \sin(x)/x$ function.
 It can be easily checked that $h[m]$ is defined to be symmetric around sample $m = 767 = M/2-1$.
@@ -169,13 +173,8 @@ The analysis filter is shown in Fig. \ref{fig:filter}.
     \caption{Top: The coefficients of the MWA's fine PFB analysis filter, defined in Eq. \eqref{eqn:filter}, which is composed of a Hanning window multiplied to a $\sinc$ function. Bottom: The frequency response of the analysis filter (black, solid), showing negligible attenuation across approximately $10\,$kHz (the bandwidth of a fine channel) and strong attenuation elsewhere. The frequency response is repeated for adjacent channels on either side (grey, dashed) showing crossover points on the channel edges at $-3\,$dB.}
     \label{fig:filter}
 \end{figure}
-
-The MWA's fine PFB is \textit{critically sampled}, meaning that consecutive $100\,\mu$s output samples are obtained by applying the analysis filter to blocks of samples separated by the length of one tap, i.e. $N = 128$ samples.
-This implies that each coarse channel sample becomes part of the input (i.e. a term in the sum) for $P$ consecutive fine channel samples.
-The term ``critically'' sampled is justified by noting that the downsampling by a factor of $P$ (inherent in the PFB algorithm) is exactly counterbalanced by the inclusion of each coarse channel sample in $P$ distinct output channels, with a different weighting (filter coefficient and phase term) applied in each case.
-As discussed below, the fact that the PFB is critically sampled informs the design of the synthesis filter used to reconstruct the coarse channel samples from the fine channels.
-
-The rationale behind the particular design choices for the MWA's fine PFB is beyond the scope of this paper---for the purposes of creating a synthesis filter, it is sufficient to know merely how the analysis filter is defined\footnote{Eq. \eqref{eqn:filter} is defined on $\mathbb{R}$, but the actual implementation on the MWA's filed-programmable gate arrays (FPGAs) defines the analysis filter coefficients on $\mathbb{Z}$. The exact implemented values, $h^\ast[m]$, can be obtained from $h[m]$ via $h^\ast[m] \equiv \lfloor\alpha h[m]\rceil$, where $\lfloor\cdot\rceil$ denotes rounding to the nearest integer and $\alpha = 117963.875$.}, and the fact that the PFB is critically sampled.
+The MWA's fine PFB is critically sampled, with $M = K = 128$.
+The rationale behind the particular design choices for the MWA's fine PFB is beyond the scope of this paper---for the purposes of creating a synthesis filter, it is sufficient to know merely how the analysis filter is defined\footnote{Eq. \eqref{eqn:filter} is defined on $\mathbb{R}$, but the actual implementation on the MWA's filed-programmable gate arrays (FPGAs) defines the analysis filter coefficients on $\mathbb{Z}$. The exact implemented values, $h^\ast[n]$, can be obtained from $h[n]$ via $h^\ast[n] \equiv \lfloor\alpha h[n]\rceil$, where $\lfloor\cdot\rceil$ denotes rounding to the nearest integer and $\alpha = 117963.875$.}, and the fact that the PFB is critically sampled.
 
 \section{Synthesis filter}
 \label{sec:ipfb}
