@@ -108,7 +108,7 @@ For our purposes, it is sufficient to note that the inevitable presence of a win
 \end{equation}
 where $j = \sqrt{-1}$ denotes the imaginary number, $m$ is the time index of the channelised (output) data, and $0 \le k < K$ denotes the channel number.
 Eq. \eqref{eqn:wdft} describes the action of performing DFTs on short, windowed segments of the input time series of length $K$.
-$M$ is the number of samples that the window is translated along $x[n]$ between successive DFT operations; thus, the index of $h[mM - n]$ represents the amount the filter must be translated in order to produce the spectrum at time $m$.
+$M$ is the number of samples that the window is translated along $x[n]$ between successive DFT operations; thus, the index of $h[mM - n]$ represents the shift required in order to produce the spectrum at time $m$.
 If $M < K$ then the windows overlap and the resulting channelisation is \textit{oversampled}; if $M = K$, then it is \textit{critically sampled}.
 The choice of $h[n]$ is motivated by the shape of its \textit{frequency response} (i.e. its Fourier pair), whose characteristics (e.g. width, location of sidelobes) are chosen according to the advantages they carry in particular contexts.
 Leaving $x[n]$ ``unweighted'' is equivalent to choosing $h[n] = w_R[n]$, in which case Eq. \eqref{eqn:wdft} is also called the short-time Fourier transform (STFT).
@@ -124,7 +124,7 @@ The two-step algorithm described above (performing a windowed DFT on $N = KP$ sa
 Formally, it is equivalent to Eq. \eqref{eqn:wdft}; however, the term \textit{critically sampled} (i.e. $M = K$) implies that the $N$-length windows will now overlap.
 The term ``polyphase'' derives from the fact that each block of $K = N/P$ samples (knows as \textit{taps}) in $x[n]$ is included in multiple applications of the DFT, but appearing at a different relative phase in each case.
 
-One of the great advantages of the PFB is the existence of a mathematically equivalent but computationally efficient implementation.
+One of the great advantages of the critically sampled PFB is the existence of a mathematically equivalent but computationally efficient implementation.
 It can be shown that Eq. \eqref{eqn:wdft} is equivalent to first segmenting the windowed time series into taps, summing their respective samples element-wise, and performing a single DFT on the resulting array (now also of size $K$), i.e.
 \begin{equation}
     X_k[m] = \sum_{n=0}^{K-1} b[n]\,e^{-2\pi jkn/K},

@@ -2,23 +2,23 @@ from scipy import hanning
 import numpy as np
 import matplotlib.pyplot as plt
 
-fig, axs = plt.subplots(2, figsize=(5,7))
-
 r = np.loadtxt("r.txt")
 rmax = max(r)
 print("max coefficient = {0}".format(rmax))
 
 P = 12 # number of taps
-N = 128 # number of output channels
-M = N*P
+K = 128 # number of output channels
+N = K*P
 
-m = np.linspace(0, M, M, endpoint=False)
-x = (m + 1 - M/2)/N
+m = np.linspace(0, N, N, endpoint=False)
+x = (m + 1 - N/2)/K
 
 s = np.sinc(x)
-hn = hanning(M+1)[1:]
+hn = hanning(N+1)[1:]
 r1 = s*hn*(rmax-0.125)
 rounded = np.round(r1)
+
+fig, axs = plt.subplots(2, figsize=(5,7))
 
 '''
 # Plots to verify the constructed coefficients vs the actual coefficients.
@@ -44,13 +44,13 @@ axs[0].set_xlabel("$m$")
 axs[0].set_ylabel("$h[m]$")
 axs[0].set_xlim([0,1536])
 
-ctr = M//2 - 1
-k = (np.arange(M) - ctr)/P * 10 # i.e. 10 kHz
+ctr = N//2 - 1
+f = (np.arange(N) - ctr)/P * 10 # i.e. 10 kHz
 fftr = np.roll(np.abs(np.fft.fft(s*hn)), ctr)
 dB = 10*np.log10(fftr/max(fftr))
-axs[1].plot(k, dB, 'k-')
-for xshift in [-10, 10]:
-    axs[1].plot(k+xshift, dB, '--', color='#c0c0c0')
+axs[1].plot(f, dB, 'k-')
+for fshift in [-10, 10]:
+    axs[1].plot(f + fshift, dB, '--', color='#c0c0c0')
 
 axs[1].set_xlabel("$\\nu$ (kHz)")
 axs[1].set_ylabel("Normalised power (dB)")
