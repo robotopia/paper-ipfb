@@ -116,7 +116,7 @@ On the other hand, choosing $h[n]$ to be the $\sinc$ function will result in a f
 
 It is well known that scaling a function in the time domain produces the inverse scaling in the Fourier domain.
 This fact motivates an alternative strategy for mitigating spectral leakage.
-Choosing a larger window size, $N = KP$ (for integer $P > 1$), and a corresponding wider analysis filter, will result in a frequency response function that is similar in shape, but $P$ times narrower than the original analysis filter.
+Choosing a larger window size, $N = KP$ (for integer $P > 1$), and a corresponding wider analysis filter, will result in a frequency response that is similar in shape, but $P$ times narrower than the frequency response of the original analysis filter.
 A DFT applied to the larger number of samples will naturally produce a correspondingly larger number of frequency channels, but choosing only every $P$th channel and discarding the rest (known as \textit{decimation}) ensures that the desired spectral resolution with $K$ channels is retained.
 In this way, spectral leakage can be contained arbitrarily close to the ``correct'' channel by choosing a sufficiently high value of $P$.
 
