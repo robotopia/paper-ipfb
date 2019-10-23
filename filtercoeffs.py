@@ -6,16 +6,27 @@ r = np.loadtxt("r.txt")
 rmax = max(r)
 print("max coefficient = {0}".format(rmax))
 
+def create_fine_PFB_filter(nchans, ntaps):
+
+    P = ntaps # number of taps
+    K = nchans # number of output channels
+    N = nchans*ntaps
+
+    m = np.linspace(0, N, N, endpoint=False)
+    x = (m + 1 - N/2)/nchans
+
+    sinc = np.sinc(x)
+    hn   = hanning(N+1)[1:]
+    h    = sinc*hn
+    return h, m, hn, sinc
+
 P = 12 # number of taps
 K = 128 # number of output channels
-N = K*P
+N = K*P # size of filter
 
-m = np.linspace(0, N, N, endpoint=False)
-x = (m + 1 - N/2)/K
+h, m, hn, s = create_fine_PFB_filter(K, P)
 
-s = np.sinc(x)
-hn = hanning(N+1)[1:]
-r1 = s*hn*(rmax-0.125)
+r1 = h*(rmax-0.125)
 rounded = np.round(r1)
 
 fig, axs = plt.subplots(2, figsize=(5,7))
