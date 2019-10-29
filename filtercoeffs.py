@@ -12,19 +12,19 @@ def create_fine_PFB_filter(nchans, ntaps):
     K = nchans # number of output channels
     N = nchans*ntaps
 
-    m = np.linspace(0, N, N, endpoint=False)
-    x = (m + 1 - N/2)/nchans
+    n = np.linspace(0, N, N, endpoint=False)
+    x = (n + 1 - N/2)/nchans
 
     sinc = np.sinc(x)
     hn   = hanning(N+1)[1:]
     h    = sinc*hn
-    return h, m, hn, sinc
+    return h, n, hn, sinc
 
 P = 12 # number of taps
 K = 128 # number of output channels
 N = K*P # size of filter
 
-h, m, hn, s = create_fine_PFB_filter(K, P)
+h, n, hn, s = create_fine_PFB_filter(K, P)
 
 r1 = h*(rmax-0.125)
 rounded = np.round(r1)
@@ -47,12 +47,12 @@ plt.show()
 '''
 
 # Plots to go in the figure
-axs[0].plot(m, hn, 'k:', label="Hanning window")
-axs[0].plot(m, s, 'k--', label="Sinc function")
-axs[0].plot(m, s*hn, 'k-', label="Analysis filter")
+axs[0].plot(n, hn, 'k:', label="Hanning window")
+axs[0].plot(n, s, 'k--', label="Sinc function")
+axs[0].plot(n, s*hn, 'k-', label="Analysis filter")
 
-axs[0].set_xlabel("$m$")
-axs[0].set_ylabel("$h[m]$")
+axs[0].set_xlabel("$n$")
+axs[0].set_ylabel("$h[n]$")
 axs[0].set_xlim([0,1536])
 
 ctr = N//2 - 1
