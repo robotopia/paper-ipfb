@@ -14,7 +14,7 @@
 %}%
 %%% END SAMPLE %%%
 
-\author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$
+\author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$, B. W. Meyers, S. E. Tremblay
 \affil{$^1$International Centre for Radio Astronomy Research (ICRAR), GPO Box U1987, Perth, WA 6845, Australia}%
 \affil{$^2$CSIRO Astronomy and Space Science, PO Box 76, Epping, NSW 1710, Australia}
 }
@@ -24,11 +24,11 @@
 \jyear{\the\year}
 
 \usepackage{aas_macros}
-\usepackage{hyperref} 
+\usepackage{hyperref}
 \hypersetup{colorlinks,citecolor=blue,linkcolor=blue,urlcolor=blue}
 
 %%%%%%% IMPORTANT: We disable hyperlinks by default with this line, to avoid the error "\pdfendlink ended up in different nesting level" while writing.
-\hypersetup{draft}
+%\hypersetup{draft}
 %%%%%%% You may comment or delete the line above to make hyperlinks in your paper active. If you then encounter a strange "\pdfendlink ended up in different nesting level than \pdfstartlink", don't worry! Uncomment the line again, and see https://www.overleaf.com/help/246 for further information.
 
 \begin{document}
@@ -122,7 +122,7 @@ In this way, spectral leakage can be contained arbitrarily close to the ``correc
 
 The two-step algorithm described above (performing a windowed DFT on $N = KP$ samples and decimating the resulting spectrum) defines the PFB.
 Formally, it is equivalent to Eq. \eqref{eqn:wdft}; however, the term \textit{critically sampled} (i.e. $M = K$) implies that the $N$-length windows will now overlap.
-The term ``polyphase'' derives from the fact that each block of $K = N/P$ samples (knows as \textit{taps}) in $x[n]$ is included in multiple applications of the DFT, but appearing at a different relative phase in each case.
+The term ``polyphase'' derives from the fact that each block of $K = N/P$ samples (known as \textit{taps}) in $x[n]$ is included in multiple applications of the DFT, but appearing at a different relative phase in each case.
 
 One of the great advantages of the critically sampled PFB is the existence of a mathematically equivalent but computationally efficient implementation.
 It can be shown that Eq. \eqref{eqn:wdft} is equivalent to first segmenting the windowed time series into taps, summing their respective samples element-wise, and performing a single DFT on the resulting array (now also of size $K$), i.e.
@@ -135,7 +135,7 @@ where
     b[n] = \sum_{\rho=0}^{P-1} h[n + K\rho]\,x[n + mM + K\rho].
 \end{equation*}
 A short proof of this equivalence is given in \citet{Harris2011}.
-Eq. \eqref{eqn:pfb} is illustrated in Fig. \ref{fig:pfb}.
+The procedure described by Eq. \eqref{eqn:pfb} is illustrated in Fig. \ref{fig:pfb}.
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{example-image-a}
@@ -165,7 +165,7 @@ is the Hanning window, and
     w_s[n] = \sinc\bigg(\frac{\pi(n + 1 - N/2)}{K}\bigg)
 \end{equation*}
 is the scaled $\sinc(x) = \sin(x)/x$ function.
-It can be easily checked that $h[m]$ is defined to be symmetric around sample $m = 767 = M/2-1$.
+It can be easily checked that $h[n]$ is defined to be symmetric around sample $n = 767 = N/2-1$.
 The analysis filter is shown in Fig. \ref{fig:filter}.
 \begin{figure}[t]
     \centering
@@ -195,15 +195,15 @@ The rationale behind the particular design choices for the MWA's fine PFB is bey
 %Dimension & Classification accuracy \\
 %\hline%
 % 1  & 0.6232$^{(a)}$ \\
-% 2  & 0.9635 \\ 
-% 3  & 0.9724 \\ 
-% 4  & 0.9690 \\ 
-% 5  & 0.9840 \\ 
-% 6  & 0.9842 \\ 
-% 7  & 0.9873 \\ 
+% 2  & 0.9635 \\
+% 3  & 0.9724 \\
+% 4  & 0.9690 \\
+% 5  & 0.9840 \\
+% 6  & 0.9842 \\
+% 7  & 0.9873 \\
 % 8  & 0.9884 \\
-% 9  & 0.9873 \\ 
-% 10 & 0.9898 \\ 
+% 9  & 0.9873 \\
+% 10 & 0.9898 \\
 % 11 & 0.9914 \\
 %\hline\hline
 %\end{tabular}
@@ -213,7 +213,7 @@ The rationale behind the particular design choices for the MWA's fine PFB is bey
 %\tabnote{This is an example of table footnote}
 %\tabnote{This is an example of table footnote}
 %\end{table}
-% 
+%
 %\begin{acknowledgements}
 %This is a multiline text of acknowledgments. We are met here on a great battlefield of that war. We have come to dedicate a portion of it as a final resting place for those who here gave their lives that that nation might live.
 %\end{acknowledgements}
@@ -230,16 +230,16 @@ The rationale behind the particular design choices for the MWA's fine PFB is bey
 %data point of which is
 %\[ (f_{i1}, . . . , f_{in}).\]
 % Let $\overline{f}_q=\frac{1}{m}\sum_{i=1}^mf_{iq}$ and $\sigma_q$ The brave men, living and dead, who struggled, here, have consecrated it far above our poor power to add or detract. Suppose that
-%\[X_i=(x_{i1},\dots,x_{in}) \indent (i=1,\dots, m),\]  
+%\[X_i=(x_{i1},\dots,x_{in}) \indent (i=1,\dots, m),\]
 %where $x_{ij}=(f_{ij}-\overline{f}_j)/\sigma_j $ and
 %\[B=(X_1^T,\dots,X_m^T)^T.\]
 % Then we can show that
 %\[C=B^TB=\sum\limits_{i=1}^m X_i^TX_i=(C_{jk})_{n\times n},\]
-%where $C_{jk}=\sum_{i=1}^mx_{ij}x_{ik}$ is the correlation matrix. Our goal is to find a normalized vector 
+%where $C_{jk}=\sum_{i=1}^mx_{ij}x_{ik}$ is the correlation matrix. Our goal is to find a normalized vector
 %$$a_1=(a_{11},a_{12},\dots,a_{1n})^T$$
 % such that the projection of the standardized data
 %\[X_ia_1=\sum\limits_{k=1}^n x_{ik}a_{1k},\]
-%\noindent then $Ba_1$ 
+%\noindent then $Ba_1$
 % \[a_1^TB^T ¡¤ Ba_1=a_1^TCa_1.\]
 % Our goal is to maximize this value under the constraint $a_1^Ta_1=1$. Let $\lambda_{\rm max}$ be the largest eigenvalue of
 % $C$. According to the Rayleigh--Ritz theorem, $a_1$ can be obtained by solving
@@ -252,3 +252,4 @@ The rationale behind the particular design choices for the MWA's fine PFB is bey
 \bibliography{biblio.bib}
 
 \end{document}
+
