@@ -1,0 +1,5 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-11T11:12:34+08:00
+
+Today's task is to revamp the existing PFB inversion (as encoded in the beamformer) to perform the inversion on a selected antenna/pol without doing the actual beamforming. I've just succeeded in getting the beamformer installed on my local machine (again), so once I make the (hopefully trivial) changes to the code, I should be able to run the recombined files through (the now inappropriately named) make_beam, and get something I can compare to the coarse channel data I got from Brian.
