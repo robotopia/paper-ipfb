@@ -1,0 +1,20 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-12T15:19:40+08:00
+
+===== VDIF file format =====
+
+Consists of "sections" (my own term), where a section consists of a "header" block and a "data" block.
+
+In our VDIF files, header blocks have size 32 bytes and data blocks have size 512 bytes.
+
+Each byte of the data block is interpreted as an ''int8_t''. From slowest-changing to fastest-changing, the hierarchy is (time, pol, complexity):
+
+  ''[ (t0,p0,re),  (t0,p0,im),  (t0,p1,re),  (t0,p1,im),''
+''   (t1,p0,re),  (t1,p0,im),  (t1,p1,re),  (t1,p1,im),''
+''   (t2,p0,re),  (t2,p0,im),  (t2,p1,re),  (t2,p1,im),''
+''    ... ]''
+
+That means there are 128 time samples per data block. Nothing special happens over the section boundaries: time just continues to advance in the normal way.
+
+The samples are unsigned and have an offset of 0x80. That is, a byte value of 0x80 means a real-world value of 0 (zero).

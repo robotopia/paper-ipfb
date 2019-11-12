@@ -43,7 +43,7 @@ followed by downloading the files to your local machine (I've been using [[/home
   -R "03:56:52.80" -D "-26:45:00.0" \
   -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after \
   -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
-  -f 117 -u -A [ant]\
+  -f 117 -u -A 0 \
   -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
 }}}
 
