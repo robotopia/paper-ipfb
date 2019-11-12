@@ -3,3 +3,54 @@ Wiki-Format: zim 0.4
 Creation-Date: 2019-11-11T11:12:34+08:00
 
 Today's task is to revamp the existing PFB inversion (as encoded in the beamformer) to perform the inversion on a selected antenna/pol without doing the actual beamforming. I've just succeeded in getting the beamformer installed on my local machine (again), so once I make the (hopefully trivial) changes to the code, I should be able to run the recombined files through (the now inappropriately named) make_beam, and get something I can compare to the coarse channel data I got from Brian.
+
+I installed vcstools by navigating to the src directory (~/src/vcstools) and running:
+{{{code: lang="sh" linenumbers="False"
+# Make beamformer and prepare to install the Python scripts
+mkdir -p build; cd build
+cmake -DCMAKE_INSTALL_PREFIX=/home/smcsweeney \
+        -DCMAKE_CUDA_FLAGS="-arch=sm_35" \
+        -DXGPU_ROOT_DIR=/home/smcsweeney/src/xGPU \
+        ..
+
+
+# Compile and install (executables and Python wrapper scripts)
+make VERBOSE=1
+make install
+}}}
+
+
+vcstools depends on a host of other software, namely: cfitsio, psrfits_utils, slalib, fftw, cuda, and (optionally) xGPU. On my machine, the locations of all the necessary libraries and include files are in standard places, and CMAKE was able to find them all (except for xGPU, apparently). I will very likely take time to put all this in a pacman package soon.
+
+--------------------
+
+Actually, something isn't right with the vcstools installation on my local machine. Trying to run the following generates an error:
+{{{code: lang="sh" linenumbers="False"
+> make_beam -h
+make_beam: error while loading shared libraries: libMWAC_GPU_Utils.so: cannot open shared object file: No such file or directory
+}}}
+
+The file in question appears to be located on my machine at ''/usr/local/lib/libMWAC_GPU_Utils.so'', but I can't figure out where it came from, or why vcstools needs it.
+
+As a quick hack, the error can be made to disappear by adding the path to LD_LIBRARY_PATH:
+{{{code: lang="sh" linenumbers="False"
+> export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+}}}
+
+(This is arguably a good path to have available anyway, so I just added it to my .bashrc.)
+
+New problem:
+{{{code: lang="sh" linenumbers="False"
+> make_beam -h
+make_beam: error while loading shared libraries: libmpi.so.20: cannot open shared object file: No such file or directory
+}}}
+
+Trouble is, I don't appear to have libmpi.so.20 on my machine. I do have [[/usr/lib/openmpi/libmpi.so.40.20.2.]] I think this means that one of make_beam's dependencies has been compiled against an earlier version of libmpi, so I'll have to recompile the dependencies:
+* ~~cfitsio~~ - Installed from Arch's "extra" repository.
+* ~~psrfits_utils~~ - Re-installed, no difference
+* ~~slalib~~ - ditto
+* ~~fftw~~ - Installed from Arch's "extra" repository
+* ~~cuda~~ - Installed from Arch's "community" repository
+Hmm, that didn't seem to help.
+
+**Found the problem**. Running "which make_beam" revealed I was trying to run some previously compiled version of the beamformer instead of the one I had just compiled today.
