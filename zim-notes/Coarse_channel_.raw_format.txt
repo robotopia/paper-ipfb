@@ -1,0 +1,23 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-12T09:06:25+08:00
+
+[From an email from Brian dated 22 June 2018:]
+
+The following four files are the raw output of the centre fibre (ie middle eight channels) of both Rec01 and Rec09 for the two seconds discussed.
+
+The packet headers have been removed and the 5+5i bit data has been changed to 8+8i.  The atomic unit is a int8_t  (equivalent to 'signed char' in most x86 GCC systems)
+
+The file is effectively a four dimensional hypercube with dimensions (from slowest changing to fastest) being 'time step', 'coarse channel', 'Antenna', and finally 'real' or 'imaginary'
+
+The files are 327,680,000 bytes in length.  This is equal to 1280000 * 8 * 16 * 2.
+
+1280000 time steps being the number of time steps in a second in the MWA coarse channel data.
+
+8 coarse channels, being channel numbers 8,9,10,11,12,13,14,15,16 in the MWA 0 to 23 channels number lists.
+
+16 Antennas, being Rec14Y, Rec14X, Rec13Y, Rec13X, Rec12Y, Rec12X, Rec11Y, Rec11X, Rec18Y, Rec18X, Rec17Y, Rec17X, Rec16Y, Rec16X, Rec15Y, Rec15X
+
+Real is first (index=0), followed by imaginary (index=1).
+
+If you read the whole thing into a single dimension array, then a given value is at htr_data[time*256 + chan*32 + ant*2 + real];

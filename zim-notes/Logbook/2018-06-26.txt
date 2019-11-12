@@ -1,0 +1,46 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-12T08:53:43+08:00
+
+===== Getting the files =====
+
+The pre-PFB files can be downloaded from:
+* http://orthrus.mwa128t.org/ForBrian/Rec01_1213668800.raw
+* http://orthrus.mwa128t.org/ForBrian/Rec01_1213668801.raw
+* http://orthrus.mwa128t.org/ForBrian/Rec09_1213668800.raw
+* http://orthrus.mwa128t.org/ForBrian/Rec09_1213668801.raw
+
+The links were originally given in an email from Brian dated 22 June 2018. He also provided a CSV file showing the bit occupancy for Rec01 for the second 1213668800, given in an email dated 26 June 2018. [See "Images/Bit Occupancy"]
+
+The post PFB files are in observation 1213668624.
+
+Downloaded on Galaxy with process vcs.py version 1.4.1 e693ada:
+{{{code: lang="sh" linenumbers="False"
+galaxy> process vcs.py -m download -o 1213668624 -b 1213668800 -e 1213668801
+}}}
+
+Unfortunately, it appears the files are not recombined. I tried
+{{{code: lang="sh" linenumbers="False"
+galaxy> process vcs.py -m recombine -o 1213668624 -b 1213668800 -e 1213668800
+}}}
+
+but it complained:
+{{{code: lang="sh" linenumbers="False"
+IOError: [Errno 2] No such file or directory:
+’/astro/mwaops/vcs/1213668624/1213668624 metafits ppds.fits’
+}}}
+
+so then I tried
+{{{code: lang="sh" linenumbers="False"
+galaxy> obsdownload.py -o 1213668624 -m -d .
+}}}
+
+but I got
+{{{code: lang="sh" linenumbers="False"
+Tue Jun 26 11:01:02 2018 [INFO] No file(s) found for observation 1213668624
+}}}
+
+
+===== File Formats =====
+
+Brian's description of the pre-PFB "raw" file format is on the "Coarse channel .raw format" page.

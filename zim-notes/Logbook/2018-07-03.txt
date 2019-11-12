@@ -1,0 +1,17 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-12T09:08:39+08:00
+
+There had been a hiccup in the automatic recombining process, but Greg sorted that out for me, and now I have the recombined files downloaded to my machine.
+
+Brian tells me that he gave me the middle 8 of the total possible 24 channels. Looking at the raw files, I have channels 109 through 132, so the “middle 8” must be channels 117–124 inclusive.
+
+=== Receiver/Antenna/Pol ordering ===
+
+With Brian’s help, I now have what’s supposed to be the correct mapping between the ordering of antennas in the recombined files compared to the ordering of antennas in the “raw” files that Brian gave me. I won’t write down the mapping here, but they can be found in an email I sent to Brian today (2018-07-03).
+
+Most of today was spent creating utility programs for extracting the correct slice of data I want to compare, and also creating the PFB imitation program to turn Brian’s “raw” data into data that can be compared to the recombined files. In this way, I managed to produce my first comparison plot, although unfortunately without finding a successful correlation. The gnuplot script to reproduce it is as follows:
+
+{{{code: lang="sh" linenumbers="False"
+gnuplot> plot '< ./pfb-model ../test-data/before/Rec09_1213668800.raw r.txt 0 0 0' u 1:($2/2000000) w l title "my pfb -- real", '' u 1:($3/2000000) w l title "my pfb -- imag", '< ./read_after ../test-data/after/1213668624_1213668800_ch117.dat 94Y 0' u 1:2 w l title "their pfb -- real", '' u 1:3 w l title "their pfb -- imag"
+}}}

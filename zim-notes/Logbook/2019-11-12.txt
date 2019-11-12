@@ -1,7 +1,5 @@
 Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
-Creation-Date: 2019-11-12T08:46:46+08:00
+Creation-Date: 2019-11-12T08:48:27+08:00
 
-====== 2019-11-12 ======
-Created Tuesday 12 November 2019
-
+Even though I already started changing the code in vcstools to be able to perform the PFB inversion on a single ant/pol (what's the term for this again? "RF stream"?), I haven't yet made enough changes to affect the functionality. I really should run the code on the files right now so that I know it works on my local GPU.

@@ -1,0 +1,146 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-12T09:16:38+08:00
+
+This documents the work already done on the verification of the "inverse PFB" algorithm originally implemented by Steve Ord for the MWA beamformer, and re-implemented for the GPU by Sam McSweeney.
+
+31 August 2018
+
+--------------------
+
+=== ABBREVIATIONS ===
+
+MSP = Millisecond pulsar
+MWA = Murchison Widefield Array
+PFB = Polyphase Filterbank
+VCS = Voltage Capture System
+
+--------------------
+
+=== OVERVIEW ===
+
+The need for PFB inversion stems from a pre-2018 limitation of the MWA/VCS system that prohibits access to the data stream before the final "fine" PFB stage. The fine PFB converts a 1.28-MHz-wide signal with a sampling rate of 1.28 MHz to a 10-kHz-wide signal with a sampling rate of 10 kHz. There are many scientific experiments for which the final sampling rate of 10 kHz is too slow (e.g. timing of MSPs), but for which 10 kHz data have already been taken. If possible, then, it would be desirable to undo the final PFB stage in order to recover the 1.28 MHz sampled data for these early data sets.
+
+In general, PFBs are not perfectly invertible, and it remains to be seen whether or not the particular PFB used by the MWA (i.e. choice of coefficients, number of taps, etc.) is in principle invertible. In practise, it is already known that the original signal will not be perfectly recoverable, due to a (deliberate) loss of bit depth (5+5i --> 4+4i).
+
+The currently implemented PFB inversion approximates the original signal quite well. This is known because of a few tests applying it to pulsar data of a few MSPs, and the recovered high-time resolution profile not only looks qualitatively similar to the low-time resolution profile, but it is also narrower, and has sharper features.
+
+The goal of this project is to quantify the signal loss introduced by the PFB inversion algorithm. If, in the process, the PFB inversion algorithm is found to be sub-optimal, then plans can be made to improve it. Ultimately, the PFB inversion algorithm and implementation will be written up and published as a follow-up paper to Steve Ord's beamformer paper.
+
+--------------------
+
+=== PLAN ===
+
+The most thorough test of a signal filter is an impulse response. In our case, this means putting an impulse signal through the forward fine PFB and then inverting the result, to see if we can recover the original impulse. Any leakage of the impulse to neighbouring time bins will indicate that the inversion may be sub-optimal (but not necessarily so). The main difficulty lies in the fact that the forward fine PFB is only implemented in the MWA's hardware: it is impractical to send a pure impulse into it. Therefore, the fine PFB needs to be recreated in software first. Sadly, the documentation for the forward PFB is inadequate, and so the first stage of the verification, to recreate the forward PFB, is not necessarily trivial.
+
+Fortunately, at the time that we were planning to do this verification, it became possible for a few seconds worth of pre-fine-PFB data to be recorded to disk. We thus organised to make such a recording concurrently with a standard VCS observation. Enclosed in this package are "before" and "after" snapshots of two seconds worth of data:
+
+GPS seconds: 1213668800 and 1213668801
+VCS obsid: 1213668624
+
+--------------------
+
+=== FILE FORMATS ===
+
+Unfortunately, the "before" and "after" data sets are in completely different formats. The "before" format is described in the following email from Brian Crosse (see "Coarse channel .raw format"). The "after" format is the standard 'recombined' file format, which is described in the doc/doc.pdf file of the "vcstools" repository. This file also describes the PFB inversion algorithm briefly.
+
+--------------------
+
+=== ANTENNA NUMBERING SYSTEM ===
+
+One of the main challenges in making sure the correct data are being compared is the fact that there are multiple numbering systems for the antennas, and the order of the antennas in the "before" data set is different to the order in the "after" data set. We (Brian and I) attempted to confirm the correct mapping from the "before" order to the "after" order, and we produced a list that we think is correct, but given that I haven't successfully managed to verify it, it may still be wrong.
+
+The current assumed map is reproduced at the end of this README. It is worth noting that this mapping differs from the previous map by a handful of antennas. The mapping depends on physical connections up at site; apparently something was changed within the last several months (~mid-2018??).
+
+--------------------
+
+=== ATTEMPTS SO FAR ===
+
+I have written a code in C (forward-pfb-model/pfb-model.c) that is my first (and only) attempt to model the forward fine PFB. To compile it, change to the forward-pfb-model directory and run
+
+{{{code: lang="sh" linenumbers="False"
+> make
+}}}
+
+
+This will also compile two other utilities: incoh_sum.c and read_after.c.
+
+--------------------
+
+=== PFB-MODEL ===
+
+Extracts a column of (fine channel) samples for the specified coarse channel, sample number, and antenna/pol from a "before" file.
+{{{code: lang="sh" linenumbers="False"
+> ./pfb-model [data_filename] [coeffs_filename] [coarse_chan(0-7)] [ant(0-15)] [sample(0-9988)]
+}}}
+
+
+'''
+data_filename   - the path to the "before" data file
+coeffs_filename - the path to the fine PFB coefficients file (included here as
+                  forward-pfb-model/r.txt)
+coarse_chan     - the coarse channel number
+ant             - the antenna number
+sample          - the sample number
+'''
+
+
+This will output three columns of numbers:
+1. the fine channel number (0-127)
+2. the real part of the PFB'ed sample
+3. the imag part of the PFB'ed sample
+
+--------------------
+
+=== READ_AFTER ===
+
+Extracts a column of (fine channel) samples for the specified coarse channel, sample number, and antenna/pol from a recombined ("after") file.
+
+{{{code: lang="sh" linenumbers="False"
+> ./read_after [recombined_file] [rec] [sample(0-9999)]
+}}}
+
+
+'''
+recombined_file  - the path to the "after" data file
+rec              - the antenna/pol number in the "before" nomenclature,
+                   e.g. 164X
+sample           - the sample number
+'''
+
+
+Like pfb-model above, this will output three columns of numbers:
+1. the fine channel number (0-127)
+2. the real part of the "after" sample
+3. the imag part of the "after" sample
+
+--------------------
+
+=== INCOH_SUM ===
+
+Sums the powers (real*real + imag*imag) of each antenna/pol (i.e. does an incoherent sum), summing across all channels and all samples.
+
+{{{code: lang="sh" linenumbers="False"
+> ./incoh_sum [recombined_file]
+}}}
+
+
+''recombined_file  - the path to an "after" data file''
+
+This will output two columns of numbers:
+1. the antenna/pol number (0-255)
+2. the result of the incoherent sum
+
+The purpose of this utility was to see at a glance which tiles were broken, (their incoherent sums would be 0) so that we could more easily check that broken tiles did indeed map to broken tiles.
+
+--------------------
+
+=== METHOD THAT I DIDN'T FINISH CARRYING OUT ===
+
+The two programs pfb-model and read_after SHOULD produce comparable output. That is to say, the real and imaginary parts of the outputs should correlate if (1) I have got the tile mapping correct, and (2) my implementation of the forward PFB is correct.
+
+My single attempt to test this (see the example GNUPLOT script in log/log.pdf) failed to reveal any correlation.
+
+So, it remains unknown whether the antenna mapping is incorrect or the PFB model is buggy. The former can be tested in principle by performing the same correlation test (and, ideally, automating it) for each pair of antennas.
+
+If that turns up nothing, then you might have to dive into pfb-model.c and start debugging!
