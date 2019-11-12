@@ -3,3 +3,97 @@ Wiki-Format: zim 0.4
 Creation-Date: 2019-11-12T08:48:27+08:00
 
 Even though I already started changing the code in vcstools to be able to perform the PFB inversion on a single ant/pol (what's the term for this again? "RF stream"?), I haven't yet made enough changes to affect the functionality. I really should run the code on the files right now so that I know it works on my local GPU.
+
+First, I successfully got the metadata fits file:
+{{{code: lang="sh" linenumbers="False"
+> wget http://ws.mwatelescope.org/metadata/fits?obs_id=1213668624 -O metadata.fits
+}}}
+
+Next, I need a dummy calibration solution:
+{{{code: lang="sh" linenumbers="False"
+> { echo 1.0; for i in {1..129}; do echo "+1.0 +0.0 +0.0 +0.0 +0.0 +0.0 +1.0 +0.0"; done } > DI_JonesMatrices_all.dat
+> for i in $(seq -w 24); do ln -s DI_JonesMatrices_all.dat DI_JonesMatrices_node0${i}.dat; done
+}}}
+
+This makes each antenna have a gain matrix of:
+''[ 1.0+0.0i  0.0+0.0i ]''
+''[ 0.0+0.0i  1.0+0.0i ]''
+that is, the identity matrix.
+
+Here's the make_beam line I'm trying:
+{{{code: lang="sh" linenumbers="False"
+> make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
+  -P "03:56:52.80_-26:45:00.0" \
+  -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after \
+  -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
+  -f 117 -v \
+  -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
+}}}
+
+The pointing is arbitrary, but I thought I might as well choose the direction of the primary beam, which according to the metadata website (http://ws.mwatelescope.org/admin/observation/observationsetting/1213668624/change/) is:
+
+RA = 59.22
+Dec = -26.75
+
+This translates to the pointing given in the argument of the -P option above.
+
+I didn't work out of the box because I compiled the "wrong" version: Nick's multibeam beamformer which doesn't support VDIF output.
+
+--------------------
+
+Ok, I just reimplemented my trivial option changes to a new branch (no_antenna_sum) which now comes comes off the py3_single-pixel_legacy branch instead of master. The only difference this should make to my command is that the -v option becomes -u, and the -P option becomes -R and -D:
+
+{{{code: lang="sh" linenumbers="False"
+> make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
+  -R "03:56:52.80" -D "-26:45:00.0" \
+  -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after \
+  -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
+  -f 117 -u \
+  -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
+}}}
+
+
+I just ran it and got a CUDA error:
+{{{code: lang="sh" linenumbers="False"
+[0.000004]  Starting make_beam with GPU acceleration
+[0.099882]  Reading in metafits file information from /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits
+[0.101127]  Setting up output header information
+GPUAssert:: system has unsupported display driver / cuda driver combination - /home/smcsweeney/src/vcstools/make_beam/form_beam.cu (434)
+}}}
+
+
+I tried changing the GPU architecture option in the vcstools compilation (from sm_35 to sm_52), but I got exactly the same error. I did recently do a systemwide upgrade, but I haven't yet restarted my computer. I'll do that now and see if things load correctly, magically.
+
+[Time lapse...]
+
+Hey, it worked! ... kinda.
+{{{code: lang="sh" linenumbers="False"
+> make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 -R "03:56:52.80" -D "-26:45:00.0" -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits -f 117 -u -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
+[0.000005]  Starting make_beam with GPU acceleration
+[0.096237]  Reading in metafits file information from /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits
+[0.099601]  Setting up output header information
+[0.177412]  **BEGINNING BEAMFORMING**
+[0.177423]  Reading in data from /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/1213668624_1213668800_ch117.dat [1/1]
+[0.757428]  Calculating delays
+[0.779969]  Calculating beam
+[1.569296]  Inverting the PFB (full)
+[2.103790]  Writing data to file(s)
+warning: vdif_write_second: significantly non-zero mean (nan), adjusting data
+error: set_level_occupancy: input[0] = NaN
+}}}
+
+I just tried the -p option (PSRFITS output), and it didn't crash, but the output is nonsensical. I'm not sure if it's because of my dummy "calibration solution" (although that's the only thing I can think of at the moment). Maybe I should just continue trying to implement the "do only one RF stream" option so that I don't have to worry about beamforming at all.
+
+It turns out to be a lot easier if I do both pols for a given antenna, instead of just selecting out a single RF stream. Now that I've implemented that (in only a slightly hacky way — -A won't work for outputs other than -u), the make_beam command is:
+{{{code: lang="sh" linenumbers="False"
+> make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
+  -R "03:56:52.80" -D "-26:45:00.0" \
+  -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after \
+  -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
+  -f 117 -u -A [ant]\
+  -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
+}}}
+
+Of course, the calibration solution really //is// a dummy solution now, since the beamforming has been chopped out of the loop. However, after running the above, the output unfortunately still looks useless, as if everything has been normalised down to zero. I will now try multiplying by the "pre-normalised" output by 128 (=the number of antennas that are usually summed together in the beamforming process) to see if that makes a difference.
+
+Well, it appears to have made a difference. This time the output VDIF file does appear (via hexdump) to have sensible-looking values in it. Weirdly, fully the first quarter of the file is practically zeros. Still, hopefully I have enough to go on.

@@ -1,0 +1,31 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-12T13:28:32+08:00
+
+This page documents the correct chain of commands that were used to show how the PFB inversion code produces "correct" output.
+
+===== Setting up =====
+
+=== Install vcstools ===
+
+See the page "vcstools installation".
+
+
+=== Downloading the needed files ===
+
+Make sure you have the recombined files (see "Logbook/2018-06-26"). The easiest way is probably:
+{{{code: lang="sh" linenumbers="False"
+galaxy> process vcs.py -m download -o 1213668624 -b 1213668800 -e 1213668801
+}}}
+
+and then, if necessary:
+{{{code: lang="sh" linenumbers="False"
+galaxy> process vcs.py -m recombine -o 1213668624 -b 1213668800 -e 1213668800
+}}}
+
+followed by downloading the files to your local machine. If the above doesn't automatically produce a metafilts file, then do:
+{{{code: lang="sh" linenumbers="False"
+> wget http://ws.mwatelescope.org/metadata/fits?obs_id=1213668624 -O metadata.fits
+}}}
+
+

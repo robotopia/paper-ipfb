@@ -1,0 +1,39 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-12T11:49:05+08:00
+
+===== Installing vcstools on my local machine =====
+
+{{{code: lang="sh" linenumbers="False"
+> git clone https://github.com/CIRA-Pulsars-and-Transients-Group/vcstools.git
+> cd vcstools
+> git checkout no_antenna_sum
+> mkdir -p build
+> cd build
+> cmake -DCMAKE_INSTALL_PREFIX=/home/smcsweeney \
+        -DCMAKE_CUDA_FLAGS="-arch=sm_52" \
+        -DXGPU_ROOT_DIR=/home/smcsweeney/src/xGPU \
+        ..
+> make VERBOSE=1
+> make install
+}}}
+
+
+Graphics card (see https://askubuntu.com/questions/5417/how-to-get-the-gpu-info):
+{{{code: lang="sh" linenumbers="False"
+> lspci | grep ' VGA ' | cut -d" " -f 1 | xargs -i lspci -v -s {}
+01:00.0 VGA compatible controller: NVIDIA Corporation GM206 [GeForce GTX 950] (rev a1) (prog-if 00 [VGA controller])
+	Subsystem: NVIDIA Corporation GM206 [GeForce GTX 950]
+	Flags: bus master, fast devsel, latency 0, IRQ 137
+	Memory at de000000 (32-bit, non-prefetchable) [size=16M]
+	Memory at c0000000 (64-bit, prefetchable) [size=256M]
+	Memory at d0000000 (64-bit, prefetchable) [size=32M]
+	I/O ports at e000 [size=128]
+	[virtual] Expansion ROM at 000c0000 [disabled] [size=128K]
+	Capabilities: <access denied>
+	Kernel driver in use: nvidia
+lspci: Unable to load libkmod resources: error -12
+}}}
+
+
+According to https://en.wikipedia.org/wiki/CUDA, this means my compute capability is 5.2.
