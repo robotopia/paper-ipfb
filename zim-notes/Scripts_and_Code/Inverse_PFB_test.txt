@@ -10,10 +10,9 @@ This page documents the correct chain of commands that were used to show how the
 
 See the page "vcstools installation".
 
-
 === Downloading the needed files ===
 
-Make sure you have the recombined files (see "Logbook/2018-06-26"). The easiest way is probably:
+Make sure you have the recombined files (see "Logbook/2018-06-26"). The easiest way is probably on galaxy:
 {{{code: lang="sh" linenumbers="False"
 galaxy> process vcs.py -m download -o 1213668624 -b 1213668800 -e 1213668801
 }}}
@@ -23,9 +22,29 @@ and then, if necessary:
 galaxy> process vcs.py -m recombine -o 1213668624 -b 1213668800 -e 1213668800
 }}}
 
-followed by downloading the files to your local machine. If the above doesn't automatically produce a metafilts file, then do:
+followed by downloading the files to your local machine (I've been using [[/home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after]] as my working directory). If the above doesn't automatically produce a metafilts file, then do:
 {{{code: lang="sh" linenumbers="False"
 > wget http://ws.mwatelescope.org/metadata/fits?obs_id=1213668624 -O metadata.fits
+}}}
+
+
+=== Generate a dummy calibration solution ===
+
+{{{code: lang="sh" linenumbers="False"
+> { echo 1.0; for i in {1..129}; do echo "+1.0 +0.0 +0.0 +0.0 +0.0 +0.0 +1.0 +0.0"; done } > DI_JonesMatrices_all.dat
+> for i in $(seq -w 24); do ln -s DI_JonesMatrices_all.dat DI_JonesMatrices_node0${i}.dat; done
+}}}
+
+
+=== Run make_beam ===
+
+{{{code: lang="sh" linenumbers="False"
+> make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
+  -R "03:56:52.80" -D "-26:45:00.0" \
+  -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after \
+  -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
+  -f 117 -u -A [ant]\
+  -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
 }}}
 
 
