@@ -1,0 +1,164 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-14T07:46:41+08:00
+
+I fixed the segfaults in correlate_coarse.c (see yesterday's entry). I'm now testing! The workflow so far is:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/after
+> ../../forward-pfb-model/read_vdif G0024_1213668624_ch117_u.vdif 0 0.498 0.502 > vdif_antpol_0.dat
+> ../../forward-pfb-model/correlate_coarse ../before/Rec09_1213668800.raw vdif_antpol_0.dat 0 > correlated_ch0.dat
+
+}}}
+
+
+--------------------
+
+The above produces absolutely HUGE correlation files. I've just redesigned it so that you can choose just a segment of the raw file to correlate against. Now, the workflow is:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/after
+> ../../forward-pfb-model/read_vdif G0024_1213668624_ch117_u.vdif 0 0.498 0.502 > vdif_antpol_0.dat
+> ../../forward-pfb-model/correlate_coarse ../before/Rec09_1213668800.raw vdif_antpol_0.dat 0 0.495 0.505 > correlated_ch0.dat
+
+}}}
+
+Plotting with:
+{{{code: lang="sh" linenumbers="False"
+gnuplot> p 'correlated_ch0.dat' matrix with image
+}}}
+
+yields a non-detection:
+{{~/documents/fine-pfb-reconstruction/test-data/after/images/attempt_01.png}}
+Next thing to try, widen the search:
+{{{code: lang="sh" linenumbers="False"
+> ../../forward-pfb-model/read_vdif G0024_1213668624_ch117_u.vdif 0 0.498 0.502 > vdif_antpol_0.dat
+> ../../forward-pfb-model/correlate_coarse ../before/Rec09_1213668800.raw vdif_antpol_0.dat 0 0.49 0.51 > correlated_ch0.dat
+
+}}}
+
+Still nothing:
+{{~/documents/fine-pfb-reconstruction/test-data/after/images/attempt_02.png}}
+Next thing to try, the other 7 channels in the raw file:
+{{{code: lang="sh" linenumbers="False"
+> ../../forward-pfb-model/correlate_coarse ../before/Rec09_1213668800.raw vdif_antpol_0.dat 0 0.49 0.51 > correlated_ch0.dat
+
+}}}
+
+I won't put the plots here, but I have visualy inspected them, and they all look very similar to the one above.
+
+--------------------
+
+Just found a major bug. I was forgetting that each .raw file only contains 16 antennas, whereas my correlation code was assuming there are 256. This means my output files will be smaller and the code won't take so friggin' long to run! Here's an example plot:
+{{{code: lang="sh" linenumbers="False"
+> ../../forward-pfb-model/correlate_coarse ../before/Rec09_1213668800.raw vdif_antpol_0.dat 0 0.49 0.51 > correlated_ch0.dat
+gnuplot> p 'correlated_ch0.dat' matrix with image
+
+}}}
+
+{{~/documents/fine-pfb-reconstruction/test-data/after/images/attempt_03.png}}
+
+Still no detection, but this //may// be simply because the antenna/pol I ran through the PFB inversion might not belong to this receiver. So now I have to rerun the PFB inversion for every ant/pol:
+**invert_antpols.sh**:
+{{{code: lang="sh" linenumbers="False"
+for ant in $(seq 0 127);
+do
+    # Remove the last VDIF file
+    rm -f G0024_1213668624_ch117_u.vdif
+
+    # Run the beamformer for this ant/pol
+    make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
+      -R "03:56:52.80" -D "-26:45:00.0" \
+      -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after \
+      -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
+      -f 117 -u -A ${ant}\
+      -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
+
+    # Pull out just the middle section of the resulting 
+    antpol0=$(echo "$ant*2" | bc)
+    antpol1=$(echo "$antpol0 + 1" | bc)
+    ../../forward-pfb-model/read_vdif G0024_1213668624_ch117_u.vdif 0 0.498 0.502 > vdif_antpol_${antpol0}.dat
+    ../../forward-pfb-model/read_vdif G0024_1213668624_ch117_u.vdif 1 0.498 0.502 > vdif_antpol_${antpol1}.dat
+done
+
+}}}
+
+
+And now, I will rerun correlate_coarse for each of the 256 output files. For now, I'll assume that the first channel in the raw file really does correspond to absolute frequency channel 117:
+{{{code: lang="sh" linenumbers="False"
+> for antpol in $(seq 0 255); do echo "Ant/pol #${antpol}"; ../../forward-pfb-model/correlate_coarse ../before/Rec09_1213668800.raw vdif_antpol_${antpol}.dat 0 0.49 0.51 > correlated_ch0_antpol${antpol}.dat; done
+gnuplot> do for [antpol=0:255] { set title 'antpol #'.antpol; p 'correlated_ch0_antpol'.antpol.'.dat' matrix w image; pause mouse close }
+
+}}}
+
+
+=== SUCCESS! ===
+
+Plots to come in a moment. For the moment, here are the lags I found:
+| Raw ant/pol (0-15) | VDIF ant/pol (0-255) | Lag index |
+|:------------------:|:--------------------:|:---------:|
+|         0          |          96          |   8704    |
+|         1          |          97          |   8704    |
+|         2          |          98          |   8704    |
+|         3          |          99          |   8704    |
+|         4          |         100          |   8704    |
+|         5          |         101          |   8704    |
+|         6          |         102          |   8704    |
+|         7          |         103          |   8704    |
+|         8          |         104          |   8704    |
+|         9          |         105          |   8704    |
+|         10         |         106          |   8704    |
+|         11         |         107          |   8704    |
+|         12         |         108          |   8704    |
+|         13         |         109          |   8704    |
+|         14         |         110          |   8704    |
+|         15         |         111          |   8704    |
+
+
+The lag index will, of course, correspond to a precise time offset, which I'll work out later. Here are some plots!
+{{~/documents/fine-pfb-reconstruction/test-data/after/images/attempt_04.png}}
+
+
+Let me now try and interpret the lag index, 8704. My timeseries from the VDIF output started at sample
+''    0.498*1280000 = 637440,''
+and the .raw timeseries started at sample
+''    0.49*1280000 = 627200.''
+The lag of 8704 implies that the correlation was found at sample
+''    627200 + 8704 = 635904,''
+which is
+''    637440 - 635904 = 1536,''
+which equals the size of the filter. So, to a first approximation, it looks like the net result of the current analysis-synthesis PFB pair is a delay of
+''    1536/1280000 = 1.2 ms''
+
+--------------------
+
+I should now be able to do the same exercise, but for a chunk of data at the beginning of the time series, and then isolate a small chunk of data (like, one filter's worth) that I can play with.
+
+{{{code: lang="sh" linenumbers="False"
+# Remove the last VDIF file
+rm -f G0024_1213668624_ch117_u.vdif
+
+# Run the beamformer for this ant/pol
+make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
+  -R "03:56:52.80" -D "-26:45:00.0" \
+  -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after \
+  -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
+  -f 117 -u -A 48 \
+  -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
+
+# Pull out just a bit of data at the beginning of each file 
+../../forward-pfb-model/read_vdif G0024_1213668624_ch117_u.vdif 0 0.00120078 0.00240078 > vdif_antpol_96.dat
+../../forward-pfb-model/correlate_coarse ../before/Rec09_1213668800.raw vdif_antpol_96.dat 0 0.0 0.0029 > correlated_ch0_antpol96.dat
+
+}}}
+
+These numbers (for start and end times) mean that we're starting at sample 0 in the raw file and sample 1536 in the VDIF file.
+{{{code: lang="sh" linenumbers="False"
+gnuplot> p 'correlated_ch0_antpol96.dat' matrix w image
+
+}}}
+
+
+{{~/documents/fine-pfb-reconstruction/test-data/after/images/attempt_05.png}}
+
+--------------------
+
+

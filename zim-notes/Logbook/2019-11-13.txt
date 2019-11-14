@@ -1,0 +1,16 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-13T08:11:44+08:00
+
+I spent rather too much time today trying to figure out why the VDIF output file was 4 times bigger than it should have been. The answer is that the beamformer only ever appends to the file, and never checks whether the file already exists.
+
+I finished writing (but not debugging) a program to do the correlation between the VDIF data and the raw coarse channel data. The first attempt to run it produced a segfault:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/after
+> ../../forward-pfb-model/read_vdif G0024_1213668624_ch117_u.vdif 0 0.49 0.51 > vdif_antpol_0.dat
+> ../../forward-pfb-model/correlate_coarse ../before/Rec09_1213668800.raw vdif_antpol_0.dat 0
+Segmentation fault (core dumped)
+}}}
+
+
+Looks like tomorrow will be a debugging day!

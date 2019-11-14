@@ -38,12 +38,13 @@ followed by downloading the files to your local machine (I've been using [[/home
 
 === Run make_beam ===
 
+First, make sure that the output VDIF file doesn't already exist. It should be called ''G0024_1213668624_ch117_u.hdr'' (for the following make_beam command). If it does exist, make_beam will simply append to the end of it.
 {{{code: lang="sh" linenumbers="False"
 > make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
   -R "03:56:52.80" -D "-26:45:00.0" \
   -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after \
   -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
-  -f 117 -u -A 0 \
+  -f 117 -u -A 48 \
   -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
 }}}
 

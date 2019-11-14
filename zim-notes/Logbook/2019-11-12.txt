@@ -97,3 +97,7 @@ It turns out to be a lot easier if I do both pols for a given antenna, instead o
 Of course, the calibration solution really //is// a dummy solution now, since the beamforming has been chopped out of the loop. However, after running the above, the output unfortunately still looks useless, as if everything has been normalised down to zero. I will now try multiplying by the "pre-normalised" output by 128 (=the number of antennas that are usually summed together in the beamforming process) to see if that makes a difference.
 
 Well, it appears to have made a difference. This time the output VDIF file does appear (via hexdump) to have sensible-looking values in it. Weirdly, fully the first quarter of the file is practically zeros. Still, hopefully I have enough to go on.
+
+--------------------
+
+I just started coding up a script (~/documents/fine-pfb-reconstruction/forward-pfb-model/read_vdif.c) to read the contents of a VDIF file for easy gnuplot plotting. Not finished it yet.

@@ -17,4 +17,8 @@ Each byte of the data block is interpreted as an ''int8_t''. From slowest-changi
 
 That means there are 128 time samples per data block. Nothing special happens over the section boundaries: time just continues to advance in the normal way.
 
-The samples are unsigned and have an offset of 0x80. That is, a byte value of 0x80 means a real-world value of 0 (zero).
+--------------------
+
+sizeof_buffer = frame_rate * sizeof_beam // = 5120000
+sizeof_beam = samples_per_frame * nchan * (iscomplex + 1) // = 512
+frame_rate = sample_rate // = 10000
