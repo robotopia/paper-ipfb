@@ -161,4 +161,27 @@ gnuplot> p 'correlated_ch0_antpol96.dat' matrix w image
 
 --------------------
 
+First, I've got to make sure that the data that is being pulled out of the recombined file by the beamformer is the same as the data pulled out of the read_after program. I've just rewritten read_after so that it uses exactly the same logic as the beamformer. In so doing, I changed one of the command line parameters.
+
+So, now, back to looking for correlations in the spectra!
+{{{code: lang="sh" linenumbers="False"
+> ./forward_pfb ../test-data/before/Rec09_1213668800.raw r.txt 0 0 0
+> ./read_after ../test-data/after/1213668624_1213668800_ch117.dat 96 0
+
+}}}
+
+Possibly that last number should be something other than 0, but it's unclear just when the known offset in the forward-backward chain is occurring. For now, it is merely necessary to point out that I will need to do a similar "proper" correlation of the complex numbers, and look for statistical significance.
+
+I just wrote a little python script to do the correlation (same as above: multiply by complex conjugate and sum), but I'm afraid I got a non-detection, even when I tried a whole range of samples:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/first-sample-correlation
+> ../../forward-pfb-model/read_after ../after/1213668624_1213668800_ch117.dat 96 0 100 > fpga.dat
+> ../../forward-pfb-model/forward_pfb ../before/Rec09_1213668800.raw ../../forward-pfb-model/r.txt 0 0 0 > model.dat
+> python correlate.py fpga.dat model.dat
+
+}}}
+
+This gives the following result:{{~/documents/fine-pfb-reconstruction/test-data/first-sample-correlation/correlation_attempt_01.png}}
+This is the best evidence so far that there is something wrong with my forward PFB model. The next task (for tomorrow) is to reduce the inverse-PFB code to maths, and calculate the "inverse-of-the-inverse" analytically, to compare with my model.
+
 
