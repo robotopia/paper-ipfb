@@ -1,0 +1,19 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-15T08:00:00+08:00
+
+I've just finished writing a program (''generate_fake_raw'') that generates fake data in the .raw format. It has options to add a sine wave (user-specified frequency and amplitude), an impulse (user-specified time and amplitude), and noise (user-specified std dev).
+
+Since I know the inverse PFB (as implemented in vcstools) does more or less the right thing, I can use easy-to-understand fake data to find out where my forward PFB model is going wrong.
+
+{{{code: lang="sh" linenumbers="False"
+> ../../forward-pfb-model/generate_fake_raw 0.0103 50.0 0 0 0 > fake_sin.raw
+> ../../forward-pfb-model/generate_fake_raw 0 0 10000 100.0 0 > fake_imp.raw
+> ../../forward-pfb-model/generate_fake_raw 0 0 0 0 12.0 > fake_noise.raw
+> ../../forward-pfb-model/generate_fake_raw 0.0103 50.0 10000 100.0 12.0 > fake_all.raw
+}}}
+
+
+--------------------
+
+I'm now trying to revamp my ''forward_pfb'' program so that it operates over a whole raw input file and outputs something resembling a recombined file. I may not finish this today, so I'll pick it up next week.
