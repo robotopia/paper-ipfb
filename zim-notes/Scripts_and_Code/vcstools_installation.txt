@@ -37,3 +37,4 @@ lspci: Unable to load libkmod resources: error -12
 
 
 According to https://en.wikipedia.org/wiki/CUDA, this means my compute capability is 5.2.
+(At home I have compute capability 6.1.)
