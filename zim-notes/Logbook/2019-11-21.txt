@@ -1,0 +1,33 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-21T15:27:45+08:00
+
+I //finally// have a smidge of time to try and figure this forward PFB out.
+
+I just finished re-vamping the forward_pfb program so that it generates data in the same format as the recombined files (git commit 896363f). I now have a full pipeline that I can use for testing my forward (synthesis) PFB against my (known-to-work) backwards (analysis) PFB.
+
+So, to get started, I will try and put some fake data containing a sinusoid through the forward pfb and see what the spectrum looks like! I altered read_after so that it spits out a matrix of the absolute values (i.e. the amplitude of the dynamic spectrum), so the following uses git commit 86cc60e.
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/fake_data
+> git log -n 1
+commit 86cc60e3f410636d8d7cffd662eaa27a6cd6dbb5 (HEAD -> master, origin/master)
+Author: Sam McSweeney <sammy.mcsweeney@gmail.com>
+Date:   Thu Nov 21 16:11:48 2019 +0800
+
+    Altered read_after so that it writes out the absolute values, instead of the real and imaginary components separately.
+    
+> ../../forward-pfb-model/generate_fake_raw 0.103 100.0 0 0 0 > fake_sin_01.raw
+> ../../forward-pfb-model/forward_pfb fake_sin_01.raw ../../forward-pfb-model/r.txt 0 0 fake_sin_01.dat
+gnuplot> set xrange [*:*] noextend
+gnuplot> set yrange [*:*] noextend
+gnuplot> unset key
+gnuplot> set xlabel "Sample number (rate = 10 kHz)"
+gnuplot> set ylabel "Fine channel number"
+gnuplot> set cblabel "Amplitude (a.u.)"
+gnuplot> p '< ../../forward-pfb-model/read_after fake_sin_01.dat 0 0 100' matrix with image
+
+}}}
+
+{{~/documents/fine-pfb-reconstruction/test-data/fake_data/dynspec_01.png}}
+
