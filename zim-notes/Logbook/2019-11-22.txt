@@ -1,0 +1,105 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-22T09:10:28+08:00
+
+Here is (the first section of) the raw (i.e. coarse channel) data that served as input for the dynamic spectrum on yesterday's entry:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/fake_data
+> od -w256 -v -t dC fake_sin_01.raw | head -n 256 > foo
+gnuplot> set xlabel "Sample number (rate = 1.28 MHz)"
+gnuplot> set ylabel "Amplitude"
+gnuplot> plot 'foo' u 2 w l title 'Real', '' u 3 w l title 'Imag' 
+}}}
+
+
+{{~/documents/fine-pfb-reconstruction/test-data/fake_data/coarse_01.png}}
+
+Now, I will put my dynamic spectrum (shown in yesterday's entry) though the PFB inverter and see what I get out:
+
+{{{code: lang="sh" linenumbers="False"
+> rm -f G0024_1213668624_ch001_u.vdif
+> ln -s fake_sin_01.dat 1213668624_1213668800_ch1.dat
+> make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
+    -R "03:56:52.80" -D "-26:45:00.0" \
+    -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/fake_data \
+    -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
+    -f 1 -u -A 0 \
+    -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
+gnuplot> plot '< ../../forward-pfb-model/read_vdif G0024_1213668624_ch001_u.vdif 0 0 0.002' u 1 w l title 'Real', \
+              '' u 2 w l title 'Imag'
+
+}}}
+
+
+{{~/documents/fine-pfb-reconstruction/test-data/fake_data/coarse_ipfb_01.png}}
+
+No one should be surprised that the output is different  to the input — this is why I haven't been able to find a correlation. The most obvious place where I've made an error is that I haven't effected the "rolling" of the FFT array properly, i.e. I haven't correctly put the DC bin in the middle when I unpacked the output of the DFT.
+
+So now I'm trying exactly the same process as the above, except that in pfb_model.c, I'm changing the line that reads
+{{{code: lang="c" linenumbers="False"
+out[t] = out_unordered[(t + TAPSIZE/2) % TAPSIZE];
+}}}
+
+into the following
+{{{code: lang="c" linenumbers="False"
+out[t] = out_unordered[(t + TAPSIZE/2 + 1) % TAPSIZE];
+}}}
+
+Now, when I repeat all the above processing steps, the output looks like the following:
+
+{{~/documents/fine-pfb-reconstruction/test-data/fake_data/coarse_ipfb_02.png}}
+Which is perhaps somewhat worse.
+
+Now I'll try the other way:
+{{{code: lang="c" linenumbers="False"
+out[t] = out_unordered[(t + TAPSIZE/2 - 1) % TAPSIZE];
+}}}
+
+And the output is:
+{{~/documents/fine-pfb-reconstruction/test-data/fake_data/coarse_ipfb_03.png}}
+So no better, really. It seems, then, that I must be missing some phase wrap in the forward PFB filter. I'll change the pfb_model.c line back to what it originally was, and then start trying to deduce what's missing.
+
+--------------------
+
+After a bit of sleuthing, I found that I was packing the real and imaginary parts of the output of the PFB into the wrong nibbles (in the recombined data format). After fixing this, I have now verified that the result of PFB'ing the above (real) signal correctly shows that the two non-zero fine channels have the same real parts, but I'm not convinced that the imaginary parts are what they should be. Nevertheless, I decided to go ahead and put it through the whole pipeline anyway, and I get (git commit eb1fa87):
+
+{{~/documents/fine-pfb-reconstruction/test-data/fake_data/coarse_ipfb_04.png}}
+
+Trying the same thing as before (where I adjust where the DC bin is put), the output looks reminiscent of the plots above, so I won't bother putting them here. I guess the most likely reason for it failing is the same reason the imaginary components of the complementary channels don't appear to be complex conjugates of each other.
+--------------------
+
+=== SUCCESS! ===
+
+I found that my scaling factor (see the SCALING_FACTOR macro in forward_pfb.c) was not large enough (it's now set to 1.0e8). I also introduced "clipping" of values that were too large to fit into the range -16 <= x <= 15. Doing so produces something sensible! (git commit 2353834):
+
+{{~/documents/fine-pfb-reconstruction/test-data/fake_data/coarse_ipfb_05.png}}
+We're clearly not out of the woods yet. But the next step is clear: I have to make sure that my forward PFB produces **exactly** the same recombined data as the "true" PFB. But now I know exactly what to compare:
+
+''read_vdif G0024_1213668624_ch117_u.vdif'', antpol #96
+and
+''Rec09_1213668800.raw'', antpol #0
+
+Running my forward PFB on the latter:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/before
+> ../../forward-pfb-model/forward_pfb Rec09_1213668800.raw ../../forward-pfb-model/r.txt 0 0 Rec09_1213668800.dat
+
+}}}
+
+
+A quick peek at the output of my PFB shows that it is full of zeros, which means that in //this// case, the scaling factor is too high. My intuition is that in the "true" PFB, there is some dynamic scaling going on. For now, I'll just try and find a scaling that gives me some proper values.
+
+Setting it to 2.0e6 (which is what I think it was set to before) gives me values that look half decent in ASCII. Here is a side-by-side plot of the real part of the output dynamic spectrum (git commit 77ebda7):
+
+{{{code: lang="sh" linenumbers="False"
+> ../../forward-pfb-model/read_after Rec09_1213668800.dat 96 0 100 > foo1
+> ../../forward-pfb-model/read_after ../after/1213668624_1213668800_ch117.dat 96 0 100 > foo2
+gnuplot> set xrange [*:*] noextend; set yrange [*:*] noextend
+gnuplot> plot 'foo1' matrix with image, 'foo2' matrix using ($1+120):2:3 with image
+
+}}}
+
+
+{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_01.png}}
+And if you try some Magic Eye magic, you should find that the two images match (with some x offset)!!!!
+
