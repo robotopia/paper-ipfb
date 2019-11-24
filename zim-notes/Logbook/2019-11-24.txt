@@ -44,10 +44,9 @@ python> dat2 = np.loadtxt("foo2") # (You'll have to use a different version of t
 python> re2 = dat2[:,0::2]; im2 = dat2[:,1::2]
 python> db2mat = np.stack((re2.transpose(), im2.transpose()), axis=2)
 python> mask = (db2mat[:,:,0]+db2mat[:,:,1]) % 2 == 1
-python> nmask = (db2mat[:,:,0]+db2mat[:,:,1]) % 2 == 0
 python> plt.clf()
 python> plt.scatter(db1mat[:,:,0][mask], db1mat[:,:,1][mask], s=0.2)
-python> plt.scatter(db1mat[:,:,0][nmask], db1mat[:,:,1][nmask], s=0.2)
+python> plt.scatter(db1mat[:,:,0][~mask], db1mat[:,:,1][~mask], s=0.2)
 python> plt.scatter(db1mat[:,64,0], db1mat[:,64,1], c='r', s=0.2)
 
 }}}
