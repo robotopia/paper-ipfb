@@ -1,0 +1,55 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-24T12:54:19+08:00
+
+I've been trying to find out why some of my fine sample channels (i.e. the ones output by my model PFB) don't match the "true" (FPGA) PFB. I used to think it was just a question of adjusting the dynamic range before quantising to 4+4i samples, but I've just produced a plot that seems to imply that there is something amiss in the PFB itself. Here is an extract from an email I just sent Brian:
+
+--------------------
+
+Here are the complex outputs (pre-scaled, pre-clipped, pre-integerised) of my PFB model (x=real, y=imag), colour-coded (blue vs orange) according to whether the corresponding FPGA outputs have the property (re+im)%2==0. Red pixels are DC bin values thrown in for good measure. The "pixel noise" in the difference images (sent in previous emails) is (I'm pretty sure) coming from the "boundary cases", i.e. the fuzzy overlap between integer boundaries that no amount of scaling/clipping/integerising can fix.
+
+**[To do: /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/before/quantisation_plot_01.png]**
+
+The asymmetry of orange points dominating the blue points at the boundaries is an illusion: it's just an artefact of plotting the orange points after plotting the blue ones. The "mixing" is, as far as I can tell, symmetric. Here's a zoom:
+
+**[To do: /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/before/quantisation_plot_02.png]**
+
+I think this means that my PFB is itself different from the FPGA PFB. I can think of a few possibilities:
+1. my filter coefficients are wrong -- I don't think this is likely, unless there are multiple versions of the filter that got used at different times, and I happened to inherit a deprecated version;
+2. the PFB implemented on the FPGAs is some kind of weird "integer approximation" to a normal implementation done that uses floats. I only say this because everything I've heard about FPGAs seems to imply that everything is done in integer-land for efficiency;
+3. I'm putting my filter in the "wrong" place. At the moment, I'm putting the first value of the filter flush with the second boundary. What happens if I'm half a tap out of place, or something
+
+--------------------
+
+To produce those plots, first checkout the correct git version
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/work/pfb-testing/forward-pfb-model
+> git checkout 5476c48
+> make
+
+}}}
+
+
+and then run the PFB code
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/work/pfb-testing/test-data/before
+> ../../forward-pfb-model/forward_pfb Rec09_1213668800.raw ../../forward-pfb-model/r.txt 0 0 Rec09_1213668800.dat
+python> import numpy as np
+python> import matplotlib.pyplot as plt
+python> db1 = np.fromfile("doubles.dat", dtype=np.float64)
+python> db1mat = db1.reshape((1024,128,2))
+python> dat2 = np.loadtxt("foo2") # (You'll have to use a different version of the PFB code to get this)
+python> re2 = dat2[:,0::2]; im2 = dat2[:,1::2]
+python> db2mat = np.stack((re2.transpose(), im2.transpose()), axis=2)
+python> mask = (db2mat[:,:,0]+db2mat[:,:,1]) % 2 == 1
+python> nmask = (db2mat[:,:,0]+db2mat[:,:,1]) % 2 == 0
+python> plt.clf()
+python> plt.scatter(db1mat[:,:,0][mask], db1mat[:,:,1][mask], s=0.2)
+python> plt.scatter(db1mat[:,:,0][nmask], db1mat[:,:,1][nmask], s=0.2)
+python> plt.scatter(db1mat[:,64,0], db1mat[:,64,1], c='r', s=0.2)
+
+}}}
+
+
