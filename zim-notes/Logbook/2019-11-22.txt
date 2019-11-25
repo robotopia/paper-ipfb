@@ -100,20 +100,20 @@ gnuplot> plot 'foo1' matrix with image, 'foo2' matrix using ($1+120):2:3 with im
 }}}
 
 
-{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_01.png}}
+{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_01.png?width=600}}
 And if you try some Magic Eye magic, you should find that the two images match (with some x offset)!!!!
 
 --------------------
 
 Working at home on this lovely Friday evening. I've checked the x offset, and it looks like there is a difference of 12 (fine channel) samples. This apparently means that the filter is applied retrospectively, instead of prospectively, which is how I'm currently implementing it. Making this change yields an almost-perfect match (i.e. except for the odd pixel or two):
 
-**[TO DO: Put in compare_dynspec_02.png here]**
+{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_02.png}}
 
 The above image is just the reals. What about the imags? Yes, also good!
 
-**[TO DO: Put in compare_dynspec_03.png here]**
+{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_03.png}}
 
 All that remains is to find the magic scaling factor that gives a perfect match for every pixel. Currently, the difference (of the first 100 samples, including the known-to-be-wrong first 12 samples) is:
+{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_diff.png}}
 
-**[TO DO: Put in compare_dynspec_diff.png here]**
 

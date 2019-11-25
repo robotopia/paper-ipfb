@@ -8,11 +8,11 @@ I've been trying to find out why some of my fine sample channels (i.e. the ones 
 
 Here are the complex outputs (pre-scaled, pre-clipped, pre-integerised) of my PFB model (x=real, y=imag), colour-coded (blue vs orange) according to whether the corresponding FPGA outputs have the property (re+im)%2==0. Red pixels are DC bin values thrown in for good measure. The "pixel noise" in the difference images (sent in previous emails) is (I'm pretty sure) coming from the "boundary cases", i.e. the fuzzy overlap between integer boundaries that no amount of scaling/clipping/integerising can fix.
 
-**[To do: /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/before/quantisation_plot_01.png]**
+{{~/documents/fine-pfb-reconstruction/test-data/before/quantisation_plot_01.png?width=600}}
 
 The asymmetry of orange points dominating the blue points at the boundaries is an illusion: it's just an artefact of plotting the orange points after plotting the blue ones. The "mixing" is, as far as I can tell, symmetric. Here's a zoom:
 
-**[To do: /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/before/quantisation_plot_02.png]**
+{{~/documents/fine-pfb-reconstruction/test-data/before/quantisation_plot_02.png?width=600}}
 
 I think this means that my PFB is itself different from the FPGA PFB. I can think of a few possibilities:
 1. my filter coefficients are wrong -- I don't think this is likely, unless there are multiple versions of the filter that got used at different times, and I happened to inherit a deprecated version;
@@ -52,3 +52,4 @@ python> plt.scatter(db1mat[:,64,0], db1mat[:,64,1], c='r', s=0.2)
 }}}
 
 
+The above Python is written in quantise.py, created in git commit 63fe368.
