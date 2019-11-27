@@ -1,0 +1,133 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+
+(From an email, 2019-11-26)
+
+====== MWA Fine PFB ======
+There are two versions of the PFB amongst the files Brian sent me:
+
+* pfb
+* newpfb
+
+It would seem the top level code (Main Function) pulls in the "newpfb" where "pfb" is unused. So the following notes are based on the "newpfb".
+
+===== Overview =====
+
+Ntaps = 12
+Nchannels = 128
+WindowSize = Ntaps * Nchannels = 1536
+
+=== Inputs: ===
+Signed 5 bits Real
+Signed 5 bits Imaginary
+
+=== Outputs: ===
+Signed 4 bits Real
+Signed 4 bits Imaginary
+
+==== PFB Front-End ====
+
+* All signals are signed integers.
+* 5 bit signed input values are sign extended to 18 bits. Nothing special going on here.
+* Data is output as signed 48 bit numbers.
+
+=== Scale of values through PFB: ===
+
+* The input data does not exceed 2^4 in magnitude
+* The coefficients do not exceed 2^17 in magnitude (more specifically, the sum of any set of 12 taps worth of coeffs do not exceed 2^17)
+* Thus after multiplying the coeffs and summing the 12 taps we are jiggling up to a maximum of 21 bits of data + the sign bit. 
+
+==== Rounding after PFB Front-End & Before the FFT ====
+
+Values are rounded to 8 bits **PRIOR** to the FFT.
+
+* From the 48 bit output of the PFB, bits 14 through to 21 are sliced out.
+* Saturation is unlikely because only the bottom 22 bits should be active.
+
+**The Rounding Method is Questionable!**
+Basically, if the number is positive it rounds up, and if the number is negative it gets floored.
+
+Also, if the number is 127.5 or above it will “Round Up”, but 128 doesn’t exist thus it wraps around and becomes -128.
+
+| Input Range | Output |
+|-------------|--------|
+| [1.5,2.5)   | 2      |
+| [0.5,1.5)   | 1      |
+| [0.0,0.5)   | 0      |
+| [-1.0,0.0)  | -1     |
+| [-2.0,1.0)  | -2     |
+
+
+{{../quantisation_example.png?width=600}}
+
+=== VHDL Code: ===
+Based on the comments it looks like they attempted to do symmetric rounding, but this is not what that code is doing.
+
+{{{code: lang="sh" linenumbers="True"
+ -- Round on Just LSB-1
+	--  2.0 -> 2
+	--  1.5 -> 2
+	--  1.0 -> 1
+	--  0.5 -> 1
+	--  0.0 -> 0
+	-- -0.5 ->-1
+	-- -1.0 ->-1
+	-- -1.5 ->-2
+	-- -2.0 ->-2
+   
+process (sum_in_a_re_s12, sum_in_a_im_s12, sum_in_b_re_s12, sum_in_b_im_s12) begin
+		--
+		if (sum_in_a_re_s12(21) = '0' and sum_in_a_re_s12(13) = '1') then
+			a_re_o <= sum_in_a_re_s12(21 downto 14) + 1;
+		else
+			a_re_o <= sum_in_a_re_s12(21 downto 14);
+		end if;
+		--
+		if (sum_in_a_im_s12(21) = '0' and sum_in_a_im_s12(13) = '1') then
+			a_im_o <= sum_in_a_im_s12(21 downto 14) + 1;
+		else
+			a_im_o <= sum_in_a_im_s12(21 downto 14);
+		end if;
+		--
+		--
+		if (sum_in_b_re_s12(21) = '0' and sum_in_b_re_s12(13) = '1') then
+			b_re_o <= sum_in_b_re_s12(21 downto 14) + 1;
+		else
+			b_re_o <= sum_in_b_re_s12(21 downto 14);
+		end if;
+		--
+		if (sum_in_b_im_s12(21) = '0' and sum_in_b_im_s12(13) = '1') then
+			b_im_o <= sum_in_b_im_s12(21 downto 14) + 1;
+		else
+			b_im_o <= sum_in_b_im_s12(21 downto 14);
+		end if;
+		--
+	end process;
+	
+}}}
+
+
+==== FFT Stage ====
+
+8 Bit Values in
+16 bit values out
+
+==== Final Stages ====
+16 bit FFT output is rounded to 4 bits.
+
+Data is packed into 16 bit numbers where the bottom 4 bits are real and bits 4 to 7 is imaginary. The top 8 bits are all set to zeros. My guess is that the output communications protocol requires 16 bit numbers.
+
+=== Rounding Method (This one is sensible) : ===
+If most negative number:
+* Disallow it, make it one larger.
+If max positive number & we’re about to round up:
+* Prevent it, clip at max positive number.
+else:
+* Always round symmetrically away from zero.
+
+
+
+
+
+
+

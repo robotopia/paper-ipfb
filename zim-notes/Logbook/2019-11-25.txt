@@ -1,0 +1,7 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-25T08:26:12+08:00
+
+In yesterday's entry, I listed three possibilities for how the FPGA PFB might differ from my own implementation. I can now rule out the third possibility, as I tested offseting the filter by a single sample, and observed that the "fuzziness" of the quantisation boundaries got worse.
+
+I also happened to find out the meaning of something that Brian mentioned in his reply email to me, namely, that there might be some clipping going on at some intermediate stage in the FPGA's butterfly. (I didn't know what "butterfly" meant in this context before, but now I understand that it refers specifically to the "divide-and-conquer" strategy of the FFT, the diagram for which resembles a butterfly.) If that is indeed what's going on, then I probably have next to no hope in trying to reproduce it by "trial and error", and have a much better chance of reading and understanding the code itself (however poorly documented Brian claims it is). On the other hand, I haven't decided how much of a difference the errors will make in the analysis-synthesis response analysis. Maybe it's not worth going down that rabbit hole at all...? Will seek advice from Brian and Steve Ord.

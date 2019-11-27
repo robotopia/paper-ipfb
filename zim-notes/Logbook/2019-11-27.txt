@@ -1,0 +1,160 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-11-27T08:20:07+08:00
+
+Today I'm going to try and //deduce// the twiddle factors used in the fine PFB FFT. If I take a block of 128x128 inputs (i.e. 128 consecutive samples' worth of overlap-window-added inputs to the FFT), and look at the corresponding 128 spectra, then I have a matrix equation that is invertible:
+
+{{./equation.png?type=equation}}
+
+where **F** is the 128x128 set of output spectra, **f** is the 128x128 set of FFT inputs (after the filter has been applied and the taps added together), and **T** is the 128x128 matrix of twiddle factors. Then, naturally,
+
+{{./equation001.png?type=equation}}
+
+Because **f** is quantised, **T** will of course only be approximate, but it //should// still reveal the basic "roots of unity" structure, and hopefully will reveal any peculiarities/bugs in the choices of twiddle factors in **T**.
+
+Using git commit 2a7a532,
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/before
+>../../forward-pfb-model/forward_pfb Rec09_1213668800.raw ../../forward-pfb-model/r.txt 0 0 Rec09_1213668800.dat > prefft.dat
+> ../../forward-pfb-model/read_after ../after/1213668624_1213668800_ch117.dat 96 100 1123 > postfft.dat
+> python find_twiddle.py
+
+}}}
+
+
+**find_twiddle.py**:
+{{{code: lang="python3" linenumbers="True"
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Pre-FFT values
+f_raw = np.loadtxt("prefft.dat")
+
+# Post-FFT values
+F_raw = np.loadtxt("postfft.dat")
+
+# Convert the "raw" matrices into equivalent, square, complex matrices
+f = f_raw.reshape((1024,128,2))
+f = f[:,:,0] + f[:,:,1]*1j
+
+F = F_raw.reshape((128,1024,2))
+F = F[:,:,0] + F[:,:,1]*1j
+
+# Use all the available data and get the mean of the results
+T = np.zeros((128,128))
+#for t in range(0,1024,128):
+for t in [0]:
+
+    f_sq = f[t:(t+128),:]
+    F_sq = F.transpose()[t:(t+128),:]
+
+    # Perform the matrix inversion and solve for 'T'
+    T = T + np.matmul(F_sq, np.linalg.inv(f_sq))
+
+fig, ax = plt.subplots(1,2)
+im1 = ax[0].imshow(np.abs(T), origin='auto')
+im2 = ax[1].imshow(np.angle(T), origin='auto', cmap='hsv')
+fig.colorbar(im1, ax=ax[0])
+ax[0].set_title("Abs(z)")
+ax[1].set_title("Arg(z)")
+ax[0].set_ylabel("Freq channel")
+ax[0].set_xlabel("Sample number")
+ax[1].set_xlabel("Sample number")
+fig.colorbar(im2, ax=ax[1])
+plt.show()
+
+}}}
+
+
+
+{{~/documents/fine-pfb-reconstruction/test-data/before/twiddle_attempt_01.png?width=700}}
+
+Hmm, doesn't look hopeful. Maybe the quantisation is too damning for this approach to work. I also tried using more data (swapping out line 20 for line 19 in ''find_twiddle.py'' above), but nothing really came of it. I //do// see structure in the args, but I don't know what it means.
+
+--------------------
+
+Partial success!
+
+Solving the matrix equation above in a least squares sense:
+
+{{./equation002.png?type=equation}}
+
+Then, **f** and **F** don't even have to be square, and I can use as much data as I want. Using git commit 4e9a4b4,
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/before
+> ../../forward-pfb-model/forward_pfb Rec09_1213668800.raw ../../forward-pfb-model/r.txt 0 0 Rec09_1213668800.dat > prefft.dat
+> ../../forward-pfb-model/read_after ../after/1213668624_1213668800_ch117.dat 96 12 9999 > postfft.dat
+> python find_twiddle.py
+
+}}}
+
+
+**find_twiddle.py**:
+{{{code: lang="python3" linenumbers="True"
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Pre-FFT values
+f_raw = np.loadtxt("prefft.dat")
+
+# Post-FFT values
+F_raw = np.loadtxt("postfft.dat")
+
+# Convert the "raw" matrices into equivalent, square, complex matrices
+f = f_raw.reshape((9988,128,2))
+f = f[:,:,0] + f[:,:,1]*1j
+f = f[600:1000,:]
+
+F = F_raw.reshape((128,9988,2))
+F = F[:,:,0] + F[:,:,1]*1j
+F = F.transpose()
+F = F[600:1000,:]
+
+# Perform the matrix inversion and solve for 'T'
+Ff = np.matmul(f.transpose(), F)
+ff = np.matmul(f.transpose(), f)
+ffi = np.linalg.inv(ff)
+T = np.matmul(ffi, Ff)
+
+# Construct the expected true answer
+n = np.arange(128)
+m = np.arange(128)
+N, M = np.meshgrid(n, m)
+Tans = np.exp(-2j*np.pi*N*M/128)
+Tans = np.roll(Tans, (64,0))
+
+fig, ax = plt.subplots(2,2)
+im1 = ax[0,0].imshow(np.abs(T)*128, origin='auto')
+im2 = ax[1,0].imshow(np.angle(T), origin='auto', cmap='hsv')
+im3 = ax[0,1].imshow(np.angle(T/Tans), origin='auto', cmap='hsv')
+im4 = ax[1,1].imshow(np.angle(Tans), origin='auto', cmap='hsv')
+fig.colorbar(im1, ax=ax[0,0])
+ax[0,0].set_title("Abs($\\bf T$)")
+ax[1,0].set_title("Arg($\\bf T$)")
+ax[0,1].set_title("Arg($\\bf T$/${\\bf T}_{ans}$)")
+ax[1,1].set_title("Arg(${\\bf T}_{ans}$)")
+fig.colorbar(im2, ax=ax[1,0])
+fig.colorbar(im3, ax=ax[0,1])
+fig.colorbar(im4, ax=ax[1,1])
+plt.show()
+
+}}}
+
+
+{{~/documents/fine-pfb-reconstruction/test-data/before/twiddle_attempt_02.png}}
+**T_ans** is what the answer //should// be (that is, the phases of an ordinary DFT kernel of size 128). You can see that the least squares solution (bottom left) is showing approximately the right thing. The noise presumably comes from the quantisation of the FFT outputs. Interestingly, though, the ratio of the least squares solution with the expected solution (top right plot) shows that the left half of the DFT kernel has an extra phase ramp in it.
+
+Some thoughts: The extra phase ramp might have something to do with the positioning of the filter coefficients over the coarse channel inputs. I'm not convinced about this, but it's worth giving it a go. The easiest thing to try, though, is to simply incorporate the extra phase ramp "manually" into the pre-FFT data stream and see if it fixes the errors.
+
+--------------------
+
+Actually, the phase ramp was a lie. I was circular shifting **T_ans** along the wrong dimension. Without doing anything special, I now get (git commit edf562f):
+
+{{~/documents/fine-pfb-reconstruction/test-data/before/twiddle_attempt_03.png?width=784}}
+The goodness of the result seems to depend on whether I include certain samples. That is, there seem to be some ranges of samples which, if I use them to produce a least squares fit for the twiddle factors, make the solution look awful. So far, it seems as if it //isn't// the case than certain samples are to blame; somehow, it is the combination of all the samples in the range that ultimately produce a bogus least squares fit solution. Not sure what to make of this. At the very least, it seems that simply including more samples does //not// given the intuitive, expected result of //improving// the least squares solution.
+
+
+
+
