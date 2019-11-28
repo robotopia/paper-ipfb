@@ -2,15 +2,36 @@ Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
 Creation-Date: 2019-11-28T06:51:19+08:00
 
+With the latest imrpovement, the errors are arguably within a tolerable level (git commit b859866):
+
 {{{code: lang="sh" linenumbers="False"
-> git checkout b859866
+> cd ~/documents/fine-pfb-reconstruction/test-data/before
 > ../../forward-pfb-model/forward_pfb Rec09_1213668800.raw ../../forward-pfb-model/r.txt 0 0 Rec09_1213668800.dat > prefft.dat
 > ../../forward-pfb-model/read_after Rec09_1213668800.dat 96 100 1123 > foo1
 > ../../forward-pfb-model/read_after ../after/1213668624_1213668800_ch117.dat 96 100 1123 > foo2
 python> import numpy as np
-python> matplotlib.pyplot as plt
+python> import matplotlib.pyplot as plt
 python> dat1 = np.loadtxt("foo1"); dat2 = np.loadtxt("foo2")
-python> plt.imshow(dat1 - dat2, origin='auto', extent=(99.5,1123.
-    ...: 5,-0.5,128.5)); plt.colorbar()
+python> plt.imshow(dat1 - dat2, origin='auto', extent=(99.5,1123.5,-0.5,128.5)); plt.colorbar()
 
 }}}
+
+
+{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_diff_02.png?width=800}}
+
+This image is showing both the real and imaginary parts of the answer, as alternate columns. X-axis is (10 kHz) sample number, and y-axis is fine frequency channel number. You can see the "extra" error that occurs every 500th sample — the first of these is shown at sample 506. (NB: there is a strong correlation between the errors in the real and imaginary parts of that sample.)
+
+Choosing a block of samples that doesn't include the really bad sample, I can estimate the fraction of pixels that have been incorrectly quantised by my own PFB code. Following on from the code block above:
+
+{{{code: lang="sh" linenumbers="False"
+python> bad = (dat1[:,0:800] - dat2[:,0:800] != 0)
+python> np.sum(bad)/np.size(bad)*100
+
+}}}
+
+
+gives 0.984375%, or, we can simply say, < 1%.
+
+--------------------
+
+At this point, I am going to get rid of all the extra "debugging" outputs in my PFB code, so that the only thing it produces is a recombined file (git commit 2287282).
