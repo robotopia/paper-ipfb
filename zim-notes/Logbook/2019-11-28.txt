@@ -184,4 +184,72 @@ Total power difference               = 0.0123%
 }}}
 
 
+--------------------
 
+And now onto the good stuff: **impulse response tests**! First test is for a impulse, with height 15 (max value for signed 5-bit samples) at sample number 10000 (to avoid weird issues near the beginning of the file):
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/fake_data
+> ../../forward-pfb-model/generate_fake_raw 0 0 10000 15.0 0 > fake_imp.raw
+> ../../forward-pfb-model/forward_pfb fake_imp.raw ../../forward-pfb-model/r.txt 0 0 1213668624_1213668800_ch117.dat
+> rm -f G0024_1213668624_ch117_u.*
+> make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
+    -R "03:56:52.80" -D "-26:45:00.0" \
+    -d /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/fake_data \
+    -m /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
+    -f 117 -u -A 0 \
+    -J /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/after
+> # Read out the original raw data to ASCII
+> od -w256 -v -t dC fake_imp.raw | head -12000 | awk 'NR >= 8000 && NR < 12000 {print NR,$2,$3}' > imp1
+> # Read out the VDIF data to ASCII
+> ../../forward-pfb-model/read_vdif G0024_1213668624_ch117_u.vdif 0 0 1 | \
+  tail -n+3 | head -13536 | awk 'NR >= 9536 && NR < 13536 {print NR-1536,$1,$2}' > imp2
+gnuplot> load 'compare_coarse_imp.gpi'
+
+}}}
+
+**compare_coarse_imp**:
+{{{code: lang="sh" linenumbers="True"
+reset
+
+set xlabel "Sample number"
+set ylabel "Coarse channel value (real)"
+
+set xrange [-600:600]
+
+p 'imp2' u ($1-10001):($2*0.125):(2) w boxes fs solid title "Reconstructed", \
+  'imp1' u ($1-10009):2:(2)          w boxes fs solid title "Original"
+
+}}}
+
+
+{{~/documents/fine-pfb-reconstruction/test-data/fake_data/compare_coarse_imp.png}}
+There has been some slight of hand here: The reconstructed response was originally offset by 1536 samples; I've changed that to 8 samples so that you can see the two central pulses side by side. I have also reduced the scale of the VDIF output by a factor of 8 (this means that my scaling in the PFB inversion is wrong, but that only matters if you want to do flux calibration). A version of this plot will appear in the paper.
+
+The appearance of temporal echoes of the original impulse at intervals of 64 samples is apparently real. I'm surprised that the interval isn't 128, but there it is.
+
+--------------------
+
+Before moving on, Jake has convinced me to give one more thing a try: circular shifting the pre-FFT array of 128 numbers by 1 or 2. This will have the effect of introducing a slight phase ramp in the result, which //may// account for the quantisation errors. I've started a new branch called ''out_of_phase'' to investigate this.
+
+Changing pfb_model.c line 50 from
+{{{code: lang="c" linenumbers="False"
+in[t]  = (double)((re[t] > 0 ? (re[t] + 0x2000) : re[t]) >> 14) +
+         (double)((im[t] > 0 ? (im[t] + 0x2000) : im[t]) >> 14)*I;
+}}}
+
+to
+{{{code: lang="c" linenumbers="False"
+in[(t+1)%TAPSIZE]  = (double)((re[t] > 0 ? (re[t] + 0x2000) : re[t]) >> 14) +
+                     (double)((im[t] > 0 ? (im[t] + 0x2000) : im[t]) >> 14)*I;
+}}}
+
+produced the following difference map (see above for instructions on how to generate):
+{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_diff_03.png}}
+Going the other way, i.e.
+{{{code: lang="c" linenumbers="False"
+in[(t-1+TAPSIZE)%TAPSIZE]  = (double)((re[t] > 0 ? (re[t] + 0x2000) : re[t]) >> 14) +
+                             (double)((im[t] > 0 ? (im[t] + 0x2000) : im[t]) >> 14)*I;
+}}}
+
+produces something very similar.
