@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Parameters for PFB
 ntaps = 12
 K = 128
 N = ntaps*K
 M = K  # meaning "ciritically sampled"
 
-ns = np.arange(N)
-
+# Choose the analysis filter
 def wH(n):
     return np.sin(np.pi*(n+1)/(N+1))**2
 
@@ -19,16 +19,38 @@ def h(n):
 
 # Choose the synthesis filter
 def f(n):
-    return h(n)
+    H = np.sum(h(ns))
+    return h(n)/H
 
-res = []
-
-H = np.sum(h(ns))
-
+# Calculate λ(s) from h[n] and f[n]
+ns = np.arange(N)
 ss = np.arange(-12,13)
-res = np.array([sum((1/H) * f(ns) * h(ns + s*M)) for s in ss])
+lmda = np.array([sum(f(ns) * h(ns + s*M)) for s in ss])
 
-plt.plot(ss, res, '-x')
+# Analysis-synthesis response of an impulse
+nsamples = K*64
+x_ntaps  = nsamples//K - ntaps
+x = np.zeros(nsamples)
+x[nsamples//3] = 1 # Put an impulse right smack bang in the middle
+ns = np.arange(nsamples)
+
+X = np.array([[np.sum(h(m*M-ns) * x * np.exp(-2j*np.pi*k*ns/K)) for m in range(x_ntaps)] for k in range(K)])
+
+#ks = np.arange(K)
+#xhat = ([f(ns-m*M) / K * np.sum(X[:,m] * np.exp(2j*np.pi*ks*n/K)) for m in range(x_ntaps)])
+#print(xhat.shape)
+
+plt.figure(1)
+plt.imshow(np.abs(X))
+plt.colorbar()
+plt.figure(2)
+plt.imshow(np.angle(X), cmap='hsv')
+plt.colorbar()
+plt.show()
+
+# Make plots
+plt.plot(ss, lmda, '-xk')
+plt.ylim([-0.1, 1.0])
 plt.xlabel("$s$")
 plt.ylabel("$\\lambda(s)$")
 plt.savefig("inverse_condition.eps", bbox_inches='tight')
