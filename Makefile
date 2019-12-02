@@ -1,3 +1,15 @@
+EPS = inverse_condition.eps \
+	  filter.eps \
+	  pre_fft_distributions.eps
+
+all_eps: $(EPS)
+
+pre_fft_distributions.eps: pre_fft_distributions.py
+	python $<
+
+inverse_condition.eps: inverse_condition.py
+	python $<
+
 filter.eps: filtercoeffs.py
 	python $<
 
