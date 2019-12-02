@@ -33,19 +33,25 @@ x_ntaps  = nsamples//K - ntaps
 x = np.zeros(nsamples)
 x[nsamples//3] = 1 # Put an impulse right smack bang in the middle
 ns = np.arange(nsamples)
+x = np.cos(2*ns)
 
 X = np.array([[np.sum(h(m*M-ns) * x * np.exp(-2j*np.pi*k*ns/K)) for m in range(x_ntaps)] for k in range(K)])
+X = np.roll(X, K//2, axis=0)
 
-#ks = np.arange(K)
-#xhat = ([f(ns-m*M) / K * np.sum(X[:,m] * np.exp(2j*np.pi*ks*n/K)) for m in range(x_ntaps)])
-#print(xhat.shape)
+ks = np.arange(K)
+ms = np.arange(x_ntaps)
+NS, KS, MS = np.meshgrid(ns, ks, ms)
+#xhat = [np.sum([f(n-m*M) / K * np.sum(X[:,m] * np.exp(2j*np.pi*ks*n/K)) for m in range(x_ntaps)]) for n in ns]
+xhat = f(NS-MS*M) / K
+print(xhat.shape)
 
-plt.figure(1)
-plt.imshow(np.abs(X))
-plt.colorbar()
-plt.figure(2)
-plt.imshow(np.angle(X), cmap='hsv')
-plt.colorbar()
+'''
+fig, ax = plt.subplots(3,1)
+im1 = ax[0].imshow(np.abs(X), aspect='auto')
+im2 = ax[1].imshow(np.angle(X), cmap='hsv', aspect='auto')
+im3 = ax[2].plot(x)
+#plt.colorbar(im1)
+#plt.colorbar(im2)
 plt.show()
 
 # Make plots
@@ -54,3 +60,5 @@ plt.ylim([-0.1, 1.0])
 plt.xlabel("$s$")
 plt.ylabel("$\\lambda(s)$")
 plt.savefig("inverse_condition.eps", bbox_inches='tight')
+plt.show()
+'''

@@ -1,0 +1,47 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2019-12-02T20:06:16+08:00
+
+I've been trying to understand the condition for PFB invertibility. What I understand so far, I've written in the paper draft, so I won't repeat myself here. I did just try something though (and failed), so I will document that here, so I don't repeat myself later.
+
+I wondered if it were possible to obtain the optimal set of filter coefficients by using least-squares. The idea was to form a matrix whose rows consisted of the analysis filter shifted by different amounts. Then the matrix multiplication of the matrix with the best synthesis filter coefficients should form the delta function (this is the invertibility condition).
+
+This is what I tried:
+{{{code: lang="python3" linenumbers="True"
+import numpy as np
+
+# Parameters for PFB
+ntaps = 12
+K = 128
+N = ntaps*K
+M = K  # meaning "ciritically sampled"
+
+# Choose the analysis filter
+def wH(n):
+    return np.sin(np.pi*(n+1)/(N+1))**2
+
+def ws(n):
+    return np.sinc((n+1-N/2)/K)
+
+def h(n):
+    return wH(n)*ws(n)*np.logical_and(n >= 0, n < N)
+    
+# Try finding the optimal filter
+r = np.arange(N)
+c = np.arange(-ntaps+1, ntaps)*K
+RR, CC = np.meshgrid(r, c)
+h_idxs = RR + CC
+h_mat = h(h_idxs)
+
+y = np.zeros((c.size, 1))
+y[ntaps - 1] = 1
+
+# (Least squares)
+XTX = np.matmul(h_mat.transpose(), h_mat)
+XTY = np.matmul(h_mat.transpose(), y)
+F = np.matmul(np.linalg.inv(XTX), XTY)
+
+}}}
+
+
+The result was meaningless.
