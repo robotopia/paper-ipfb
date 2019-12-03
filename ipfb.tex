@@ -3,6 +3,10 @@
 \usepackage{graphicx}
 
 \DeclareMathOperator{\sinc}{sinc}
+\newcommand{\Kron}{\delta_s^0}
+\newcommand{\vcstools}{VCSTools}
+\newcommand{\bname}{B0950$+$08}
+\newcommand{\jname}{J0953$+$0755}
 
 \title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via a synthesis filter}
 
@@ -14,9 +18,10 @@
 %}%
 %%% END SAMPLE %%%
 
-\author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$, B. W. Meyers, S. E. Tremblay
+\author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$, B. W. Meyers$^{1,2,3}$, S. E. Tremblay, J. Jones, B. Crosse
 \affil{$^1$International Centre for Radio Astronomy Research (ICRAR), GPO Box U1987, Perth, WA 6845, Australia}%
 \affil{$^2$CSIRO Astronomy and Space Science, PO Box 76, Epping, NSW 1710, Australia}
+\affil{$^3$Dept. of Physics and Astronomy, University of British Columbia, 6224 Agricultural Road, Vancouver, B.C., V6T 1Z1, Canada}
 }
 
 \jid{PASA}
@@ -75,9 +80,9 @@ The conditions under which the original time series can be exactly reproduced de
 Here, we describe the synthesis filter that is implemented as the (optional) final stage of the tied-array beamforming pipeline, the former stages of which are described in detail in \citet[][hereafter Paper I]{Ord2019} and \citet[][hereafter Paper II]{Xue2019}.
 The synthesis filter is applied to the fine-channel output of the beamformer, and recovers the coarse channel time series.
 That is, it effectively `undoes' the fine PFB, increasing the available time resolution to $\sim 0.8\,\mu$s.
-A brief review of PFBs in general, and their particular implementation in the case of the MWA, are given in \S\ref{sec:pfb}.
-The design of the synthesis filter is described in \S\ref{sec:ipfb}, including a discussion of its fidelity, i.e., the appearance of any temporal and spectral artefacts introduced by the synthesis filter itself.
-Finally, the practical use of this functionality is demonstrated through two examples: MWA observations of the MSPs J2241$-$5236 and J0437$-$4715.
+A brief review of PFBs in general, and their particular implementation in the case of the MWA, are given in Section \ref{sec:pfb}.
+The design of the synthesis filter is described in Section \ref{sec:ipfb}, including a discussion of its fidelity, i.e., the appearance of any temporal and spectral artefacts introduced by the synthesis filter itself.
+Finally, the practical use of this functionality is demonstrated in Section \ref{sec:pulsardata} through three examples: MWA observations of the PSRs J2241$-$5236, J0437$-$4715, and \bname{} (\jname{}).
 
 \section{Polyphase filterbanks (PFBs)}
 \label{sec:pfb}
@@ -135,7 +140,7 @@ where
     b[n] = \sum_{\rho=0}^{P-1} h[n + K\rho]\,x[n + mM + K\rho].
 \end{equation*}
 A short proof of this equivalence is given in \citet{Harris2011}.
-The procedure described by Eq. \eqref{eqn:pfb} is illustrated in Fig. \ref{fig:pfb}.
+The procedure described by Eq. \eqref{eqn:pfb} is called the \textit{weighted overlap-add} algorithm, and is illustrated in Fig. \ref{fig:pfb}.
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{example-image-a}
@@ -153,7 +158,11 @@ The first stage (coarse) PFB is described in \citet{Prabu2015}, and here we only
 A PFB is specified by (1) the number of output channels, $K$, (2) the number of taps, $P$, and (3) the analysis filter, $h[n]$.
 For the MWA, $K = 128$ (giving fine channels $10\,$kHz wide), $P = 12$, and
 \begin{equation}
-    h[n] = w_H[n]\,w_s[n],
+    h[n] =
+        \begin{cases}
+            w_H[n]\,w_s[n], & 0 \le n < N, \\
+            0               & \text{otherwise}
+        \end{cases}
     \label{eqn:filter}
 \end{equation}
 where
@@ -176,15 +185,142 @@ The analysis filter is shown in Fig. \ref{fig:filter}.
 The MWA's fine PFB is critically sampled, with $M = K = 128$.
 The rationale behind the particular design choices for the MWA's fine PFB is beyond the scope of this paper---for the purposes of creating a synthesis filter, it is sufficient to know merely how the analysis filter is defined\footnote{Eq. \eqref{eqn:filter} is defined on $\mathbb{R}$, but the actual implementation on the MWA's filed-programmable gate arrays (FPGAs) defines the analysis filter coefficients on $\mathbb{Z}$. The exact implemented values, $h^\ast[n]$, can be obtained from $h[n]$ via $h^\ast[n] \equiv \lfloor\alpha h[n]\rceil$, where $\lfloor\cdot\rceil$ denotes rounding to the nearest integer and $\alpha = 117963.875$.}, and the fact that the PFB is critically sampled.
 
+The fine PFB is implemented on [TODO: make/model] field-programmable gate arrays (FPGAs) and was designed in such a way to accommodate the data rates and bit depths set by the surrounding hardware.
+The input signal values are signed (5+5)-bit complex integers, and the final outputs are (4+4)-bit complex integers.
+The loss of precision associated with the demotion of 1 bit naturally places limits on the ability for any synthesis filter to perfectly reconstruct the original coarse channel time series, which is analysed for our system below.
+The full details of the FPGA implementation are given in the appendix.
+
 \section{Synthesis filter}
 \label{sec:ipfb}
 
 \subsection{Design}
 
+The spectral output of the PFB, $X_k[m]$, can be used to reconstruct the time series $\hat{x}[n]$ by means of a \textit{synthesis filter}.
+The hat signifies the fact that the resulting time series does not necessarily equal the original input to the PFB, $x[n]$, since one is free to choose the synthesis filter itself, $f$:
+\begin{equation}
+    \hat{x}[n] = \sum_{m = 0}^{M-1} f[n - mM]\,
+        \frac{1}{K} \sum_{k=0}^{K-1} X_k[m]\,e^{2\pi jkn/K}.
+    \label{eqn:ipfb}
+\end{equation}
+The precise condition for $\hat{x}[n] = x[n]$ for a critically sampled PFB is \citep[proven in][]{Crochiere1983}:
+\begin{equation}
+    \lambda(s) = \sum_{m=0}^{M-1} f[n-mM]\,h[mM - n + sM] = \Kron
+    \label{eqn:invertibility_condition}
+\end{equation}
+for all values of $n$, where $\Kron$ is the Kronecker delta.
+Eq. \eqref{eqn:invertibility_condition} means that the synthesis filter must ``convolve'' with the analysis filter (where the translation part of the convolution is restricted to step sizes of $M$) to produce an impulse.
+
+Whether this condition is perfectly met clearly depends on the choice of analysis and synthesis filters.
+However, even a synthesis filter which only approximately satisfies Eq. \eqref{eqn:invertibility_condition} for a given analysis filter (i.e. $\lambda(s) \approx \Kron$) will produce a time series approximates the original coarse channel time series (i.e. $\hat{x}[n] \approx x[n]$).
+The more Eq. \eqref{eqn:invertibility_condition} departs from the Kronecker delta function, the more artefacts will appear in the time domain.
+In practice, the choice of synthesis filter is often obliged to be a compromise between ease of implementation and an acceptable level of imperfection in the reconstructed time series.
+
+For the filter $h[n]$ defined in Eq. \eqref{eqn:filter}, it is found that choosing
+\begin{equation}
+    f[n] = \frac{h[-n]}{H},
+    \label{eqn:synthesisfilter}
+\end{equation}
+meets the invertibility condition sufficiently closely for our purposes.
+$H = \sum_{n=0}^{N-1} h[n]$ is a normalising factor.
+The value of \eqref{eqn:invertibility_condition} is illustrated in Fig. \ref{fig:inverse_condition}, in which it can be readily seen that $\lambda(s)$ closely approximates, but does not exactly equal, a delta function.
+The quantitative effect of this analysis-synthesis pair is discussed in Section \ref{sec:fidelity}.
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{inverse_condition.eps}
+    \caption{The condition for invertibility, Eq. \eqref{eqn:invertibility_condition}, demonstrated for the analysis filter given in Eq. \eqref{eqn:filter} and the synthesis filter given in Eq. \eqref{eqn:synthesisfilter}. The fact that $\lambda(s)$ only approximates the delta function gives rise to spurious artefacts (``ringing'') in the time domain, which can be seen in Fig. (TODO).}
+    \label{fig:inverse_condition}
+\end{figure}
+
 \subsection{Implementation}
 
-\subsection{Fidelity}
+We have implemented the synthesis filter defined in Eq. \eqref{eqn:synthesisfilter} as an optional component of the MWA-VCS beamforming software, \vcstools{}\footnote{\url{https://github.com/CIRA-Pulsars-and-Transients-Group/vcstools}}, described in \citet{Ord2019}.
+In this mode, a time series reconstructed from the beamformed fine channelised data is written out for each coarse channel as two separate polarisation streams (i.e. without converting to Stokes parameters) in the VDIF file format \citep{Whitney2009}.
+This format was chosen because it is supported by the coherent de-dispersion functionality of DSPSR\footnote{\url{http://dspsr.sourceforge.net/}} \citep{VanStraten2011b}, a software suite for processing pulsar time series.
 
+The final stage before writing out the time series to file is the conversion from the complex floating point output of the synthesis operation into a signed 8-bit complex integer format required by the VDIF format.
+Each second of data is independently mean-subtracted and normalised in order to avoid clipping errors.
+It is worth noting that the mean-subtraction will mitigate to some degree the mean offset introduced by rounding errors in the analysis PFB (see the Appendix for details).
+
+Viewed as a linear operation, Eq. \eqref{eqn:ipfb} is ideally suited for GPUs, and we have implemented it in \vcstools{} for NVIDIA's CUDA architecture.
+Rather than use existing implementations of the implied inverse DFT, the $N \times K$ exponential terms (the so-called ``twiddle factors'') are pre-calculated and stored in a 2D array of double-precision floating point numbers on the GPUs.
+These are then accessed as required for the calculation of a given sample $\hat{x}[n]$.
+The whole pipeline (beamforming and synthesis) runs faster than real time\footnote{Verified for CUDA compute capability $>3.5$.}, unless throttled by I/O limitations of the computer system it is running on.
+
+\subsection{Fidelity of reconstructed time series}
+\label{sec:fidelity}
+
+The major challenge in verifying the fidelity of the back-to-back analysis-synthesis filter pair is the fact that the analysis PFB only exists on the FPGAs used in production and not as stand-alone software than can be fed arbitrary input.
+This makes conducting standard impulse response tests impossible, unless the exact performance of the PFB can be reproduced.
+We have therefore attempted to replicate the PFB in software; however, the replication was not perfect, causing a small difference between the our model analysis-synthesis back-to-back system, and the analysis-synthesis system used in production.
+
+In the fidelity tests presented in this section, there are therefore a number of sources of error, all of which cause the reconstructed coarse channel time series, $\hat{x}[n]$, to differ from the original input time series, $x[n]$:
+\begin{itemize}
+    \item the imperfect replication of the forward PFB, estimated to contribute noise-like error at the $-20\,$dB level (``replication error'', see Appendix for details);
+    \item the error associated with the demotion of the input (5+5)-bit complex integers ($x[n]$) to the (4+4)-bit complex integer format output by the PFB (``quantisation error'', also see Appendix); and
+    \item the error caused by the fact that the synthesis filter ($f[n]$) does not exactly complement the analysis filter ($h[n]$) in the sense described by Eq. \eqref{eqn:invertibility_condition} (``filter error'').
+\end{itemize}
+Although knowing the relative contributions of quantisation and filter errors is useful for improving the system (since the latter may be mitigated by identifying a better synthesis filter), it is only necessary to know their joint contribution for the purposes of characterising the analysis-synthesis system.
+This contribution is revealed in an impulse response test, the results of which are shown in Fig. \eqref{fig:impulse_response}.
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{compare_coarse_imp.eps}
+    \caption{The response of the back-to-back analysis-synthesis system to a finite impulse. The coarse-channelised output has been arbitrarily scaled to have a comparable magnitude to the original (5+5)-bit impulse, and the original impulse has been shifted slightly to the left for visual clarity. The spurious artefacts seen on either side of the central pulse at intervals of 64 samples are dominated by the so-called ``filter error'' (see text).}
+    \label{fig:impulse_response}
+\end{figure}
+
+As revealed by the impulse response test, our system is capable of reproducing the original impulse with high fidelity, despite the fact that the chosen synthesis filter is not ideal.
+The main discrepancy appears in the form of temporal ``echoes'' of the original impulse occurring at intervals of 64 coarse channel samples (i.e. half the size of one tap, equal to $50\,\mu$s for our sampling rate of $1.28\,$MHz).
+Although the power in the echoes is small compared to the central impulse (at roughly the $-10\,$dB level), it is important to realise that the echoes always appear at the same locations relative to it.
+Therefore, echoes of individual pulses from a pulsar signal will always contribute to the same phase bins when the time series is folded at the pulsar's rotation period.
+Any structure seen on this time scale must therefore always be regarded with suspicion.
+
+\section{Verification with pulsar observations}
+\label{sec:pulsardata}
+
+\section{Conclusion}
+
+The MWA-VCS telescope system outputs dynamic spectra with a frequency resolution of $10\,$kHz and a time resolution of $100\,\mu$s, which is suitable for many pulsar applications, as demonstrated in several pulsar science papers published to date \citep[e.g.][]{Oronsaye2015,McSweeney2017,Bhat2018}.
+In this paper, we have presented an algorithm to undo the fine channelisation stage (fine PFB) of the VCS pipeline by using a synthesis polyphase filter, implemented as part of our processing software suite, \vcstools{}.
+The result is a high-fidelity reconstruction of the coarse channelised (pre-PFB) time series, suitable for high-time resolution studies of MSPs and other rapid transient signals.
+Although the reconstruction is not perfect, the introduced errors are quantified (up to $-10\,$dB in certain samples) and any spurious artefacts can be identified by virtue of the known timescale of their recurrence ($50\,\mu$s).
+
+\begin{appendix}
+
+\section{The FPGA implementation of the fine PFB}
+
+Each coarse channel is independently processed by dedicated FPGAs to convert (5+5)-bit complex integers sampled at $1.28\,$MHz into a series of spectra composed of $128\times$(4+4)-bit complex integers sampled at $10\,$kHz.
+The PFB is implemented in two stages: (1) a ``front-end'' stage which prepares the array $b[n]$ (see Eq. \eqref{eqn:pfb}), and (2) the ``FFT'' stage, which calculates the 128-point spectrum, $X_k[m]$.
+
+The first stage involves a multiplication of a window of 1536 consecutive coarse channel samples with the analysis filter shown in Fig. \ref{fig:filter}, and then a summation of the 12 taps together to produce a single array of 128 complex integers.
+The combination of the allowed input values $[-16, 15]$ and the filter values guarantees that the magnitudes of the summed numbers do not exceed $2^{22} = 4194304$.
+At this stage of the processing, they are stored as 48-bit signed integers, of which only the bottom 21 bits are therefore significant.
+Each integer $n$ (either real or imaginary) is then reduced from 48 bits to 8 bits in the following manner.
+If $n$ is positive, then bits 14 through 21 (counting from the least significant bit) are selected to form the 8-bit integer, and 1 is subsequently added if bit 13 is 1.
+This is equivalent to rounding the number $n/2^{14}$ to the nearest integer, where fractional values of 0.5 are always rounded up.
+If $n$ is negative, then bits 14 through 21 are selected, but no rounding occurs.
+This is equivalent to applying the floor operation to $n/2^{14}$.
+It should be noted that this rounding scheme introduces a bias into the distribution of values.
+In particular, the distribution of 8-bit values has a different mean than the distribution of the original 5-bit values, and it results in an artificial deficit in the number of values that get rounded to zero.
+The rounding scheme and its effect on the distribution are illustrated in Fig. \ref{fig:pre_fft_distributions}, including a displaced mean which artificially adds power to the DC bin of the spectrum.
+\begin{figure}[t!]
+    \centering
+    \includegraphics[width=\columnwidth]{pre_fft_distributions.eps}
+    \caption{The first-stage (i.e. pre-FFT) rounding scheme implemented in the MWA FPGAs compared with a symmetric scheme. The top panel illustrates the two rounding schemes (each has been given a slightly different $y$-offset for visual clarity). A population of 5-bit samples was drawn from a rounded Gaussian distribution with mean $\mu = 0$ and standard deviation $\sigma = 2$. The vertical dashed lines show the means of the distributions after the population has been subjected to the first stage of the PFB (i.e. converted to 8-bit integers) and rounded according to the two different schemes. The bottom panel compares the distributions of the resulting population of 8-bit samples.}
+    \label{fig:pre_fft_distributions}
+\end{figure}
+
+The second stage calculates the spectrum of $b[n]$ using the standard fixed point FFT algorithm that is implemented on [make and model] FPGAs.
+The output values are scaled and (symmetrically) rounded, producing (4+4)-bit output values.
+
+As described in the main text, it was necessary to replicate the function of the fine PFB in software in order to conduct impulse tests of the analysis-synthesis pair.
+Our CPU-based implementation differs from the algorithm described above only by the use of the FFTW library\footnote{\url{http://www.fftw.org/}} for the FFT stage, which uses (and outputs) floating point values.
+Nevertheless the resulting spectrum was found to contain a small number of quantisation ``errors'': slightly under $1\%$ of the output 4-bit values differed from the FPGA-produced values by 1.
+To quantify the effect of these quantisation errors, we recorded a small amount of coarse channel data (dominated by telescope noise) along with the contemporaneous spectrum output by the FPGA PFB.
+We used the GPU-based synthesis filter described in Section \ref{sec:ipfb} to reconstruct the coarse channel data from both the FPGA spectrum and the CPU spectrum generated by our own implementation.
+We found the results to differ from each other at less than the $-20\,$dB power level, which is much less than the estimated difference between the reconstructed coarse channel data and the original.
+
+
+\end{appendix}
 
 %%% SAMPLE %%%
 %\begin{table}
