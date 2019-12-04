@@ -3,4 +3,4 @@ Wiki-Format: zim 0.4
 Creation-Date: 2019-11-12T09:00:36+08:00
 
 Bit occupancy histograms for Rec 01, second 1213668800. The color scale maximum (yellow) is clipped at a value of 50,000. There are 16 antennas and 8 coarse channels. Antenna 9 (counting from 0) is the “broken” one.
-{{~/documents/fine-pfb-reconstruction/test-data/before/bit-occupancy.png}}
+{{~/documents/fine-pfb-reconstruction/test-data/before/bit-occupancy.png?width=800}}

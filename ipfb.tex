@@ -5,8 +5,11 @@
 \DeclareMathOperator{\sinc}{sinc}
 \newcommand{\Kron}{\delta_s^0}
 \newcommand{\vcstools}{VCSTools}
-\newcommand{\bname}{B0950$+$08}
-\newcommand{\jname}{J0953$+$0755}
+\newcommand{\psrslowB}{B0950$+$08}
+\newcommand{\psrslowJ}{J0953$+$0755}
+\newcommand{\psrkaurJ}{J2241$-$5236}
+\newcommand{\psrbhatJ}{J0437$-$4715}
+\newcommand{\dmunits}{\ensuremath{\text{pc}\,\text{cm}^{-3}}}
 
 \title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via a synthesis filter}
 
@@ -82,9 +85,9 @@ The synthesis filter is applied to the fine-channel output of the beamformer, an
 That is, it effectively `undoes' the fine PFB, increasing the available time resolution to $\sim 0.8\,\mu$s.
 A brief review of PFBs in general, and their particular implementation in the case of the MWA, are given in Section \ref{sec:pfb}.
 The design of the synthesis filter is described in Section \ref{sec:ipfb}, including a discussion of its fidelity, i.e., the appearance of any temporal and spectral artefacts introduced by the synthesis filter itself.
-Finally, the practical use of this functionality is demonstrated in Section \ref{sec:pulsardata} through three examples: MWA observations of the PSRs J2241$-$5236, J0437$-$4715, and \bname{} (\jname{}).
+Finally, the practical use of this functionality is demonstrated in Section \ref{sec:pulsardata} through three examples: MWA observations of the PSRs \psrkaurJ{}, \psrbhatJ{}, and \psrslowB{} (\psrslowJ{}).
 
-\section{Polyphase filterbanks (PFBs)}
+\section{Polyphase filterbanks (PFB)}
 \label{sec:pfb}
 
 PFBs are a type of analysis filter, designed to extract spectral information out of discrete time series data.
@@ -202,17 +205,16 @@ The hat signifies the fact that the resulting time series does not necessarily e
         \frac{1}{K} \sum_{k=0}^{K-1} X_k[m]\,e^{2\pi jkn/K}.
     \label{eqn:ipfb}
 \end{equation}
-The precise condition for $\hat{x}[n] = x[n]$ for a critically sampled PFB is \citep[proven in][]{Crochiere1983}:
+The necessary and sufficient condition for exact equality, $\hat{x}[n] = x[n]$, for a critically sampled PFB is \citep[proven in][]{Crochiere1983}:
 \begin{equation}
     \lambda(s) = \sum_{m=0}^{M-1} f[n-mM]\,h[mM - n + sM] = \Kron
     \label{eqn:invertibility_condition}
 \end{equation}
 for all values of $n$, where $\Kron$ is the Kronecker delta.
-Eq. \eqref{eqn:invertibility_condition} means that the synthesis filter must ``convolve'' with the analysis filter (where the translation part of the convolution is restricted to step sizes of $M$) to produce an impulse.
+Eq. \eqref{eqn:invertibility_condition} formally resembles a kind of ``convolution'' of the synthesis filter with the analysis filter, where the translational part of the convolution operation is restricted to step sizes of $M$.
 
 Whether this condition is perfectly met clearly depends on the choice of analysis and synthesis filters.
-However, even a synthesis filter which only approximately satisfies Eq. \eqref{eqn:invertibility_condition} for a given analysis filter (i.e. $\lambda(s) \approx \Kron$) will produce a time series approximates the original coarse channel time series (i.e. $\hat{x}[n] \approx x[n]$).
-The more Eq. \eqref{eqn:invertibility_condition} departs from the Kronecker delta function, the more artefacts will appear in the time domain.
+However, even a synthesis filter which only approximately satisfies Eq. \eqref{eqn:invertibility_condition} for a given analysis filter (i.e. $\lambda(s) \approx \Kron$) will produce a time series that approximates the original coarse channel time series (i.e. $\hat{x}[n] \approx x[n]$).
 In practice, the choice of synthesis filter is often obliged to be a compromise between ease of implementation and an acceptable level of imperfection in the reconstructed time series.
 
 For the filter $h[n]$ defined in Eq. \eqref{eqn:filter}, it is found that choosing
@@ -222,12 +224,12 @@ For the filter $h[n]$ defined in Eq. \eqref{eqn:filter}, it is found that choosi
 \end{equation}
 meets the invertibility condition sufficiently closely for our purposes.
 $H = \sum_{n=0}^{N-1} h[n]$ is a normalising factor.
-The value of \eqref{eqn:invertibility_condition} is illustrated in Fig. \ref{fig:inverse_condition}, in which it can be readily seen that $\lambda(s)$ closely approximates, but does not exactly equal, a delta function.
+The value of \eqref{eqn:invertibility_condition} is illustrated in Fig. \ref{fig:inverse_condition}, in which it can be readily seen that $\lambda(s)$ closely approximates, but does not exactly equal, $\Kron$.
 The quantitative effect of this analysis-synthesis pair is discussed in Section \ref{sec:fidelity}.
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{inverse_condition.eps}
-    \caption{The condition for invertibility, Eq. \eqref{eqn:invertibility_condition}, demonstrated for the analysis filter given in Eq. \eqref{eqn:filter} and the synthesis filter given in Eq. \eqref{eqn:synthesisfilter}. The fact that $\lambda(s)$ only approximates the delta function gives rise to spurious artefacts (``ringing'') in the time domain, which can be seen in Fig. (TODO).}
+    \caption{The condition for invertibility, Eq. \eqref{eqn:invertibility_condition}, demonstrated for the analysis filter given in Eq. \eqref{eqn:filter} and the synthesis filter given in Eq. \eqref{eqn:synthesisfilter}. The fact that $\lambda(s)$ only approximates the delta function gives rise to spurious artefacts (``ringing'') in the time domain, which can be seen in Fig. \ref{fig:impulse_response}.}
     \label{fig:inverse_condition}
 \end{figure}
 
@@ -264,7 +266,7 @@ This contribution is revealed in an impulse response test, the results of which 
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{compare_coarse_imp.eps}
-    \caption{The response of the back-to-back analysis-synthesis system to a finite impulse. The coarse-channelised output has been arbitrarily scaled to have a comparable magnitude to the original (5+5)-bit impulse, and the original impulse has been shifted slightly to the left for visual clarity. The spurious artefacts seen on either side of the central pulse at intervals of 64 samples are dominated by the so-called ``filter error'' (see text).}
+    \caption{The response of the back-to-back analysis-synthesis system to a finite impulse. The coarse-channelised (reconstructed) output has been arbitrarily scaled to have a comparable magnitude to the original (5+5)-bit impulse, and the original impulse has been shifted slightly to the left for visual clarity. The spurious artefacts seen on either side of the central pulse at intervals of 64 samples are dominated by the so-called ``filter error'' (see text).}
     \label{fig:impulse_response}
 \end{figure}
 
@@ -276,6 +278,31 @@ Any structure seen on this time scale must therefore always be regarded with sus
 
 \section{Verification with pulsar observations}
 \label{sec:pulsardata}
+
+Pilot observations of three pulsars are presented here to vindicate the synthesis filter as a useful tool for undertaking high time resolution studies of pulsars: MSPs \psrkaurJ{} and \psrbhatJ{}, and the bright PSR \psrslowB{}.
+
+\psrkaurJ{} has a rotation period of $2.2\,$ms and a dispersion measure (DM) of $11.4\,\dmunits$.
+The resulting dispersion smear across $10\,$kHz channels at the central observing frequency of $150.4\,$MHz is approximately $0.2\,$ms, or $45^\circ$ of rotation phase, consistent with the width of the average profile formed from incoherently de-dispersed, fine channelised data recorded with the MWA-VCS system (Fig. \ref{fig:J2241_profiles}, top panel).
+Upon applying the synthesis filter and coherently de-dispersing the reconstructed time series sampled at the much higher rate of $1.28\,$MHz, the same data revealed exquisite detail in the average profile, including a pair of pre-cursor components only marginally visible (if at all) at higher frequencies (Fig. \ref{fig:J2241_profiles}, bottom panel).
+Moreover, these new, low-frequency observations have enabled the DM of this pulsar to be measured to unprecedented precision, with important consequences for measuring DM chromaticity and evaluating its effect on pulsar timing experiments.
+These results are discussed in detail in \citet{Kaur2019}.
+
+The resemblance of the newly-sighted precursor components to the temporal artefacts induced by the synthesis filter naturally raises questions about their authenticity.
+The fact that the components only appear on the leading side of the main pulse is a point in favour of them being real, since the temporal artefacts are expected to appear on both leading and trailing sides.
+In addition, the time interval between the main pulse and the closest component is $\sim150\,\mu$s, which, although it corresponds to the expected location of the third-order artefact, is not expected to be brighter than the first two; however, no evidence of the lower-order artefacts is seen.
+Finally, recent independent follow-up observations made by some of the authors using Band 3 ($250$ to $500\,$MHz) of the upgraded Giant Metrewave Radio Telescope (uGMRT) have confirmed the reality of the innermost component (Kaur et al., in prep).
+
+\psrbhatJ{} \dots
+
+\psrslowB{} \dots
+
+\begin{figure}[t!]
+    \centering
+    \includegraphics[angle=270,width=\columnwidth]{J2241_063-172_FITS_profile.eps}
+    \includegraphics[angle=270,width=\columnwidth]{J2241_063-172_vdif_profile.eps}
+    \caption{Profiles of PSR \psrkaurJ{} made using incoherently de-dispersed, $10\,$kHz fine channels (top) and coherently de-dispersed, reconstructed coarse channels (bottom) from the same data set \citep{Kaur2019}. The possibility that the two small components on the leading side of the main pulse are artefacts of the synthesis filter has been ruled out (see accompanying text).}
+    \label{fig:J2241_profiles}
+\end{figure}
 
 \section{Conclusion}
 
