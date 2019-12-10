@@ -15,6 +15,10 @@ signal(n) = cos(0.01*n) + randn(n)/2.0
 unset key
 unset tics
 
+# The four "taps"
+ntaps = 4
+tapsize = N/ntaps
+
 set samples N
 
 set print $sig
@@ -23,48 +27,85 @@ do for [n=0:N-1] { print n, signal(n) }
 set print $fil
 do for [n=0:N-1] { print n, filter(n) }
 
+set print $filsig
+do for [n=0:N-1] { print n, filter(n)*signal(n) }
+
+set samples tapsize
+set print $summed
+do for [n=0:tapsize-1] {
+    s = 0
+    do for [t=0:ntaps-1] { s = s + filter(t*tapsize + n)*signal(t*tapsize + n) }
+    print n, s
+}
+
 set print
 
 set multiplot
 
-# The four "taps"
-ntaps = 4
-tapsize = N/ntaps
-
 lgap = 0.02 # Left margin gap in screen units
 rgap = 0.02 # Right margin gap
-mgap = 0.08 # Gap between panels
+hgap = 0.04 # Gap between panels
 
-w = (1.0 - (lgap + rgap + (ntaps-1)*mgap)) / ntaps # Width of one plot
-W = w + mgap                                       # Width of one plot plus one gap
+tgap = 0.02
+h    = 0.16
+vgap = 0.08
+
+w = (1.0 - (lgap + rgap + (ntaps-1)*hgap)) / ntaps # Width of one plot
+W = w + hgap                                       # Width of one plot plus one gap
+
+L(t) = lgap + W*t
+R(t) = L(t) + w
 
 do for [t=0:ntaps-1] {
-    L = lgap + W*t
-    R = L + w
 
-    set lmargin at screen L
-    set rmargin at screen R
+    set lmargin at screen L(t)
+    set rmargin at screen R(t)
 
-    set samples N/ntaps
+    set samples tapsize
 
-    set xrange [t*N/ntaps:(t+1)*N/ntaps-1]
+    set xrange [t*tapsize:(t+1)*tapsize-1]
+
+    # Plot the signal panels
 
     set tmargin at screen 0.98
-    set bmargin at screen 0.78
+    set bmargin at screen 0.82
 
-    set label t+1 "⊗" at screen (L+R)/2.0, screen 0.74 center font ",16"
+    set label t+1 "⊗" at screen (L+R)/2.0, screen 0.78 center font ",16"
 
     set yrange [-4:4]
     plot $sig w l
 
-    set tmargin at screen 0.70
-    set bmargin at screen 0.50
+    # Plot the filter panels
 
-    unset label
+    set tmargin at screen 0.74
+    set bmargin at screen 0.58
+
+    set label t+1+ntaps "⊜" at screen (L+R)/2.0, screen 0.54 center font ",16"
 
     set yrange [-0.25:1.1]
     plot $fil w l
 
+    # Plot the signal-times-filter panels
+
+    set tmargin at screen 0.50
+    set bmargin at screen 0.34
+
+    unset label
+    #set label t+1+ntaps "⊜" at screen (L+R)/2.0, screen 0.54 center font ",16"
+
+    set yrange [-1.1:1.6]
+    plot $filsig w l
+
 }
+
+# Plot the summed panel
+
+set tmargin at screen 0.20
+set bmargin at screen 0.04
+set lmargin at screen 0.2
+set rmargin at screen 0.2 + w
+
+set xrange [0:tapsize-1]
+plot $summed w l
 
 unset multiplot
