@@ -1,8 +1,12 @@
 EPS = inverse_condition.eps \
 	  filter.eps \
-	  pre_fft_distributions.eps
+	  pre_fft_distributions.eps \
+	  cartoon.eps
 
 all_eps: $(EPS)
+
+cartoon.eps: cartoon.gpi
+	gnuplot -e "set terminal epscairo size 4,5; set output '$@'" $<
 
 pre_fft_distributions.eps: pre_fft_distributions.py
 	python $<
