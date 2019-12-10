@@ -1,5 +1,7 @@
 reset
 
+myfont = ",28"
+
 N = 1536
 K = 128.0
 
@@ -59,7 +61,7 @@ R(t) = L(t) + w
 T(t) = (t <= 2 ? 1.0 - (tgap + H*t) : tgap + h)
 B(t) = (t <= 2 ? T(t) - h           : tgap)
 
-lastL(t) = 0.2
+lastL(t) = (t == 1 ? 0.2 : 0.8 - w)
 lastR(t) = lastL(t) + w
 
 
@@ -77,7 +79,7 @@ do for [t=0:ntaps-1] {
     set tmargin at screen T(0)
     set bmargin at screen B(0)
 
-    set label t+1 "⊗" at screen (L(t)+R(t))/2.0, screen (B(0)+T(1))/2.0 center font ",16"
+    set label t+1 "⊗" at screen (L(t)+R(t))/2.0, screen (B(0)+T(1))/2.0+0.005 center font myfont
 
     set yrange [-4:4]
     plot $sig w l
@@ -87,7 +89,7 @@ do for [t=0:ntaps-1] {
     set tmargin at screen T(1)
     set bmargin at screen B(1)
 
-    set label t+1 "⊜" at screen (L(t)+R(t))/2.0, screen (B(1)+T(2))/2.0 center font ",16"
+    set label t+1 "⊜" at screen (L(t)+R(t))/2.0, screen (B(1)+T(2))/2.0+0.005 center font myfont
 
     set yrange [-0.25:1.1]
     plot $fil w l
@@ -112,8 +114,19 @@ set rmargin at screen lastR(1)
 
 set xrange [0:tapsize-1]
 
-set label 1 "⊕" at screen (lastL(1) + lastR(1))/2.0, screen (B(2) + T(3))/2.0 center font ",16"
+set label 1 "⊕" at screen (lastL(1) + lastR(1))/2.0, screen (B(2) + T(3))/2.0 center font myfont
 
 plot $summed w l
+
+set lmargin at screen lastL(2)
+set rmargin at screen lastR(2)
+
+set yrange [0:*]
+
+set label 1 "FFT" at screen (lastR(1) + lastL(2))/2.0, screen (B(3) + T(3))/2.0+0.05 center font myfont
+set arrow 1 from screen lastR(1), (B(3) + T(3))/2.0 \
+            to   screen lastL(2), (B(3) + T(3))/2.0
+
+plot 'ffted.txt' w l
 
 unset multiplot
