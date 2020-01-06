@@ -116,7 +116,8 @@ set yrange [0:*]
 
 set label 1 "FFT" at screen (lastR(1) + lastL(2))/2.0, screen (B(3) + T(3))/2.0+0.05 center font myfont
 set arrow 1 from screen lastR(1), (B(3) + T(3))/2.0 \
-            to   screen lastL(2), (B(3) + T(3))/2.0
+            to   screen lastL(2), (B(3) + T(3))/2.0 \
+            lw 5
 
 plot dat index 1 using 0:2 w l
 
