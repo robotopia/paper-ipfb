@@ -80,9 +80,9 @@ do for [t=0:ntaps-1] {
     set tmargin at screen T(2)
     set bmargin at screen B(2)
 
-    labelv = (B(2)+T(3))/2.0
+    labelv = (B(2)+T(3))/2.0 - 0.02
     unset arrow
-    set arrow t+1 from screen midh, screen B(2) to screen (lastL(1) + lastR(1))/2.0, screen labelv+0.01 nohead lw 5
+    set arrow t+1 from screen midh, screen B(2) to screen (lastL(1) + lastR(1))/2.0, screen labelv+0.035 nohead lw 5
 
     set yrange [-1.1:1.6]
     plot dat index 0 using 0:3 w l
@@ -99,10 +99,13 @@ set rmargin at screen lastR(1)
 
 set xrange [0:tapsize-1]
 
-set label 1 "⊕" at screen (lastL(1) + lastR(1))/2.0, screen (B(2) + T(3))/2.0 center font myfont
-set arrow 1 from screen (lastL(1) + lastR(1))/2.0, screen labelv-0.015 to screen (lastL(1) + lastR(1))/2.0, screen T(3) lw 5
+set label 1 "⊕" at screen (lastL(1) + lastR(1))/2.0, screen labelv center font myfont
+set arrow 1 from screen (lastL(1) + lastR(1))/2.0, screen labelv+0.035 to screen (lastL(1) + lastR(1))/2.0, screen labelv+0.01 nohead lw 5
+set arrow 2 from screen (lastL(1) + lastR(1))/2.0, screen labelv-0.015 to screen (lastL(1) + lastR(1))/2.0, screen T(3) lw 5
 
 plot dat index 1 using 0:1 w l
+
+unset arrow
 
 # Plot the FFT panel
 
