@@ -84,7 +84,7 @@ do for [t=0:ntaps-1] {
     unset arrow
     set arrow t+1 from screen midh, screen B(2) to screen (lastL(1) + lastR(1))/2.0, screen labelv+0.035 nohead lw 5
 
-    set yrange [-1.1:1.6]
+    set yrange [-2.2:1.8]
     plot dat index 0 using 0:3 w l
 
     unset arrow
