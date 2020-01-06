@@ -2,6 +2,19 @@ Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
 Creation-Date: 2019-12-18T08:32:54+08:00
 
-====== B0950+08 ICS ======
-Created Wednesday 18 December 2019
+From an email from Brian Crosse, dated 17 Dec 2019:
 
+{{{code: lang="sh" linenumbers="False"
+Hi Sammy, I found a nice pulse at around 1260302862.  It really stands out in
+channel 119 (gpubox11).
+
+I have a bunch of .sub files for you, but the one I'd suggest you go for first
+is 1260302416_1260302856_11.sub
+
+A chart of the incoherent sum for this file is below.  Red is my flag every
+pulse period.  Blue is ICS.
+
+}}}
+
+
+{{../cncnaoefoopfpkbo.png?width=700}}

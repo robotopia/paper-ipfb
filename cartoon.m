@@ -23,7 +23,7 @@ end
 % The signal function
 function x = signal(N)
     n = [0:N-1]';
-    x = cos(0.01*n) + randn(N,1)/2.0;
+    x = cos(0.5*n) + randn(N,1)/2.0;
 end
 
 % Do a PFB!
@@ -33,6 +33,7 @@ filsig = fil .* sig;
 
 summed = sum(reshape(filsig, [tapsize, ntaps]), 2);
 ffted = abs(fft(summed));
+ffted = shift(ffted, tapsize/2);
 
 data = [sig, fil, filsig];
 

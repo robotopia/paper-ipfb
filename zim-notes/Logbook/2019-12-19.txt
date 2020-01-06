@@ -2,6 +2,18 @@ Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
 Creation-Date: 2019-12-19T10:02:14+08:00
 
-====== 2019-12-19 ======
-Created Thursday 19 December 2019
+Brian and Greg have kindly arranged for me to have access to the HTR files:
 
+{{{code: lang="sh" linenumbers="False"
+> cd /home/smcsweeney/documents/fine-pfb-reconstruction/test-data/B0950+08
+> scp galaxy:/group/mwaops/vcs/1260302416/htr/1260302416_1260302856_11.sub .
+
+}}}
+
+
+I'm going to see if Andrew's calibration observation that he took several hours earlier is any good for my observation.
+The one I identified is 1260271200, taken at 2019-12-13 19:19:42 AWST (for comparison, my B0950+08 obs started at 2019-12-14 03:59:58 AWST).
+
+{{{code: lang="sh" linenumbers="False"
+galaxy> process_vcs.py -m download_cal -O 1260271200 -o 1260302416
+}}}

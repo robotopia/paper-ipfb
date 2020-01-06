@@ -5,8 +5,11 @@ EPS = inverse_condition.eps \
 
 all_eps: $(EPS)
 
-cartoon.eps: cartoon.gpi
+cartoon.eps: cartoon.gpi cartoon.dat
 	gnuplot -e "set terminal epscairo size 4,5; set output '$@'" $<
+
+cartoon.dat: cartoon.m
+	octave $<
 
 pre_fft_distributions.eps: pre_fft_distributions.py
 	python $<

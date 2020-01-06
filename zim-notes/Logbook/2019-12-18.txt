@@ -2,6 +2,13 @@ Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
 Creation-Date: 2019-12-18T07:56:53+08:00
 
-====== 2019-12-18 ======
-Created Wednesday 18 December 2019
+Brian has made a recording of a few minutes of B0950+08 with simultaneous coarse and fine channel data. Today, I'll be processing them!
+
+{{{code: lang="sh" linenumbers="True"
+galaxy> psrbashrc
+galaxy> process_vcs.py -m download_ics -o 1260302416 -a
+galaxy> create_ics_psrfits.py 1260302416
+
+}}}
+
 
