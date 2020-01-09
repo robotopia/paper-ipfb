@@ -1,0 +1,71 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-08T09:06:08+08:00
+
+The previous attempt to do this...
+{{{code: lang="sh" linenumbers="False"
+galaxy> process_vcs.py -m download_cal -O 1260271200 -o 1260302416
+}}}
+
+...bombed out with an out of time error. I didn't follow that up, and simply tried again this morning, after Pawsey's upgrade over the holiday break. I got an sbatch error saying:
+{{{code: lang="sh" linenumbers="False"
+2020-01-08 08:54:38,015  process_vcs.py  __main__  901   INFO      :: Using vcstools/master
+2020-01-08 08:54:38,015  process_vcs.py  __main__  990   INFO      :: Processing Obs ID 1260302416 from GPS times None till None
+2020-01-08 08:54:38,015  process_vcs.py  __main__  1018  INFO      :: Mode: download_cal
+sbatch: error: Batch job submission failed: Invalid account or account/partition combination specified
+
+}}}
+
+I emailed Pawsey's help desk:
+{{{code: lang="sh" linenumbers="False"
+from:	Sammy McSweeney <sammy.mcsweeney@gmail.com>
+to:	help@pawsey.org.au
+date:	8 Jan 2020, 09:05
+subject:	mwaops + Zeus?
+mailed-by:	gmail.com
+
+Hi Pawsey,
+
+I just tried using one of our standard scripts for downloading data to be used on Zeus:
+/group/mwaops/vcs/1260302416/batch/caldownload_1260271200.batch
+
+I get the error message:
+sbatch: error: Batch job submission failed: Invalid account or account/partition combination specified
+
+Is the mwaops group no longer set up to use Zeus?
+
+Cheers,
+~/Sam
+
+}}}
+
+They replied:
+{{{code: lang="sh" linenumbers="False"
+from:	Ashley Chew <help@pawsey.org.au>
+reply-to:	help@pawsey.org.au
+to:	sammy.mcsweeney@gmail.com
+date:	8 Jan 2020, 09:28
+subject:	GS-14018 mwaops + Zeus?
+mailed-by:	pawsey.org.au
+
+Ashley Chew commented:
+
+Hi Sam
+
+I just had a look at the associations of accounts on slurm with regards to "mwaops"
+
+From the looks of it, the only allowed currently is mwaops on galaxy.
+
+On the portal application mwaops has both access to galaxy and zeus.
+
+Looks like it was a byproduct of account cleanup on magnus and zeus.
+
+Although it was listed on the portal, the accounts needs to be re-activated on zeus after the purge (Galaxy was left untouched)
+
+I've re-activted your account and I'll loop though the other members of mwaops.
+
+Cheers then, Ashley
+
+}}}
+
+So that fixed that issue. But actually, the ASVO data server is down still, so I won't be able to download the data just yet anyway.

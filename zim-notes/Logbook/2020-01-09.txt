@@ -1,0 +1,5 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-09T16:34:51+08:00
+
+Finally added my ASVO key to my Galaxy's .bashrc, so now I can actually download calibration observations through the MWA client of ASVO. I just reran the same process_vcs.py command as yesterday, and it appears to be running now. I'll check in tomorrow to see if it actually worked.
