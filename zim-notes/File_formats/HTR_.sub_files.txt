@@ -1,0 +1,58 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-14T10:41:57+08:00
+
+(https://wiki.mwatelescope.org/display/MP/MWA+High+Time+Resolution+Voltage+Capture+System, accessed 2020-01-14)
+
+All MWA observations start, and end, on eight second boundaries.  These boundaries occur when the current GPS time in seconds is a whole multiple of 8 seconds.  ie when ( GPS_time % 8 == 0 )
+
+As a consequence, all observations are a whole multiple of eight seconds in length.
+
+Within the HTR-VCS system, a separate file is created for each 8 second block ('sub-observation') for each coarse channel that is recorded.
+
+The file size depends on the number of tiles configured to be recorded in that observation.
+
+Within the MWA, each physical tile is assigned a ‘Tile id’. The tile id is a number from 0 to 32767 inclusive. The tile id is linked to an X,Y,Z field location in the M&C database. Should a physical tile have its digitizer chain moved to a different set of electronics, the tile id always remains with the physical tile.
+
+Tile Ids are not assigned consecutively. Gaps are left in the numbers and number ranges are assigned for Hex tiles, Long Baseline tiles etc.  Not all tiles will be included in every observation, so consequentially the order in which included tiles appear can change on observation boundaries.
+
+For the 'standard' MWA system, with 128 dual polarisation tiles, all being recorded, the file size is 5269098496 bytes (~5GB)
+
+The file begins with a 4096 byte ASCII header containing a subset of metadata for the observation.
+
+There is then a 'delay metadata' block, used for fringe-tracking, of size:  numTiles * 2 * 102400 bytes.  For the standard 128T array, this is 26214400 bytes.
+
+There are then 200 independent 'voltage data' blocks, each the same size as the delay metadata block.  That is numTiles * 2 * 102400 bytes.
+
+The total file size of a 128-Tile observation file is therefore 4096 + 201 * 26214400 or  5269098496 bytes.
+
+Each 'voltage data' block contains 40ms of raw voltage data for each tile.
+
+The voltage buffer ordering is:
+* Antenna 0 polarisation X  (51,200 consecutive samples)
+* Antenna 0 polarisation Y (51,200 consecutive samples)
+* Antenna 1 polarisation X (51,200 consecutive samples)
+* Antenna 1 polarisation Y (51,200 consecutive samples)
+* Antenna 2 polarisation X (51,200 consecutive samples)
+* Antenna 2 polarisation Y (51,200 consecutive samples)
+* … through to the final antenna in this observation.  Assuming n tiles, that would be:
+* Antenna (n-1) polarisation X (51,200 consecutive samples)
+* Antenna (n-1) polarisation Y  (51,200 consecutive samples)
+
+Each sample is two Bytes.  One byte 'real' followed by one byte 'imaginary'. The values are stored as 'signed chars' in standard 'twos complement'.  51,200 samples are therefore 102400 bytes.  Each Tile is assumed to have two polarisations.
+
+The ordering of antenna numbers (from 0 to numTiles-1) and the link back to the original tile information such as location, is defined within the observation's 'metafits' file.  The metafits file is small in size and available via a web query.  It conforms to the FITS standard which is available for download from NASA at no charge.
+
+Every observation is associated with a unique metafits file. 
+
+Within the metafits, there is a binary table extension (a ‘BINTABLE’) called ‘TILEDATA’ which contains information on all tiles that are to be included in the observation.
+
+There is a row (AXIS2) for each signal chain. I.e. a separate row for each of X and Y polarisation.
+
+That row contains three table fields relevant to ordering:
+* “Tile” contains the tile id number from 0 to 32767 inclusive described above.
+* “Pol” contains the polarisation “X” or “Y”.
+* “Antenna” contains the voltage buffer order that will lead to the HTR-VCS file output order.
+
+For the HTR-VCS system, the order in which tiles/rows appear in the metafits table is not considered or used. Only the values of those three fields.
+

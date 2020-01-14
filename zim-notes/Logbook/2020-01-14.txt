@@ -1,0 +1,79 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-14T08:39:26+08:00
+
+Nick fixed the issue from the last entry (2020-01-10), so srclist_by_beam.py worked. Now to continue the calibration:
+
+{{{code: lang="sh" linenumbers="False"
+galaxy> cd /group/mwaops/vcs/1260302416/cal/1260271200/vis
+galaxy> srclist_by_beam.py -m 1260271200.metafits -n 1000 -s $RTS_SRCLIST
+galaxy> calibrate_vcs.py -o 1260302416 -O 1260271200 -m 1260271200_metafits_ppds.fits -s srclist_pumav3_EoR0aegean_EoR1pietro+ForA_1260271200_patch1000.txt
+
+}}}
+
+
+This made an RTS input file, as it should, and it also apparently attempted to submit the RTS job to the queue, but it never got on the queue because of an error (which I only found by re-submitting the batch script "manually"):
+
+{{{code: lang="sh" linenumbers="False"
+galaxy> sbatch /group/mwaops/vcs/1260302416/batch/RTS_1260271200.batch 
+sbatch: unrecognized option '--workdir=/group/mwaops/vcs/1260302416/cal/1260271200/rts'
+Try "sbatch --help" for more information
+}}}
+
+
+I therefore removed the offending line from the batch script and resubmitted it, and now it's sitting on the queue.
+
+--------------------
+
+The job seemed to run ok, so now I need to look at the calibration solutions:
+
+{{{code: lang="sh" linenumbers="False"
+galaxy> cd /group/mwaops/vcs/1260302416/cal/1260271200/rts
+galaxy> for i in $(seq -w 1 24);do python3 `which plot_BPcal_128T.py` -r -o chan${i}_amp.png --file Bandpass*_node0${i}.dat; python3 `which plot_BPcal_128T.py` -r -p -o chan${i}_phase.png --file Bandpass*_node0${i}.dat;done
+
+}}}
+
+
+Many of the resulting PNGs indicated that the Y polarisation of tile 69 had trouble converging. an example is shown below. for completeness, the tiles that were (automatically) flagged to produce these plots were: {16, 24, 120, 121, 122, 123, 124, 125, 126, 127}. The following plot was for the amplitudes of the first course channel (chan01_amp.png)"
+
+{{../../rts_example_01.png?width=700}}
+
+I will try flagging it and running it again.
+
+--------------------
+
+Flagging tile 69 worked really well. Now all the calibration solutions look really good except for
+* coarse channel 6, which was pretty bad throughout, but especially for fine channel 50-something (which may have caused the rest of the failure),
+* coarse channel 9, which looked alright except for fine channel ~88 or thereabouts.
+In particular, coarse channel 11 looks good. The reason I bring that one up in particular is that the high time resolution (HTR; i.e. pre-PFB) files that Brian provided have (according to Brian) several nice bright B0950+08 pulses in that coarse channel. (At least, the files he offloaded to me are called: ''[obsid]_[gpstime]_11.sub''.) I think "coarse channel 11" really means coarse channel 119 (since this obs has coarse channels running from 109 to 132).
+
+I was about to beamform, but I realised that I've only downloded the ics (incoherent sum) files, so now I'll have to download the recombined files.
+
+{{{code: lang="sh" linenumbers="False"
+galaxy> process_vcs.py -m download -o 1260302416 -a
+}}}
+
+
+Great, that's on its way now.
+
+--------------------
+
+While those are downloading, it's time to start thinking about how to compare the HTR files with my (eventual) inverse-PFB files. The easiest comparison to make is the timeseries of the incoherent sum, just as Brian has been doing. I actually have everything I need to do that comparison now (except the code to do it). So, I'll get cracking!
+
+Downloading the HTR files to my computer:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/htr
+> rsync --progress --partial galaxy:/group/mwaops/vcs/1260302416/htr/*.sub .
+
+}}}
+
+
+--------------------
+
+Ok, I've made a first draft of a program to perform an incoherent sum on the HTR files. It is used as follows:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/htr
+> ./src/htr_incoh -t 1260302416_1260302800_11.sub > 1260302416_1260302800_11_incoh.txt
+}}}
+
+

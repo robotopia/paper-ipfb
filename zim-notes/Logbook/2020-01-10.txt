@@ -1,0 +1,32 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-10T07:49:48+08:00
+
+I finally managed to download the GPUBOX files for the calibration observation 1260271200 in [[/group/mwaops/vcs/1260302416/cal/1260271200/vis.]] Next thing to do is to calibrate on them! Following the instructions on https://wiki.mwatelescope.org/display/MP/Documentation#Documentation-CalibratingwiththeRealTimeSystem(RTS):
+
+{{{code: lang="sh" linenumbers="False"
+galaxy> cd /group/mwaops/vcs/1260302416/cal/1260271200/vis
+galaxy> srclist_by_beam.py -m 1260271200.metafits -n 1000 -s $RTS_SRCLIST
+}}}
+
+
+This last command produces an error:
+{{{code: lang="sh" linenumbers="False"
+Traceback (most recent call last):
+  File "/group/mwa/software/srclists/master/srclist_by_beam.py", line 8, in <module>
+    import pyfits
+  File "/pawsey/cle60up07/python/3.6.3/pyfits/3.4/lib/python3.6/site-packages/pyfits-3.4-py3.6-linux-x86_64.egg/pyfits/__init__.py", line 11, in <module>
+    from . import core
+  File "/pawsey/cle60up07/python/3.6.3/pyfits/3.4/lib/python3.6/site-packages/pyfits-3.4-py3.6-linux-x86_64.egg/pyfits/core.py", line 37, in <module>
+    from . import py3compat
+  File "/pawsey/cle60up07/python/3.6.3/pyfits/3.4/lib/python3.6/site-packages/pyfits-3.4-py3.6-linux-x86_64.egg/pyfits/py3compat.py", line 136, in <module>
+    import pyfits.util
+  File "/pawsey/cle60up07/python/3.6.3/pyfits/3.4/lib/python3.6/site-packages/pyfits-3.4-py3.6-linux-x86_64.egg/pyfits/util.py", line 27, in <module>
+    import numpy as np
+  File "/group/mwa/software/numpy/v1.17.3/galaxy/lib/python3.6/site-packages/numpy/__init__.py", line 140, in <module>
+    from . import _distributor_init
+ImportError: cannot import name _distributor_init
+}}}
+
+
+First port of call: ask Nick. Sent him a message on Slack.
