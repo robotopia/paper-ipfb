@@ -1,0 +1,64 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-15T08:29:17+08:00
+
+After downloading the recombined files of obsid 1260302416, I found that a (for me) familiar error has occurred and untar has failed on several files, including the time span I'm interested in (explicitly, from ''1260302416_1260302482_combined.tar'' to ''1260302416_1260302929_combined.tar''). This range seems to correspond to a filaure of the batch files (in ''/group/mwaops/vcs/1260302416/batch''):
+{{{code: lang="sh" linenumbers="False"
+check_volt_1260302482.batch
+check_volt_1260302546.batch
+check_volt_1260302610.batch
+check_volt_1260302674.batch
+check_volt_1260302738.batch
+check_volt_1260302802.batch
+check_volt_1260302866.batch
+}}}
+
+The other (three?) check_volt scripts seemed to work just fine. Well, I can't be bothered troubleshooting this, so I'll just get Nick to fire off the jobs again and be done with it.
+
+--------------------
+
+I need an apples-to-apples comparison of the HTR data and the resynthesised data set. The trouble is, the latter is necessarily beamformed already, so I'd have to beamform the HTR data without fine-PFB'ing it. If I want to use exactly the same pipeline, I'd have to recast the HTR data into the recombined data format, put it through the beamformer, and then reconstruct the (HTR) timeseries.
+
+Although technically possible, I can't do it both easily and efficiently.
+
+The current beamforming pipeline makes you choose between producing an incoherent sum //or// inverse-PFB. You can't have both.
+
+Weighing everything up, I think the only viable solution is to do the comparison with the incoherent sum. I just realised I //can// avoid the beamforming issue by using my branch of the beamformer that picks out a single antenna instead of beamforming. If I do that for each antenna, I'll have a directly comparable set of HTR voltages. I can then fold each data set in the same way to get a folded profile which I can then directly compare. I'll also have a "noise" timeseries which has only been forward- and backward-PFB'ed. Finally, I can produce the full coherently dedispersed profile for the wow factor (assuming there is one).
+
+Downloading the relevant recombined files:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> rsync --progress --partial galaxy:/group/mwaops/vcs/1260302416/combined/1260302416_12603028??_ch119.dat .
+
+}}}
+
+
+--------------------
+
+Switching tracks for a moment, I just wrote a program for (incoherently summing and) folding HTR data at a given pulsar period.
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/htr
+> ../src/htr_fold_incoh -P 0.2530651649482 -n 1024 1260302416_12603028*.sub > 1024bin_profile.txt
+gnuplot> set xrange [*:*] noextend
+gnuplot> set format x "%h°"
+gnuplot> set xlabel "Rotation phase"
+gnuplot> set ylabel "Intensity (a.u.)"
+gnuplot> plot '1024bin_profile.txt' u ($1*360/1024.0):2 w l notitle
+
+}}}
+
+{{~/documents/fine-pfb-reconstruction/B0950+08/htr/1024bin_profile.png?width=480}}
+I should now be able to re-create the kind of single-pulse data that Brian was producing. If I set the period to be the whole time, I can choose the number of bins as an effective time-scrunching factor. There are 80 seconds worth of data here, so if I choose 6,400,000 bins, I should get out the same time resolution as I would for fine-PFB'ed data:
+
+80*200*51200/6400000 = a scrunching factor of 128
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/htr
+> # git checkout 9d28800
+> ../src/htr_fold_incoh -P 80 -n 6400000 1260302416_12603028*.sub > single_pulse.txt
+gnuplot> [similar to above]
+
+}}}
+
+

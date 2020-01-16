@@ -73,7 +73,7 @@ Downloading the HTR files to my computer:
 Ok, I've made a first draft of a program to perform an incoherent sum on the HTR files. It is used as follows:
 {{{code: lang="sh" linenumbers="False"
 > cd ~/documents/fine-pfb-reconstruction/B0950+08/htr
-> ./src/htr_incoh -t 1260302416_1260302800_11.sub > 1260302416_1260302800_11_incoh.txt
+> ../src/htr_incoh -t 1260302416_1260302800_11.sub > 1260302416_1260302800_11_incoh.txt
 }}}
 
 
