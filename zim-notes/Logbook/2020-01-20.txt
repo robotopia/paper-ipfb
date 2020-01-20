@@ -14,3 +14,39 @@ galaxy> process_vcs.py -m beamform -o 1260302416 -b 1260302800 -e 1260302879 \
 }}}
 
 Well, it ran, and finished, and now I have a bunch of VDIF files to look at. And, inspecting the batch files, it looks like I had my "-z" option wrong! I don't know how, but somehow I was using the time 20:07:24 instead of the correct time 20:06:22 which corresponds to the beginning GPS time 1260302800. That's weird — how on earth was I 62 seconds out??
+
+First, another pic:
+{{{code: lang="sh" linenumbers="False"
+galaxy> /group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750
+galaxy> dspsr -E 0950.par -b 1024 -s -K C001_1260302416_ch119_u.hdr
+galaxy> psradd -o pulse_all.ar pulse_4252597*.ar
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> scp galaxy:/group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/pulse_all.ar .
+> pav -g 1024bins.ps/cps -YFCp pulse_all.ar
+> convert 1024bins.ps -flatten -rotate 90 1024bins.png
+
+}}}
+
+
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/1024bins.png}}
+
+Now for the high time resolution plot of the 62th second:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> scp galaxy:/group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/C001_1260302416_ch119* .
+> ../../forward-pfb-model/read_vdif C001_1260302416_ch119_u.vdif 0 62.0 63.0 > vdif_pol0_62s.txt
+> ../../forward-pfb-model/read_vdif C001_1260302416_ch119_u.vdif 1 62.0 63.0 > vdif_pol1_62s.txt
+> paste vdif_pol0_62s.txt vdif_pol1_62s.txt > vdif_62s.txt
+gnuplot> set xlabel "Time (s)"
+gnuplot> set ylabel "Intensity (a.u.)"
+gnuplot> plot 'vdif_62s.txt' u ($0/1280000 + 62):(sqrt($1**2 + $2**2 + $3**2 + $4**2)) w l no title
+
+}}}
+
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/vdif_62s.png?width=480}}
+Here is a very exciting zoom of the barely-resolved spike at ~62.25 seconds:
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/vdif_62s_zoom1.png?width=480}}
+
+
+
+
