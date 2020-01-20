@@ -1,0 +1,16 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-20T08:39:19+08:00
+
+Nick used the Galaxy version to beamform on my pulsar just fine:
+{{../../Images/1260302416_ch109-132_0001_PSR_0953+0755.pfd.png?width=700}}
+So I must have been doing something wrong in my custom call to make_beam, or there version of make_beam I'm using is buggy. At any rate, Nick didn't choose VDIF output, so I'll just try and run it on Galaxy myself:
+{{{code: lang="sh" linenumbers="False"
+galaxy> process_vcs.py -m beamform -o 1260302416 -b 1260302800 -e 1260302879 \
+        --DI_dir /group/mwaops/vcs/1260302416/cal/1260305032/rts \
+        --bf_out_format vdif -p "09:53:09.31_+07:55:35.750" \
+        --flagged_tiles /group/mwaops/vcs/1260302416/cal/1260305032/rts/flagged_tiles.txt
+
+}}}
+
+Well, it ran, and finished, and now I have a bunch of VDIF files to look at. And, inspecting the batch files, it looks like I had my "-z" option wrong! I don't know how, but somehow I was using the time 20:07:24 instead of the correct time 20:06:22 which corresponds to the beginning GPS time 1260302800. That's weird — how on earth was I 62 seconds out??

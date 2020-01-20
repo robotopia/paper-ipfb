@@ -2,6 +2,8 @@ Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
 Creation-Date: 2020-01-15T08:29:17+08:00
 
+(This log entry actually covers 2020-01-15 through 2020-01-17.)
+
 After downloading the recombined files of obsid 1260302416, I found that a (for me) familiar error has occurred and untar has failed on several files, including the time span I'm interested in (explicitly, from ''1260302416_1260302482_combined.tar'' to ''1260302416_1260302929_combined.tar''). This range seems to correspond to a filaure of the batch files (in ''/group/mwaops/vcs/1260302416/batch''):
 {{{code: lang="sh" linenumbers="False"
 check_volt_1260302482.batch
@@ -49,16 +51,37 @@ gnuplot> plot '1024bin_profile.txt' u ($1*360/1024.0):2 w l notitle
 }}}
 
 {{~/documents/fine-pfb-reconstruction/B0950+08/htr/1024bin_profile.png?width=480}}
-I should now be able to re-create the kind of single-pulse data that Brian was producing. If I set the period to be the whole time, I can choose the number of bins as an effective time-scrunching factor. There are 80 seconds worth of data here, so if I choose 6,400,000 bins, I should get out the same time resolution as I would for fine-PFB'ed data:
-
-80*200*51200/6400000 = a scrunching factor of 128
+I should now be able to re-create the kind of single-pulse data that Brian was producing. If I set the period to be the whole time, I can choose the number of bins as an effective time-scrunching factor. There are 80 seconds worth of data here, so if I choose 6,400,000 bins, I should get out an effective sampling rate of 80 kHz:
 
 {{{code: lang="sh" linenumbers="False"
 > cd ~/documents/fine-pfb-reconstruction/B0950+08/htr
 > # git checkout 9d28800
 > ../src/htr_fold_incoh -P 80 -n 6400000 1260302416_12603028*.sub > single_pulse.txt
-gnuplot> [similar to above]
+gnuplot> set xrange [*:*] noextend
+gnuplot> set xlabel "Time (s)"
+gnuplot> set ylabel "Intensity (a.u.)"
+gnuplot> plot 'single_pulse.txt' u ($1/80000.0):2 w l notitle
 
 }}}
 
+{{~/documents/fine-pfb-reconstruction/B0950+08/htr/single_pulse.png?width=480}}
+The spike at around 62 seconds has me intrigued. When I zoom in on it, it looks like a subpulse lasting less than 20 ms, with an unresolved spike in the middle of it! This is quite exciting, because it means there might be discernible structure at higher time resolutions.
+{{~/documents/fine-pfb-reconstruction/B0950+08/htr/single_pulse_zoom.png?width=480}}
+The above is equivalent to downsampling the original HTR sampling rate by a factor of 16. I will now re-process just the HTR file containing this section of data without any downsampling at all, and see what this "spike" looks like then!
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/htr
+> ../src/htr_incoh -t 1260302416_1260302856_11.sub > spike.txt
+gnuplot> set xrange [*:*] noextend
+gnuplot> set xlabel "Time (s)"
+gnuplot> set ylabel "Intensity (a.u.)"
+gnuplot> plot 'spike.txt' u ($0/1280000.0+56):1 w l notitle
+
+}}}
+
+Hmm, not as exciting as I'd hoped.
+{{~/documents/fine-pfb-reconstruction/B0950+08/htr/spike.png?width=480}}
+But maybe DM smear is getting in the way? If this is channel 119 as I expect, then the DM smear for this pulsar (DM = 2.96927 pc/cm^3) is approximately 9 ms across the whole coarse channel. this actually seems consistent with the width of the subpulse, but makes it seem like the unresolved spike was a fluke, unless the spike itself is quite narrow band. The spike itself (in the 80 kHz data) occurs at ~62.3013 s. A zoom of the HTR data at that time reveals the following structure:
+{{~/documents/fine-pfb-reconstruction/B0950+08/htr/spike_zoom.png?width=480}}
+So I think the best strategy is to look at how this all looks with full reconstructed VDIF, and see if there is any sign of fine temporal structure in the coherently de-dispersed data. At this point, I'll start a new log entry.
 

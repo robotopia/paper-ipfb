@@ -1,0 +1,192 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-17T09:37:27+08:00
+
+Assuming the coarse channel number corresponding to the "11" in the .sub file names is 119 (and not 120), I simply need to run the recombined file 1260302416_1260302862_ch119.dat through the beamformer and take a look at the VDIF output. I've already downloaded the recombined files (see previous entry), but I also need the metafits file and the calibration solution (fingers crossed hope it works!)
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> wget http://ws.mwatelescope.org/metadata/fits?obs_id=1260302416 -O metadata.fits
+> scp galaxy:/group/mwaops/vcs/1260302416/cal/1260271200/rts/DI*.dat .
+> scp galaxy:/group/mwaops/vcs/1260302416/cal/1260271200/rts/flagged_tiles.txt .
+
+}}}
+
+Now for the beamforming. First, I switched to the no_antenna_sum branch of the vcstools git repo and recompiled. Then:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> rm -f C001_1260302416_ch119_u.*
+> make_beam -o 1260302416 -b 1260302862 -e 1260302862 -z 2019-12-13T20:07:24 \
+    -R "09:53:09.3097" -D "+07:55:35.75" \
+    -d /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec \
+    -m /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits \
+    -f 119 -u \
+    -F /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/flagged_tiles.txt \
+    -J /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal
+
+}}}
+
+Unfortunately, this gives me an error!
+{{{code: lang="sh" linenumbers="False"
+[0.000005]  Starting make_beam with GPU acceleration
+[0.108971]  Reading in metafits file information from /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits
+warning: antenna   0, pol 0 is included even though it is flagged in the metafits file
+warning: antenna   0, pol 1 is included even though it is flagged in the metafits file
+warning: antenna   1, pol 0 is included even though it is flagged in the metafits file
+warning: antenna   1, pol 1 is included even though it is flagged in the metafits file
+warning: antenna   2, pol 0 is included even though it is flagged in the metafits file
+warning: antenna   2, pol 1 is included even though it is flagged in the metafits file
+warning: antenna   3, pol 0 is included even though it is flagged in the metafits file
+warning: antenna   3, pol 1 is included even though it is flagged in the metafits file
+warning: antenna  72, pol 0 is included even though it is flagged in the metafits file
+warning: antenna  72, pol 1 is included even though it is flagged in the metafits file
+warning: antenna  97, pol 0 is included even though it is flagged in the metafits file
+warning: antenna  97, pol 1 is included even though it is flagged in the metafits file
+[0.109690]  Setting up output header information
+[0.240354]  **BEGINNING BEAMFORMING**
+[0.240365]  Reading in data from /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/1260302416_1260302862_ch119.dat [1/1]
+[0.338320]  Calculating delays
+[0.342666]  Calculating beam
+[0.993079]  Inverting the PFB (full)
+[1.502330]  Writing data to file(s)
+warning: vdif_write_second: significantly non-zero mean (nan), adjusting data
+error: set_level_occupancy: input[0] = NaN
+
+}}}
+
+I took the advice and add the extra antennas to ''flagged_tiles.txt'', but it didn't help:
+{{{code: lang="sh" linenumbers="False"
+[0.000002]  Starting make_beam with GPU acceleration
+[0.090430]  Reading in metafits file information from /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits
+[0.091123]  Setting up output header information
+[0.185922]  **BEGINNING BEAMFORMING**
+[0.185935]  Reading in data from /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/1260302416_1260302862_ch119.dat [1/1]
+[0.284496]  Calculating delays
+[0.288700]  Calculating beam
+[0.966066]  Inverting the PFB (full)
+[1.475966]  Writing data to file(s)
+warning: vdif_write_second: significantly non-zero mean (nan), adjusting data
+error: set_level_occupancy: input[0] = NaN
+
+}}}
+
+The data inside 1260302416_1260302862_ch119.dat look fine (looking at hexdump -C) so I guess the problem must be in the calibration solution? In the DI_JonesMatrices files, it looks like the only matrices that are filled with zeros are those for the last eight antennas, but they are all being flagged in flagged_tiles.txt (120-127). All the other suspect Jones matrices (with only real entries) are also all flagged. Everything else looks fine!
+
+Ok, I just noticed in the 2019-11-12 entry that I was having the same issues with this git branch back then, so maybe I'll only use this branch for when I'm not beamforming, but using the -A option that I introduced especially for that branch. I switched to the latest legacy branch (a5d8f4e) (the current master branch is the multipixel version which currently doesn't support VDIF output so can't be used with GPUs). I rebuilt it and it all seems fine. Now I'll try and run make_beam afresh:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> rm -f C001_1260302416_ch119_u.*
+> make_beam -o 1260302416 -b 1260302862 -e 1260302862 -z 2019-12-13T20:07:24 \
+    -R "09:53:09.3097" -D "07:55:35.75" \
+    -d /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec \
+    -m /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits \
+    -f 119 -u \
+    -F /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/flagged_tiles.txt \
+    -J /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal
+
+}}}
+
+Still no joy...
+
+Aha! Of course! **I need to give it the ACTUAL Jones matrix file for that coarse channel**. God, what a rookie error. Switching back to the no_antenna_sum branch then (090bc62)! I also just found out from Andrew Williams that it's likely that the channel numbers given in the HTR .sub file filenames are probably 1-indexed, so that means I think I'm correct in using channel 119.
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> rm -f C001_1260302416_ch119_u.*
+> make_beam -o 1260302416 -b 1260302862 -e 1260302862 -z 2019-12-13T20:07:24 \
+    -R "09:53:09.3097" -D "07:55:35.75" \
+    -d /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec \
+    -m /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits \
+    -f 119 -u \
+    -F /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/flagged_tiles.txt \
+    -J /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/DI_JonesMatrices_node011.dat
+
+}}}
+
+Excellent! It worked! But is the output sensible?
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> ../../forward-pfb-model/read_vdif C001_1260302416_ch119_u.vdif 0 > 1260302862_polX.txt
+> ../../forward-pfb-model/read_vdif C001_1260302416_ch119_u.vdif 1 > 1260302862_polY.txt
+> paste 1260302862_polX.txt 1260302862_polY.txt > 1260302862_all.txt
+gnuplot> set xrange [*:*] noextend
+gnuplot> set xlabel "Time (s)"
+gnuplot> set ylabel "Intensity (a.u.)"
+gnuplot> plot '1260302862_all.txt' u ($0/1280000.0 + 62):(sqrt($1**2 + $2**2 + $3**2 + $4**2)) w l
+
+}}}
+
+I won't bother showing this plot because (1) nothing seems to crop up at that time stamp, but also, (2) this hasn't been coherently de-dispersed yet.
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> psrcat -e2 B0950+08 > 0950.par
+> dspsr -E 0950.par -b 1024 -s -K -y C001_1260302416_ch119_u.vdif
+
+}}}
+
+**ERROR!** dspsr says:
+{{{code: lang="sh" linenumbers="False"
+dspsr: Loading ephemeris from 0950.par
+*** buffer overflow detected ***: dspsr terminated
+Aborted (core dumped)
+}}}
+
+I tried fiddling with various permutations of options, but nothing seemed to work. When I re-ran the make_beam command to produce PSRFITS output (-u → -p), dspsr does work on the PSRFITS (but a quick look using pav looked like there was not much to see).
+So now I'm re-running the beamformer on the whole 100 seconds that I downloaded:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> rm -rf C001_1260302416_ch119*
+> make_beam -o 1260302416 -b 1260302800 -e 1260302899 -z 2019-12-13T20:06:22 \
+    -R "09:53:09.3097" -D "07:55:35.75" \
+    -d /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec \
+    -m /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits \
+    -f 119 -p -u \
+    -F /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/flagged_tiles.txt \
+    -J /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/DI_JonesMatrices_node011.dat
+
+}}}
+
+The result shows no pulses whatsoever!
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> prepfold -psr 0953+0755 -nosearch C001_1260302416_ch119_0001.fits
+> convert C001_1260302416_ch119_0001_PSR_0953+0755.pfd.ps -flatten -rotate 90 \
+    C001_1260302416_ch119_0001_PSR_0953+0755.png
+
+}}}
+
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/C001_1260302416_ch119_0001_PSR_0953+0755.png}}
+What this is all adding up to is a bung calibration solution. Fortunately, Paul Hancock suggested that there might be other calibration solutions available, so another look at the MWA Observations page revealed a [[HydA]] calibration observation with obsid=1260305032 (only a few minutes after my observation)!
+{{{code: lang="sh" linenumbers="False"
+galaxy> process_vcs.py -m download_cal -O 1260305032 -o 1260302416
+galaxy> cd /group/mwaops/vcs/1260302416/cal/1260305032/vis
+galaxy> srclist_by_beam.py -m 1260305032.metafits -n 1000 -s $RTS_SRCLIST
+galaxy> ln -s 1260305032.metafits 1260305032_metafits_ppds.fits
+galaxy> calibrate_vcs.py -o 1260302416 -O 1260305032 \
+            -m 1260305032_metafits_ppds.fits \
+            -s srclist_pumav3_EoR0aegean_EoR1pietro+ForA_1260305032_patch1000.txt
+galaxy> cd /group/mwaops/vcs/1260302416/cal/1260305032/rts
+galaxy> for i in $(seq -w 1 24);do python3 `which plot_BPcal_128T.py` \
+            -r -o chan${i}_amp.png --file Bandpass*_node0${i}.dat; \
+            python3 `which plot_BPcal_128T.py` \
+            -r -p -o chan${i}_phase.png --file Bandpass*_node0${i}.dat;done
+
+}}}
+
+
+Started downloading cal obs at around 13:17; finished at 14:12, so just under one hour to download. Good to know.
+
+Actually, that time might be a little underestimated because it actually didn't finish, but quit with an error: 
+{{{code: lang="sh" linenumbers="False"
+galaxy> less /group/mwaops/vcs/1260302416/batch/caldownload_1260305032.out
+...
+slurmstepd: error: Detected 2 oom-kill event(s) in step 3569270.batch cgroup. Some of your processes may have been killed by the cgroup out-of-memory handler.
+
+}}}
+Damn! It was just one file short of having two complete sets of gpubox files. I'll run the download script again and see if it can't get the missing files to download properly.
+
+Ah! That finished only in a few minutes! And it looks like everything is there! Running calibrate_vcs.py worked, except, as before, it's putting an erroneous line in the sbatch file (--workdir). Nick said this is actually fixed in some version or another, but I'm happy to take it out manually in the meantime and then run the sbatch script again. The job is now on the queue.
+
+This time the RTS failed on Galaxy, with several errors that definitely sound like it's Pawsey's fault. I've saved off the output as [[/group/mwaops/vcs/1260302416/batch/RTS_1260305032.out.bak,]] and am now trying to run it again.
+
+It worked the second time. Keegan mentioned that that happens to him sometimes too. I should check to see if Chris sees the same thing.
+
+I replaced the DI_JonesMatrices files in [[~/documents/fine-pfb-reconstruction/B0950+08/rec/cal]] with the ones I just made (I double checked that chan11 looks good), and re-ran the beamformer. It all works fine, except the output from both PRESTO and PSRCHIVE still show no hint of any pulses whatsoever! I can't imagine what I'm doing wrong! In both cases the calibration itself looked great, and the second one is very close in time to my observation. (I can't say how spatially separated they are.) 

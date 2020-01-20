@@ -7,7 +7,9 @@ Nick fixed the issue from the last entry (2020-01-10), so srclist_by_beam.py wor
 {{{code: lang="sh" linenumbers="False"
 galaxy> cd /group/mwaops/vcs/1260302416/cal/1260271200/vis
 galaxy> srclist_by_beam.py -m 1260271200.metafits -n 1000 -s $RTS_SRCLIST
-galaxy> calibrate_vcs.py -o 1260302416 -O 1260271200 -m 1260271200_metafits_ppds.fits -s srclist_pumav3_EoR0aegean_EoR1pietro+ForA_1260271200_patch1000.txt
+galaxy> calibrate_vcs.py -o 1260302416 -O 1260271200 \
+            -m 1260271200_metafits_ppds.fits \
+            -s srclist_pumav3_EoR0aegean_EoR1pietro+ForA_1260271200_patch1000.txt
 
 }}}
 
