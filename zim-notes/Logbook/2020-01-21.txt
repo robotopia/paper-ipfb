@@ -1,0 +1,76 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-21T12:54:32+08:00
+
+The first comparison plot is coming up.
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/htr
+> git checkout 3dce1f2
+> ../src/htr_fold_incoh -P 0.2530651649482 -n 1024 1260302416_12603028*.sub > 1024bin_profile.txt
+> ../src/htr_fold_incoh -P 0.2530651649482 -n 1024 -t vdif ../rec/C001_1260302416_ch119_u.vdif > 1024bin_profile_vdif.txt
+gnuplot> load "B0950+08_profiles.gpi"
+
+}}}
+
+
+{{~/documents/fine-pfb-reconstruction/B0950+08/htr/1024bin_profiles_htr_vs_vdif.png?width=480}}
+
+Next thing I have to do is to change htr_fold_incoh so that it prints out Stokes parameters, not just Stokes I. Might require a bit of a re-write because at the moment I'm treating each tile/pol pair as completely independent.
+
+--------------------
+
+Strike that. My pulsar folding routine is doomed because, of course, my VDIF data isn't ALREADY de-dispersed (either coherently or any other way), and also, I'm not taking into account rotation measure (or any other subtleties...?). I should just leave all that to DSPSR.
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> pav -g 1024bins_profile.ps/cps --publnc -SFTC pulse_all.ar
+> convert 1024bins_profile.ps -flatten -rotate 90 1024bins_profile.png
+
+}}}
+
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/1024bins_profile.png}}
+
+Let's go for the high time resolution zoom! There are 323923.41113 HTR samples per pulsar period. But 323928 is a much rounder number (= 2*2*2*3*3*11*409), suitable for bin scrunching, if needed. The event happens at 62.2512 seconds from the beginning of the data, which corresponds to the 246th pulse.
+{{{code: lang="sh" linenumbers="False"
+galaxy> cd /group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750
+galaxy> psrcat -v
+Software version: 1.49
+Catalogue version number = 1.61
+galaxy> psrcat -e B0950+08 > 0950.par
+galaxy> dspsr -E 0950.par -b 323928 -s -K C001_1260302416_ch119_u.hdr
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> scp galaxy:/group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/pulse_425259733[7-9].ar .
+> pav -g 200ms_res.ps/cps --publnc -SFC -b 264 pulse_4252597337.ar
+> pav -g 50ms_res.ps/cps --publnc -SFC -z 0.45,0.55 -b 66 pulse_4252597337.ar
+> pav -g 5ms_res.ps/cps --publnc -SFC -z 0.495,0.505 -b 6 pulse_4252597337.ar
+> convert 200ms_res.ps -flatten -rotate 90 200ms_res.png
+> convert 50ms_res.ps -flatten -rotate 90 50ms_res.png
+> convert 5ms_res.ps -flatten -rotate 90 5ms_res.png
+
+}}}
+
+
+**200 ms resolution:**
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/200ms_res.png}}
+
+**50 ms resolution:**
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/50ms_res.png}}
+
+**5 ms resolution:**
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/5ms_res.png}}
+
+Here are the .eps versions for the paper:
+{{{code: lang="sh" linenumbers="False"
+> convert 1024bins_profile.ps -rotate 90 1024bins_profile.eps
+> convert 200ms_res.ps -rotate 90 200ms_res.eps
+> convert 50ms_res.ps -rotate 90 50ms_res.eps
+> convert 5ms_res.ps -rotate 90 5ms_res.eps
+
+}}}
+
+
+--------------------
+
+Just wrote a program to extract a single tile/pol from a HTR file. I tested it on a .sub file and it seemed to work just fine. Tomorrow, I'll finish testing it and use it to show the difference in the noise between VDIF and HTR (git commit 220b28e).
+
