@@ -1,0 +1,215 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-22T07:45:26+08:00
+
+Now I have to inspect to see whether I can marry up a tile/pol in the HTR .sub files with the correct tile/pol in the VDIF files. That is to say, I would like to know which tile/pol to PFB-invert using my hacked -A option in make_beam.
+
+**[Python3]**
+{{{code: lang="python3" linenumbers="True"
+from astropy.io import fits
+f = fits.open("/home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits")
+f[1].data['Antenna']
+f[1].data['Tile']
+f[1].data['TileName']
+f.close()
+}}}
+
+
+The above gives me the tile info for the ordering in the recombined files, but I can't find the tile info for the .sub files anywhere, not even in the files' metadata block (which seems to be all zeros). I may have to "guess and check". From earlier, when I was dealing with the old-style .raw files, I found that the first tile/pol in the .raw files corresponded to -A 96 in the recombined files. That's a good a place to start as any, I guess!
+
+First, checkout the ''no_antenna_sum'' branch of the vcstools repo, make, and install it. Then,
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec/single
+> make_beam -o 1260302416 -b 1260302800 -e 1260302800 -z 2019-12-13T20:06:22 \
+    -R "09:53:09.31" -D "+07:55:35.75" \
+    -d /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec \
+    -m /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits \
+    -f 119 -u -A 96 \
+    -J /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/DI_JonesMatrices_node011.dat
+
+}}}
+
+Then, in the same directory, generate the timeseries using:
+{{{code: lang="sh" linenumbers="False"
+> ../../src/htr_tilepol -t 0 -p 0 -f htr ../../htr/1260302416_1260302800_11.sub > htr.txt
+> ../../src/htr_tilepol -t 0 -p 0 -f vdif C001_1260302416_ch119_u.vdif > vdif.txt
+gnuplot> p 'vdif.txt' u (($0-1536)/1280000.0):1 w l, \
+           'htr.txt' every ::::1280000 u ($0/1280000.0):1 w l
+
+}}}
+
+Looks like a non-correlation to me:
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/single/no_correlate_01.png?width=480}}
+...and no wonder. The ordering in the old .raw files is completely different to the .sub files. Next guess is trying "-A 0" (perhaps the more obvious first choice):
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec/single
+> make_beam -o 1260302416 -b 1260302800 -e 1260302800 -z 2019-12-13T20:06:22 \
+    -R "09:53:09.31" -D "+07:55:35.75" \
+    -d /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec \
+    -m /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits \
+    -f 119 -u -A 0 \
+    -J /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/DI_JonesMatrices_node011.dat
+> ../../src/htr_tilepol -t 0 -p 0 -f vdif C001_1260302416_ch119_u.vdif > vdif.txt
+gnuplot> p 'vdif.txt' u (($0-1536)/1280000.0):(sqrt($1**2 + $2**2)) w l, \
+           'htr.txt' every ::::1280000 u ($0/1280000.0):(10*sqrt($1**2 + $2**2)) w l
+
+}}}
+
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/single/no_correlate_02.png?width=480}}
+Nothing for it but to go through them all one by one.
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec/single
+> for A in {0..255}; do \
+    rm -f C001_1260302416_ch119_u.vdif C001_1260302416_ch119_u.hdr
+    make_beam -o 1260302416 -b 1260302800 -e 1260302800 -z 2019-12-13T20:06:22 \
+      -R "09:53:09.31" -D "+07:55:35.75" \
+      -d /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec \
+      -m /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits \
+      -f 119 -u -A $A \
+      -J /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/DI_JonesMatrices_node011.dat
+    ../../src/htr_tilepol -t 0 -p 0 -f vdif C001_1260302416_ch119_u.vdif > vdif_A${A}.txt
+  done
+gnuplot> do for [t=0:255] {
+           plot 'vdif_A'.t.'.txt' every ::(640000-1536)::(640100-1536) \
+                    u ($0/1280000.0):1 \
+                    w l title '-A '.t, \
+                'htr.txt' every ::640000::640100 \
+                    u ($0/1280000.0):(10*$1) \
+                    w l title 'htr 0'
+         }
+
+}}}
+
+Bah, it's no good trying to do it by eye. I'll have to calculate the proper correlation again. This time, I //know// the VDIF samples are out by 1536, so I should just be able to calculate a single number for each tile/pol.
+
+--------------------
+
+Ok, I've just coded up a little C program for doing that. It's in git commit a60a3f4, and can be compiled thusly:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec/single
+> make correlate
+
+}}}
+
+
+Running it over all (VDIF) tile/pols:
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec/single
+> echo "# real  imag" > all_correlate.txt
+> for A in {0..255}; do ./correlate htr.txt vdif_A${A}.txt >> all_correlate.txt; done
+gnuplot> set xlabel "VDIF tile/pol #"
+gnuplot> set xrange [*:*] noextend
+gnuplot> plot 'all_correlate.txt' u 0:1 w l title "Real", \
+              ''                  u 0:2 w l title "Imag"
+
+}}}
+
+Damn! Nothing!
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/single/no_correlate_03.png?width=480}}
+--------------------
+
+Ok, so I found a bug in htr_tilepol which meant that it wasn't reading the VDIF file correctly. Now with the debugged version, I find the answer easily!
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/single/no_correlate_04.png?width=480}}
+The spike occurs at "-A 43". A, hang on a minute. Doing 
+{{{code: lang="sh" linenumbers="False"
+> ../../src/htr_tilepol -t 0 -p 1 -f htr ../../htr/1260302416_1260302800_11.sub > htr_t0_p1.txt
+> for A in {0..255}; do \
+      echo $A
+      ./correlate htr_t0_p1.txt vdif_A${A}.txt >> all_correlate_t0_p1.txt
+  done
+gnuplot> plot 'all_correlate_t0_p1.txt' u 0:1 w l title "Real", '' u 0:2 w l title "Imag"
+
+}}}
+
+results in
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/single/no_correlate_05.png}}
+which looks much more promising. The peak is at "-A 43", like before. I don't understand why there's a second peak, nor do I understand why there wasn't some other peak for "tile 0 pol 0".
+{{{code: lang="sh" linenumbers="False"
+gnuplot> fact = 8.0
+gnuplot> plot 'vdif_A43.txt' every ::(640000+1536)::(640200+1536) \
+             u 1 \
+             w l title 'VDIF', \
+         'htr_t0_p1.txt' every ::640000::640200 \
+             u (fact*$1) \
+             w l title 'Raw'
+
+}}}
+
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/single/no_correlate_06.png}}
+That looks better. Now, to design a plot for the paper.
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec/single
+> paste <(sed -n '4,259p' htr_t0_p1.txt) <(sed -n '1540,1795p' vdif_A43.txt) > correlated_selection.txt
+> gnuplot -e "set terminal epscairo size 5,8 font ',20'; set output 'compare_timeseries.eps'" compare_timeseries.gpi
+
+}}}
+
+compare_timeseries.gpi:
+{{{code: lang="sh" linenumbers="True"
+reset
+
+fact = 8.0 # Scaling factor to put HTR and VDIF on similar footing
+
+rnd(x) = floor(x+0.5)
+
+set xrange [-0.5:128.5]
+
+set multiplot
+
+set lmargin at screen 0.13
+set rmargin at screen 0.96
+set bmargin at screen 0.65
+set tmargin at screen 0.98
+
+unset xtics
+set ytics 2
+set yrange [-6.5:6.5]
+set ylabel "Sample value"
+unset key
+set label 1 "Real" at graph 0.02,0.9 left
+
+plot 'correlated_selection.txt' u 1         w boxes          lc rgb "black" fs solid, \
+     ''                         u ($3/fact) w lp pt 7 ps 0.3 lc rgb "red"
+
+set bmargin at screen 0.53
+set tmargin at screen 0.65
+
+set ytics 2
+set yrange [-3.2:3.2]
+set ylabel "Diff"
+unset label 1
+
+plot 'correlated_selection.txt' u ($1-$3/fact) pt 7 ps 0.3 lc rgb "black" notitle
+
+set bmargin at screen 0.20
+set tmargin at screen 0.53
+
+unset xtics
+set ytics 2
+set yrange [-6.5:6.5]
+set ylabel "Sample value"
+unset key
+set label 1 "Imag" at graph 0.02,0.9 left
+
+plot 'correlated_selection.txt' u 2         w boxes          lc rgb "black" fs solid, \
+     ''                         u ($4/fact) w lp pt 7 ps 0.3 lc rgb "red"
+
+set bmargin at screen 0.08
+set tmargin at screen 0.20
+
+set xlabel "Sample number"
+set xtics 16
+set ytics 2
+set yrange [-3.2:3.2]
+set ylabel "Diff"
+unset label 1
+
+plot 'correlated_selection.txt' u ($2-$4/fact) pt 7 ps 0.3 lc rgb "black" notitle
+
+unset multiplot
+
+}}}
+
+
+
+

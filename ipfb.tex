@@ -12,15 +12,7 @@
 \newcommand{\psrbhatJ}{J0437$-$4715}
 \newcommand{\dmunits}{\ensuremath{\text{pc}\,\text{cm}^{-3}}}
 
-\title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via a synthesis filter}
-
-%%% SAMPLE %%%
-%% Please note that the command \and is not supported in \author.
-%\author[Author1 et al.]{Author1$^1$, Author2$^2$, Author3$^2$ and Author4$^{2,}$\thanks{This is an example of author footnote}
-%\affil{$^1$This is  an example of Affiliation r Author 1}%
-%\affil{$^2$This is  an example of Affiliation for Author 2}
-%}%
-%%% END SAMPLE %%%
+\title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via a polyphase synthesis filter}
 
 \author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$, B. W. Meyers$^{1,2,3}$, S. E. Tremblay, J. Jones$^1$, B. Crosse$^1$
 \affil{$^1$International Centre for Radio Astronomy Research (ICRAR), GPO Box U1987, Perth, WA 6845, Australia}%
@@ -36,17 +28,16 @@
 \usepackage{hyperref}
 \hypersetup{colorlinks,citecolor=blue,linkcolor=blue,urlcolor=blue}
 
-%%%%%%% IMPORTANT: We disable hyperlinks by default with this line, to avoid the error "\pdfendlink ended up in different nesting level" while writing.
-%\hypersetup{draft}
-%%%%%%% You may comment or delete the line above to make hyperlinks in your paper active. If you then encounter a strange "\pdfendlink ended up in different nesting level than \pdfstartlink", don't worry! Uncomment the line again, and see https://www.overleaf.com/help/246 for further information.
-
 \begin{document}
 
 \begin{frontmatter}
 \maketitle
 
 \begin{abstract}
-[Abstract\dots]
+A new high time resolution observing mode for the Murchison Widefield Array (MWA) is described, enabling full polarimetric observations with up to $30.72\,$MHz of bandwidth and a time resolution of $\sim 0.8\,\mu$s.
+This mode makes use of a polyphase synthesis filter to ``undo'' the polyphase analysis filter stage of the standard MWA's Voltage Capture System (VCS) observing mode.
+Sources of potential error in the reconstruction of the high time resolution data are identified and quantified, the most significant of which relate to ``temporal echoes'' seen in impulse response tests.
+The system is further verified by observing three pulsars with known structure on microsecond timescales.
 \end{abstract}
 
 \begin{keywords}
@@ -60,9 +51,9 @@
 
 Some of the most exciting advances in time-domain astronomy have only been made possible by pushing the capabilities of latest generation telescopes to be sensitive to signals of shorter and shorter duration.
 The serendipitous discovery of pulsars in the late 1960's is perhaps the prototypical example \citep{Hewish1968}.
-In more recent times, the ongoing effort to detect nanohertz gravitational waves by means of pulsar timing arrays requires the continual monitoring of the times of arrival (TOAs) of millisecond pulsars (MSPs) with microsecond accuracy (CITATIONS).
-Pulsars are also known to exhibit temporal structures on microsecond and even nanosecond time scales \citep[e.g.][]{Craft1968,Hankins2003}, providing major clues for the underlying radio emission mechanism \citep[][\dots]{Cordes1981}.
-Similarly, fast radio bursts (FRBs) have been shown to exhibit temporal sub-millisecond structures that either point to the intrinsic emission mechanism or to interesting propagation effects occurring in the intergalactic medium \citep{Hessels2019}.
+In more recent times, the ongoing effort to detect nanohertz gravitational waves by means of pulsar timing arrays requires the continual monitoring of the times of arrival (TOAs) of millisecond pulsars (MSPs) with microsecond accuracy \citep[e.g.][]{Hobbs2017}.
+Pulsars are also known to exhibit temporal structures on microsecond and even nanosecond time scales \citep[e.g.][]{Craft1968,Hankins2003}, providing major clues for the underlying radio emission mechanism \citep[e.g.][]{Cordes1981,Popov2002}.
+Similarly, fast radio bursts (FRBs) have been shown to exhibit temporal sub-millisecond structures that either point to the intrinsic emission mechanism or to interesting propagation effects occurring in the intergalactic medium \citep{Farah2018,Hessels2019}.
 All of these examples serve to illustrate the scientifically important and still largely untapped parameter space that is only accessible to telescopes equipped with a sufficiently high time resolution observing mode.
 
 The Murchison Widefield Array \citep[MWA;][]{Tingay2013} is a low-frequency ($\sim80$ to $300\,$MHz) aperture array telescope located at the Murchison Radio Observatory (MRO) in Western Australia.
@@ -72,7 +63,7 @@ This system has enabled the MWA to be used as a premier instrument for high-time
 
 Although the tile voltages are sampled at a (Nyquist) rate of $655.36\,$MHz, these data undergo several stages of processing before finally being written to disk.
 After preliminary filtering and digitisation, the raw voltages are subjected to a two-stage frequency analysis filter, which trades time resolution for increased frequency resolution.
-In the MWA's case, both stages of the analysis filter were implemented as polyphase filterbanks \citep[PFBs;][\dots]{Harris2011,Prabu2015}.
+In the MWA's case, both stages of the analysis filter were implemented as polyphase filterbanks \citep[PFBs;][]{Harris2011,Prabu2015}.
 The first stage (`coarse') PFB reduces the effecting sampling rate by a factor of 512, resulting in an array of complex-valued samples with $1.28\,$MHz resolution in frequency (`coarse' channels) and $\sim0.8\,\mu$s in time.
 In the second stage (`fine') PFB, each coarse channel is further split into $128 \times 10\,$kHz `fine' channels at the cost of decreasing the time resolution to $100\,\mu$s.
 
@@ -147,8 +138,8 @@ A short proof of this equivalence is given in \citet{Harris2011}.
 The procedure described by Eq. \eqref{eqn:pfb} is called the \textit{weighted overlap-add} algorithm, and is illustrated in Fig. \ref{fig:pfb}.
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{example-image-a}
-    \caption{A diagrammatic representation of the weighted overlap-add algorithm, as defined in Eq. \eqref{eqn:pfb}.}
+    \includegraphics[width=\columnwidth]{cartoon.eps}
+    \caption{A diagrammatic representation of the weighted overlap-add algorithm, as defined in Eq. \eqref{eqn:pfb}. A discrete signal containing a sinusoid and noise (top row) is multiplied by a filter (second and third rows), and each ``tap'' (represented by columns) is summed (bottom left) and Fourier transformed to produce the final spectrum (bottom right).}
     \label{fig:pfb}
 \end{figure}
 
@@ -257,11 +248,11 @@ This makes conducting standard impulse response tests impossible, unless the exa
 We have therefore attempted to replicate the PFB in software; however, the replication was not perfect, causing a small difference between the our model analysis-synthesis back-to-back system, and the analysis-synthesis system used in production.
 
 In the fidelity tests presented in this section, there are therefore a number of sources of error, all of which cause the reconstructed coarse channel time series, $\hat{x}[n]$, to differ from the original input time series, $x[n]$:
-\begin{itemize}
-    \item the imperfect replication of the forward PFB, estimated to contribute noise-like error at the $-20\,$dB level (``replication error'', see Appendix for details);
-    \item the error associated with the demotion of the input (5+5)-bit complex integers ($x[n]$) to the (4+4)-bit complex integer format output by the PFB (``quantisation error'', also see Appendix); and
-    \item the error caused by the fact that the synthesis filter ($f[n]$) does not exactly complement the analysis filter ($h[n]$) in the sense described by Eq. \eqref{eqn:invertibility_condition} (``filter error'').
-\end{itemize}
+\begin{description}
+    \item[``Replication error'':] The imperfect replication of the forward PFB, estimated to contribute noise-like error at the $-20\,$dB level (see Appendix for details);
+    \item[``Quantisation error'':] The error associated with the demotion of the input (5+5)-bit complex integers ($x[n]$) to the (4+4)-bit complex integer format output by the PFB (also see Appendix); and
+    \item[``Filter error'':] the error caused by the fact that the synthesis filter ($f[n]$) does not exactly complement the analysis filter ($h[n]$) in the sense described by Eq. \eqref{eqn:invertibility_condition}.
+\end{description}
 Although knowing the relative contributions of quantisation and filter errors is useful for improving the system (since the latter may be mitigated by identifying a better synthesis filter), it is only necessary to know their joint contribution for the purposes of characterising the analysis-synthesis system.
 This contribution is revealed in an impulse response test, the results of which are shown in Fig. \eqref{fig:impulse_response}.
 \begin{figure}
@@ -278,7 +269,20 @@ Because both the analysis and synthesis filters are symmetrical, the echoes are 
 Note that echoes arising from strong individual pulses in a pulsar signal will always contribute to the same phase bins when the time series is folded at the pulsar's rotation period.
 Any structure seen on this time scale must therefore always be regarded with suspicion.
 
-Further fidelity tests were performed with data containing real pulsar signals, presented in the next section.
+As a further verification, we also made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
+The fine channels from one polarisation of a single tile were extracted and subjected to the synthesis filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data.
+Although not as telling as an impulse response test, the close similarity of the reconstructed (white) noise with the original (see Fig. \ref{fig:compare_timeseries}) is indicative of the fidelity of the analysis-synthesis filter pair.
+
+Note that in this test, the FPGA-based fine PFB was used; thus, the errors shown in Fig. \ref{fig:compare_timeseries} do not contain any ``replication error''.
+However, the synthesis filter used in production uses an arbitrary scaling factor in order to make better use of the dynamic range afforded by VDIF's (8+8)-bit depth.
+The reconstructed samples shown in the figure have been rescaled by eye for the purposes of visual comparison.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{compare_timeseries.eps}
+    \caption{128 high time resolution ($1.28\,$MHz) samples from a single coarse channel and a single polarisation of one MWA tile. The real (top) and imaginary (bottom) components are shown separately. The original coarse channel data (black boxes) are overlaid with the reconstructed data (red lines and dots), with the differences plotted in the lower panels.}
+    \label{fig:compare_timeseries}
+\end{figure}
 
 \section{Verification with pulsar observations}
 \label{sec:pulsardata}
@@ -308,6 +312,7 @@ Finally, recent independent follow-up observations made by some of the authors u
 
 \subsection{PSR \psrbhatJ{}}
 
+[Suggestions:]
 \begin{itemize}
     \item Now able to resolve notches in profile
     \item Compare to higher frequency polarimetry
@@ -323,14 +328,50 @@ Finally, recent independent follow-up observations made by some of the authors u
 
 \subsection{PSR \psrslowB{}}
 
-\dots
+Finally, we observed \psrslowB{}, a bright, slow ($P = 0.253\,$s) pulsar known to show microstructure on time scales of $\sim 60\,\mu$s \citep{Kuzmin2003}.
+A total of eighty seconds (315 pulses) of data ($128 \times 10\,$kHz fine channels) were recorded, beamformed, and subjected to the polyphase synthesis filter.
+The mean profile formed from the entire data set is shown in Fig. \ref{fig:0950_80_secs}.
+Several individual pulses were sufficiently bright to see substructure.
+One such pulse is showcased in Fig. \ref{fig:0950_single_pulse} at three different time resolutions (corresponding to the chosen bin width of each plot).
+
+\begin{figure}[t!]
+    \centering
+    \includegraphics[width=\columnwidth]{1024bins_profile.eps}
+    \caption{Polarisation profile formed using 80 seconds (315 pulses) of \psrslowB{} data. The time resolution is $\sim 250\,\mu$s.}
+    \label{fig:0950_80_secs}
+\end{figure}
+
+\begin{figure}[t!]
+    \centering
+    \includegraphics[width=\columnwidth]{200ms_res.eps} \\[10pt]
+    \includegraphics[width=\columnwidth]{50ms_res.eps} \\[10pt]
+    \includegraphics[width=\columnwidth]{5ms_res.eps}
+    \caption{A bright, single pulse of \psrslowB{}, displayed with full polarisation at time resolutions of $\sim 200\,\mu$s (top), $\sim 50\,\mu$s (middle), and $\sim 5\,\mu$s (bottom).}
+    \label{fig:0950_single_pulse}
+\end{figure}
+
+Despite the proximity of this timescale to the temporal ``echoes'' induced by the synthesis filter ($50\mu$s), we were able to clearly identify the ($\sim 60\mu$s) microstructure reported by \citet{Kuzmin2003}.
+We also suggest that the finest observable structures (Fig. \ref{fig:0950_single_pulse}, bottom plot) might correspond to the $\sim 10\,\mu$s structures reported by \citet{Popov2002}.
+However, \citet{Kuzmin2003} used only a single linear polarisation feed, and \citet{Popov2002}, only a left-handed circularly polarised feed.
+With the benefit of full Stokes polarimetry, we are able to verify that on the smallest time scales, the emission is almost 100\% polarised---mostly linear, but with a small amount of circular polarisation during the brightest part of the pulse.
+This is evidence that the errors introduced by the analysis-synthesis filter do not contribute a significant amount of polarisation leakage into neighbouring time bins---in particular, at $50\,\mu$s intervals.
 
 \section{Conclusion}
 
-The MWA-VCS telescope system outputs dynamic spectra with a frequency resolution of $10\,$kHz and a time resolution of $100\,\mu$s, which is suitable for many pulsar applications, as demonstrated in several pulsar science papers published to date \citep[e.g.][]{Oronsaye2015,McSweeney2017,Bhat2018}\textbf{[BWM: Can probably not bother with these references here since you use the same ones in the introduction. You could maybe cite the MWA Phase 2 science paper here?]}.
+The MWA-VCS telescope system outputs dynamic spectra with a frequency resolution of $10\,$kHz and a time resolution of $100\,\mu$s, which is suitable for many pulsar applications, as demonstrated in several pulsar science papers published to date.
 In this paper, we have presented an algorithm to undo the fine channelisation stage (fine PFB) of the VCS pipeline by using a synthesis polyphase filter, implemented as part of our processing software suite, \vcstools{}.
 The result is a high-fidelity reconstruction of the coarse channelised (pre-PFB) time series, suitable for high-time resolution studies of MSPs and other rapid transient signals.
-Although the reconstruction is not perfect, the introduced errors are quantified (up to $-10\,$dB in certain samples) and any spurious artefacts can be identified by virtue of the known timescale of their recurrence ($50\,\mu$s).
+Although the reconstruction is not perfect, the introduced errors are quantified (up to $-10\,$dB in certain samples).
+The most significant artefacts, the ``temporal echoes'' of the impulse response, can be identified by virtue of the known timescale of their recurrence ($50\,\mu$s).
+
+We have further verified our system by observing PSRs \psrkaurJ{}, \psrbhatJ{}, and \psrslowB{}, all of which are known to exhibit structures on microsecond timescales.
+In each case, our results have been shown to be consistent with observations at higher radio frequencies.
+In particular, we have demonstrated that the errors introduced by the imperfect analysis-synthesis filter pair are negligible compared to the pulsar signals themselves, which have been reconstructed with full polarisation at the faster sampling rate ($1.28\,$MHz) with high fidelity.
+The advent of the VCS high time resolution observing mode thus distinguishes the MWA as a premier low-frequency instrument for studying pulsars and other transients at microsecond precision, with important implications for studies of the pulsar emission mechanism, the characterisation of the ISM in the ongoing search for gravitational waves, and others.
+
+\begin{acknowledgements}
+This work was supported by resources provided by the Pawsey Supercomputing Centre with funding from the Australian Government and the Government of Western Australia.
+\end{acknowledgements}
 
 \begin{appendix}
 
@@ -340,8 +381,8 @@ Each coarse channel is independently processed by dedicated FPGAs to convert (5+
 The PFB is implemented in two stages: (1) a ``front-end'' stage which prepares the array $b[n]$ (see Eq. \eqref{eqn:pfb}), and (2) the ``FFT'' stage, which calculates the 128-point spectrum, $X_k[m]$.
 
 The first stage involves a multiplication of a window of 1536 consecutive coarse channel samples with the analysis filter shown in Fig. \ref{fig:filter}, and then a summation of the 12 taps together to produce a single array of 128 complex integers.
-The combination of the allowed input values $[-16, 15]$ and the filter values guarantees that the magnitudes of the summed numbers do not exceed $2^{22} = 4194304$.
-At this stage of the processing, they are stored as 48-bit signed integers, of which only the bottom 21 bits are therefore significant.
+The combination of the allowed input values $[-16, 15]$ and the filter values guarantees that the magnitudes of the summed (signed) numbers do not exceed $2^{21} = 2097152$.
+At this stage of the processing, they are stored as 48-bit signed integers, of which only the bottom 22 bits are therefore significant.
 Each integer $n$ (either real or imaginary) is then reduced from 48 bits to 8 bits in the following manner.
 If $n$ is positive, then bits 14 through 21 (counting from the least significant bit) are selected to form the 8-bit integer, and 1 is subsequently added if bit 13 is 1.
 This is equivalent to rounding the number $n/2^{14}$ to the nearest integer, where fractional values of 0.5 are always rounded up.
@@ -366,8 +407,6 @@ Nevertheless the resulting spectrum was found to contain a small number of quant
 To quantify the effect of these quantisation errors, we recorded a small amount of coarse channel data (dominated by telescope noise) along with the contemporaneous spectrum output by the FPGA PFB.
 We used the GPU-based synthesis filter described in Section \ref{sec:ipfb} to reconstruct the coarse channel data from both the FPGA spectrum and the CPU spectrum generated by our own implementation.
 We found the results to differ from each other at less than the $-20\,$dB power level, which is much less than the estimated difference between the reconstructed coarse channel data and the original.
-
-\dots
 
 \end{appendix}
 
