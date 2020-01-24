@@ -1,18 +1,18 @@
 Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
-Creation-Date: 2020-01-24T08:51:33+08:00
+Creation-Date: 2020-01-24T10:48:22+08:00
 
-====== Figure 2 ======
+====== Figure 10 ======
+Created Friday 24 January 2020
 
-{{~/documents/papers/ipfb/filter.png}}
+{{~/documents/papers/ipfb/pre_fft_distributions.png}}
 
 {{{code: lang="sh" linenumbers="False"
-> cd ~/documents/papers/ipfb
-
-> make filter.eps
-python filtercoeffs.py
+> make pre_fft_distributions.eps 
+python pre_fft_distributions.py
 
 }}}
+
 
 
 **Verisons:**
@@ -39,4 +39,6 @@ python> matplotlib.__version__
 '3.1.2'
 
 }}}
+
+
 

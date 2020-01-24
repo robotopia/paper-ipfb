@@ -1,0 +1,56 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-01-24T10:35:10+08:00
+
+====== Figure 8 and 9 ======
+
+{{{code: lang="sh" linenumbers="False"
+# Do the beamforming on Galaxy
+galaxy> process_vcs.py -m beamform -o 1260302416 -b 1260302800 -e 1260302879 \
+          --DI_dir /group/mwaops/vcs/1260302416/cal/1260305032/rts \
+          --bf_out_format vdif -p "09:53:09.31_+07:55:35.750" \
+          --flagged_tiles /group/mwaops/vcs/1260302416/cal/1260305032/rts/flagged_tiles.txt
+
+# Create pulsar archives
+galaxy> cd /group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750
+galaxy> psrcat -e B0950+08 > 0950.par
+galaxy> dspsr -E 0950.par -b 323928 -s -K C001_1260302416_ch119_u.hdr
+galaxy> psradd -o pulse_all.ar pulse_4252597*.ar
+
+# Download the archives
+> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> scp galaxy:/group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/pulse_4252597337.ar .
+> scp galaxy:/group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/pulse_all.ar .
+
+> pav -g 1024bins_profile.ps/cps --publnc -SFTC pulse_all.ar
+> pav -g 200ms_res.ps/cps --publnc -SFC -b 264 pulse_4252597337.ar
+> pav -g 50ms_res.ps/cps --publnc -SFC -z 0.45,0.55 -b 66 pulse_4252597337.ar
+> pav -g 5ms_res.ps/cps --publnc -SFC -z 0.495,0.505 -b 6 pulse_4252597337.ar
+
+> convert 1024bins_profile.ps -flatten -rotate 90 1024bins_profile.png
+> convert 200ms_res.ps -flatten -rotate 90 200ms_res.png
+> convert 50ms_res.ps -flatten -rotate 90 50ms_res.png
+> convert 5ms_res.ps -flatten -rotate 90 5ms_res.png
+}}}
+
+
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/1024bins_profile.png}}
+**200 ms resolution:**
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/200ms_res.png}}
+
+**50 ms resolution:**
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/50ms_res.png}}
+
+**5 ms resolution:**
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/5ms_res.png}}
+
+**Versions:**
+{{{code: lang="sh" linenumbers="False"
+galaxy> psrcat -v
+Software version: 1.49
+Catalogue version number = 1.61
+
+> cd ~/src/pulsar-pkgs/psrchive-git/src/code
+> git checkout 258bbf9d6
+}}}
+

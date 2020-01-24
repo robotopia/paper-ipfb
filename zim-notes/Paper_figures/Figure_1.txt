@@ -8,7 +8,7 @@ Creation-Date: 2020-01-24T08:42:36+08:00
 
 {{{code: lang="sh" linenumbers="False"
 > cd ~/documents/papers/ipfb
-> git checkout e1f44cd
+
 > make cartoon.eps
 octave cartoon.m
 gnuplot -e "set terminal epscairo size 4,5; set output 'cartoon.eps'" cartoon.gpi
@@ -16,10 +16,17 @@ gnuplot -e "set terminal epscairo size 4,5; set output 'cartoon.eps'" cartoon.gp
 }}}
 
 
-This script uses Octave and Gnuplot.
+**Verisons:**
 {{{code: lang="sh" linenumbers="False"
+> cd ~/documents/papers/ipfb
+> git checkout e1f44cd
+
+> make -v
+GNU Make 4.2.1
+
 > octave -v
 GNU Octave, version 5.1.0
+
 > gnuplot -V
 gnuplot 5.2 patchlevel 8
 
