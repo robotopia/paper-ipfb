@@ -15,9 +15,18 @@ python filtercoeffs.py
 }}}
 
 
-This script uses Python.
+This script uses Python, NumPy, SciPy, and matplotlib.
 {{{code: lang="sh" linenumbers="False"
 > python -V
 Python 3.8.1
+python> import numpy
+python> numpy.version.version
+'1.18.1'
+python> import scipy
+python> scipy.version.version
+'1.4.1'
+python> import matplotlib
+python> matplotlib.__version__
+'3.1.2'
 
 }}}
