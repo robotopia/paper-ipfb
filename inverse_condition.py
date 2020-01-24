@@ -53,6 +53,7 @@ im3 = ax[2].plot(x)
 #plt.colorbar(im1)
 #plt.colorbar(im2)
 plt.show()
+'''
 
 # Make plots
 plt.plot(ss, lmda, '-xk')
@@ -60,5 +61,3 @@ plt.ylim([-0.1, 1.0])
 plt.xlabel("$s$")
 plt.ylabel("$\\lambda(s)$")
 plt.savefig("inverse_condition.eps", bbox_inches='tight')
-plt.show()
-'''
