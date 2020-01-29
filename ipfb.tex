@@ -17,7 +17,7 @@
 \author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$, B. W. Meyers$^{1,2,3}$, S. E. Tremblay, J. Jones$^1$, B. Crosse$^1$
 \affil{$^1$International Centre for Radio Astronomy Research (ICRAR), GPO Box U1987, Perth, WA 6845, Australia}%
 \affil{$^2$CSIRO Astronomy and Space Science, PO Box 76, Epping, NSW 1710, Australia}
-\affil{$^3$Dept. of Physics and Astronomy, University of British Columbia, 6224 Agricultural Road, Vancouver, B.C., V6T 1Z1, Canada}
+\affil{$^3$Department of Physics and Astronomy, University of British Columbia, 6224 Agricultural Road, Vancouver, BC V6T 1Z1, Canada}
 }
 
 \jid{PASA}
@@ -84,7 +84,7 @@ Finally, the practical use of this functionality is demonstrated in Section \ref
 
 PFBs are a type of analysis filter, designed to extract spectral information out of discrete time series data.
 They can be considered a generalisation of the more familiar discrete Fourier transform (DFT), and are designed to overcome the undesirably uneven frequency response (i.e. spectral leakage) inherent in the application of DFTs to discretely sampled time series of finite length.
-They are well described in standard texts \citep{Crochiere1983,Harris2004,Oppenheim2009}; a clear and concise review of PFBs in the context of radio astronomy is given in \citet{Harris2011}.
+PFBs are well described in standard texts \citep{Crochiere1983,Harris2004,Oppenheim2009}; a clear and concise review of PFBs in the context of radio astronomy is given in \citet{Harris2011}.
 Thus, only a brief review of the salient features is given, in order to prepare the reader for the description of the synthesis filter in the following sections.
 
 \subsection{General review and mathematical notation}
@@ -117,11 +117,11 @@ On the other hand, choosing $h[n]$ to be the $\sinc$ function will result in a f
 It is well known that scaling a function in the time domain produces the inverse scaling in the Fourier domain.
 This fact motivates an alternative strategy for mitigating spectral leakage.
 Choosing a larger window size, $N = KP$ (for integer $P > 1$), and a corresponding wider analysis filter, will result in a frequency response that is similar in shape, but $P$ times narrower than the frequency response of the original analysis filter.
-A DFT applied to the larger number of samples will naturally produce a correspondingly larger number of frequency channels, but choosing only every $P$th channel and discarding the rest (known as \textit{decimation}) ensures that the desired spectral resolution with $K$ channels is retained.
+A DFT applied to the larger number of samples will naturally produce a correspondingly larger number of (more closely spaced) frequency channels, but choosing only every $P$th channel and discarding the rest (known as \textit{decimation}) ensures that the desired spectral resolution with $K$ channels is retained.
 In this way, spectral leakage can be contained arbitrarily close to the ``correct'' channel by choosing a sufficiently high value of $P$.
 
 The two-step algorithm described above (performing a windowed DFT on $N = KP$ samples and decimating the resulting spectrum) defines the PFB.
-Formally, it is equivalent to Eq. \eqref{eqn:wdft}; however, the term \textit{critically sampled} (i.e. $M = K$) implies that the $N$-length windows will now overlap.
+Formally, it is equivalent to Eq. \eqref{eqn:wdft}; however, in this context the term \textit{critically sampled} (i.e. $M = K$) implies that the $N$-length windows will now overlap.
 The term ``polyphase'' derives from the fact that each block of $K = N/P$ samples (known as \textit{taps}) in $x[n]$ is included in multiple applications of the DFT, but appearing at a different relative phase in each case.
 
 One of the great advantages of the critically sampled PFB is the existence of a mathematically equivalent but computationally efficient implementation.
@@ -209,19 +209,19 @@ Whether this condition is perfectly met clearly depends on the choice of analysi
 However, even a synthesis filter which only approximately satisfies Eq. \eqref{eqn:invertibility_condition} for a given analysis filter (i.e. $\lambda(s) \approx \Kron$) will produce a time series that approximates the original coarse channel time series (i.e. $\hat{x}[n] \approx x[n]$).
 In practice, the choice of synthesis filter is often obliged to be a compromise between ease of implementation and an acceptable level of imperfection in the reconstructed time series.
 
-For the filter $h[n]$ defined in Eq. \eqref{eqn:filter}, it is found that choosing
+For the analysis filter $h[n]$ defined in Eq. \eqref{eqn:filter}, it is found that choosing the synthesis filter
 \begin{equation}
-    f[n] = \frac{h[-n]}{H},
+    f[n] = \frac{h[-n]}{H}
     \label{eqn:synthesisfilter}
 \end{equation}
-meets the invertibility condition sufficiently closely for our purposes.
-$H = \sum_{n=0}^{N-1} h[n]$ is a normalising factor.
-The value of \eqref{eqn:invertibility_condition} is illustrated in Fig. \ref{fig:inverse_condition}, in which it can be readily seen that $\lambda(s)$ closely approximates, but does not exactly equal, $\Kron$.
+where $H = \sum_{n=0}^{N-1} h[n]$ is a normalising factor, meets the invertibility condition sufficiently closely for our purposes, as demonstrated below.
+With the analysis and synthesis filters thus defined, the value of Eq. \eqref{eqn:invertibility_condition} can be calculated and is illustrated in Fig. \ref{fig:inverse_condition}.
+It is readily seen that $\lambda(s)$ closely approximates, but does not exactly equal, $\Kron$.
 The quantitative effect of this analysis-synthesis pair is discussed in Section \ref{sec:fidelity}.
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{inverse_condition.eps}
-    \caption{The condition for invertibility, Eq. \eqref{eqn:invertibility_condition}, demonstrated for the analysis filter given in Eq. \eqref{eqn:filter} and the synthesis filter given in Eq. \eqref{eqn:synthesisfilter}. The fact that $\lambda(s)$ only approximates the delta function gives rise to spurious artefacts (``ringing'') in the time domain, which can be seen in Fig. \ref{fig:impulse_response}.}
+    \caption{The condition for invertibility, Eq. \eqref{eqn:invertibility_condition}, demonstrated for the analysis filter given in Eq. \eqref{eqn:filter} and the synthesis filter given in Eq. \eqref{eqn:synthesisfilter}. The fact that $\lambda(s)$ only approximates the delta function gives rise to spurious artefacts (``temporal echoes'') in the time domain, which can be seen in Fig. \ref{fig:impulse_response}.}
     \label{fig:inverse_condition}
 \end{figure}
 
@@ -264,16 +264,16 @@ This contribution is revealed in an impulse response test, the results of which 
 
 As revealed by the impulse response test, our system is capable of reproducing the original impulse with high fidelity, despite the fact that the chosen synthesis filter is not ideal.
 The main discrepancy appears in the form of temporal ``echoes'' of the original impulse occurring at intervals of 64 coarse channel samples (i.e. half the size of one tap, equal to $50\,\mu$s for our sampling rate of $1.28\,$MHz) on either side of the reconstructed impulse.
-Although the power in the echoes is small compared to the central impulse (at roughly the $-10\,$dB level), it is important to realise that the echoes always appear at the same locations relative to it.
-Because both the analysis and synthesis filters are symmetrical, the echoes are also expected to be symmetrical; the asymmetry seen in Fig. \ref{fig:impulse_response} must therefore be due to either replication or quantisation error.
-Note that echoes arising from strong individual pulses in a pulsar signal will always contribute to the same phase bins when the time series is folded at the pulsar's rotation period.
-Any structure seen on this time scale must therefore always be regarded with suspicion.
+Although the power in the echoes is small compared to the central impulse (at roughly the $-10\,$dB level), the echoes always appear at the same locations relative to it.
+The asymmetry seen in Fig. \ref{fig:impulse_response} is due to replication error, quantisation error, the ``phase'' of the impulse with respect to the filter window, or some combination of the above.
+Importantly, echoes arising from strong, periodic individual pulses (e.g. in a pulsar signal) will accumulate in the same phase bins when the time series is folded at the pulsar's rotation period.
+Thus, any structure seen on this time scale must therefore be regarded with suspicion.
 
 As a further verification, we also made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
 The fine channels from one polarisation of a single tile were extracted and subjected to the synthesis filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data.
 Although not as telling as an impulse response test, the close similarity of the reconstructed (white) noise with the original (see Fig. \ref{fig:compare_timeseries}) is indicative of the fidelity of the analysis-synthesis filter pair.
 
-Note that in this test, the FPGA-based fine PFB was used; thus, the errors shown in Fig. \ref{fig:compare_timeseries} do not contain any ``replication error''.
+Note that in this test, the FPGA-based fine PFB was used; thus, the errors shown in Fig. \ref{fig:compare_timeseries} do not contain any replication error.
 However, the synthesis filter used in production uses an arbitrary scaling factor in order to make better use of the dynamic range afforded by VDIF's (8+8)-bit depth.
 The reconstructed samples shown in the figure have been rescaled by eye for the purposes of visual comparison.
 
@@ -287,7 +287,7 @@ The reconstructed samples shown in the figure have been rescaled by eye for the 
 \section{Verification with pulsar observations}
 \label{sec:pulsardata}
 
-Pilot observations of three pulsars are presented here to vindicate the synthesis filter as a useful tool for undertaking high time resolution studies of pulsars: MSPs \psrkaurJ{} and \psrbhatJ{}, and the bright PSR \psrslowB{}.
+Pilot observations of three pulsars are presented here to validate the synthesis filter as a useful tool for undertaking high time resolution studies of pulsars: MSPs \psrkaurJ{} and \psrbhatJ{}, and the bright PSR \psrslowB{}.
 
 \subsection{PSR \psrkaurJ{}}
 
@@ -300,7 +300,7 @@ These results are discussed in detail in \citet{Kaur2019}.
 The resemblance of the newly-sighted precursor components to the temporal artefacts induced by the synthesis filter naturally raises questions about their authenticity.
 The fact that the components only appear on the leading side of the main pulse is a point in favour of them being real, since the temporal artefacts are expected to appear on both leading and trailing sides.
 In addition, the time interval between the main pulse and the closest component is $\sim150\,\mu$s, which, although it corresponds to the expected location of the third-order artefact, is not expected to be brighter than the first two; however, no evidence of the lower-order artefacts is seen.
-Finally, recent independent follow-up observations made by some of the authors using Band 3 ($250$ to $500\,$MHz) of the upgraded Giant Metrewave Radio Telescope (uGMRT) have confirmed the reality of the innermost component (Kaur et al., in prep).
+Finally, recent independent follow-up observations made by some of the authors using Band 3 ($250$ to $500\,$MHz) of the upgraded Giant Metrewave Radio Telescope (uGMRT) have confirmed that at least the innermost component is real (Kaur et al., in prep).
 
 \begin{figure}[t!]
     \centering
@@ -312,23 +312,25 @@ Finally, recent independent follow-up observations made by some of the authors u
 
 \subsection{PSR \psrbhatJ{}}
 
-[Suggestions:]
-\begin{itemize}
-    \item Now able to resolve notches in profile
-    \item Compare to higher frequency polarimetry
-    \item \dots
-\end{itemize}
+PSR \psrbhatJ{} is a nearby MSP (distance $d \approx 157\,$pc; period $P \approx 5.76\,$ms) and an established target for pulsar timing array (PTA) applications.
+It boasts a complex, multi-component polarimetric profile (Fig. \ref{fig:0437}) that spans more than half of its rotation period \citep[cf.][]{Yan2011}.
+It was used in Paper I as a verification of the beamforming method employed in the VCS processing pipeline, although there is a noticeable difference between the circular polarisation published in that work and that shown here (see the Figure caption for details).
+
+As evident from Fig. \ref{fig:0437}, the application of the synthesis filter successfully recovers some curious fine structure (e.g. notch-like features at pulse phases $\sim$ 0.54 and $\sim$ 0.7) characteristic to this pulsar, first reported in early high time resolution studies made at 430 MHz \citep{Navarro1997}. The pulsar detection (for Stokes I only) was originally presented in \citet{Bhat2018}, where the combination of a lower time resolution (100 $\mu$s) and a non-negligible dispersive smearing ($\sim$45 $\mu$s) obscured the detection of these fine structures. Fig. \ref{fig:0437} thus presents the highest-fidelity detection of this important pulsar at frequencies below 200 MHz.
 
 \begin{figure}[t!]
     \centering
+    \includegraphics[width=\columnwidth]{mwa0437lowres.png} \\[10pt]
     \includegraphics[width=\columnwidth]{mwa0437hires.png}
-    \caption{[Caption\dots]}
+    \caption{Profiles of PSR \psrbhatJ{} formed from the same data set. Top: incoherently de-dispersed with $10\,$kHz (fine) frequency channels formed from the standard PFB analysis filter. Bottom: coherently de-dispersed using $1.28\,$MHz (coarse) frequency channels reconstructed using the synthesis filter described in this paper. The higher time resolution profile shows features (e.g. notches in the total intensity profile at pulse phases $\sim 0.54$ and $\sim 0.7$) that are obscured by dispersion smear at the lower time resolution. A comparison with these profiles with that published in Paper I reveals an excess of circular polarisation on both the leading and trailing edges of the profile. The reason for the discrepancy is not clear, but it should be noted that the earlier profiles were published before the polarimetric verification of Paper II was carried out.}
     \label{fig:0437}
 \end{figure}
 
+%\dots
+
 \subsection{PSR \psrslowB{}}
 
-Finally, we observed \psrslowB{}, a bright, slow ($P = 0.253\,$s) pulsar known to show microstructure on time scales of $\sim 60\,\mu$s \citep{Kuzmin2003}.
+\psrslowB{} is a bright, slow ($P = 0.253\,$s) pulsar known to exhibit microstructure \citep{Popov2002,Kuzmin2003}.
 A total of eighty seconds (315 pulses) of data ($128 \times 10\,$kHz fine channels) were recorded, beamformed, and subjected to the polyphase synthesis filter.
 The mean profile formed from the entire data set is shown in Fig. \ref{fig:0950_80_secs}.
 Several individual pulses were sufficiently bright to see substructure.
@@ -346,12 +348,12 @@ One such pulse is showcased in Fig. \ref{fig:0950_single_pulse} at three differe
     \includegraphics[width=\columnwidth]{200ms_res.eps} \\[10pt]
     \includegraphics[width=\columnwidth]{50ms_res.eps} \\[10pt]
     \includegraphics[width=\columnwidth]{5ms_res.eps}
-    \caption{A bright, single pulse of \psrslowB{}, displayed with full polarisation at time resolutions of $\sim 200\,\mu$s (top), $\sim 50\,\mu$s (middle), and $\sim 5\,\mu$s (bottom).}
+    \caption{A bright, single pulse of \psrslowB{}, displayed with full polarisation at time resolutions of $\sim 200\,\mu$s (top), $\sim 50\,\mu$s (middle), and $\sim 5\,\mu$s (bottom). The total time span of the displayed windows are $253\,$ms, $25.3\,$ms, and $2.53\,$ms, respectively.}
     \label{fig:0950_single_pulse}
 \end{figure}
 
-Despite the proximity of this timescale to the temporal ``echoes'' induced by the synthesis filter ($50\mu$s), we were able to clearly identify the ($\sim 60\mu$s) microstructure reported by \citet{Kuzmin2003}.
-We also suggest that the finest observable structures (Fig. \ref{fig:0950_single_pulse}, bottom plot) might correspond to the $\sim 10\,\mu$s structures reported by \citet{Popov2002}.
+Despite the proximity of this timescale to the temporal ``echoes'' induced by the synthesis filter ($50\mu$s), we were able to clearly identify the ($\sim 60\mu$s) microstructure reported by \citet{Kuzmin2003} at $102.5\,$MHz.
+We also suggest that the finest observable structures (Fig. \ref{fig:0950_single_pulse}, bottom plot) might correspond to the $\sim 10\,\mu$s structures reported by \citet{Popov2002} at $1.65\,$GHz.
 However, \citet{Kuzmin2003} used only a single linear polarisation feed, and \citet{Popov2002}, only a left-handed circularly polarised feed.
 With the benefit of full Stokes polarimetry, we are able to verify that on the smallest time scales, the emission is almost 100\% polarised---mostly linear, but with a small amount of circular polarisation during the brightest part of the pulse.
 This is evidence that the errors introduced by the analysis-synthesis filter do not contribute a significant amount of polarisation leakage into neighbouring time bins---in particular, at $50\,\mu$s intervals.
@@ -370,6 +372,7 @@ In particular, we have demonstrated that the errors introduced by the imperfect 
 The advent of the VCS high time resolution observing mode thus distinguishes the MWA as a premier low-frequency instrument for studying pulsars and other transients at microsecond precision, with important implications for studies of the pulsar emission mechanism, the characterisation of the ISM in the ongoing search for gravitational waves, and others.
 
 \begin{acknowledgements}
+This scientific work uses data obtained from the Murchison Radio-astronomy Observatory. We acknowledge the Wajarri Yamatji people as the traditional owners of the Observatory site.
 This work was supported by resources provided by the Pawsey Supercomputing Centre with funding from the Australian Government and the Government of Western Australia.
 \end{acknowledgements}
 
@@ -398,7 +401,7 @@ The rounding scheme and its effect on the distribution are illustrated in Fig. \
     \label{fig:pre_fft_distributions}
 \end{figure}
 
-The second stage calculates the spectrum of $b[n]$ using the standard fixed point FFT algorithm that is implemented on [make and model] FPGAs.
+The second stage calculates the spectrum of $b[n]$ using the standard fixed point FFT algorithm that is implemented on (Xilinx Virtex4 XC4VSX35) FPGAs.
 The output values are scaled and (symmetrically) rounded, producing (4+4)-bit output values.
 
 As described in the main text, it was necessary to replicate the function of the fine PFB in software in order to conduct impulse tests of the analysis-synthesis pair.
