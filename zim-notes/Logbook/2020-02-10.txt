@@ -1,0 +1,44 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-02-10T14:02:41+08:00
+
+Steve Ord suggested that a comparison of the PFB inversion with a direct inverse FFT would be valuable. So, here goes:
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/documents/fine-pfb-reconstruction/test-data/fake_data
+> ../../forward-pfb-model/read_after 1213668624_1213668800_ch118.dat 0 84 84 > fine_sample_84.txt
+
+}}}
+
+
+{{{code: lang="sh" linenumbers="False"
+> make fake_all.raw
+../../forward-pfb-model/generate_fake_raw 0.0103 0.5 10000 12.0 0.5 > fake_all.raw
+
+> ../../forward-pfb-model/forward_pfb fake_all.raw \
+  ../../forward-pfb-model/r.txt 0 0 1213668624_1213668800_ch118.dat
+
+> rm -f G0024_1213668624_ch118_u.*
+
+> make_beam -o 1213668624 -b 1213668800 -e 1213668800 -z 2018-06-22T02:13:02 \
+    -R "03:56:52.80" -D "-26:45:00.0" \
+    -d  ~/documents/fine-pfb-reconstruction/test-data/fake_data \
+    -m  ~/documents/fine-pfb-reconstruction/test-data/after/metadata.fits \
+    -f 118 -u -A 118 \
+    -J ~/documents/fine-pfb-reconstruction/test-data/after/DI_JonesMatrices_all.dat
+
+> od -w256 -v -t dC fake_all.raw | head -12000 | awk 'NR >= 8000 && NR < 12000 {print NR,$2,$3}' > imp_all1
+
+> ../../forward-pfb-model/read_vdif G0024_1213668624_ch118_u.vdif 0 0 1 | \
+  tail -n+3 | head -13536 | awk 'NR >= 9536 && NR < 13536 {print NR-1536,$1,$2}' > imp_all2
+  
+> ../../forward-pfb-model/read_after 1213668624_1213668800_ch118.dat 0 30 120 > \
+  fine_sample_30-120.txt
+  
+> octave ifft_method.m > imp_all3
+
+> make compare_coarse_imp_all.eps
+gnuplot -e "set terminal postscript eps enhanced color font ',24'; set output 'compare_coarse_imp_all.eps'" compare_coarse_imp_all.gpi
+
+}}}
+

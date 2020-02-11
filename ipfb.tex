@@ -269,18 +269,28 @@ The asymmetry seen in Fig. \ref{fig:impulse_response} is due to replication erro
 Importantly, echoes arising from strong, periodic individual pulses (e.g. in a pulsar signal) will accumulate in the same phase bins when the time series is folded at the pulsar's rotation period.
 Thus, any structure seen on this time scale must therefore be regarded with suspicion.
 
-As a further verification, we also made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
-The fine channels from one polarisation of a single tile were extracted and subjected to the synthesis filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data.
-Although not as telling as an impulse response test, the close similarity of the reconstructed (white) noise with the original (see Fig. \ref{fig:compare_timeseries}) is indicative of the fidelity of the analysis-synthesis filter pair.
+We also compared the result of the synthesis filter method with a simple inverse FFT, shown in Fig. \ref{fig:imp_sin_noise}.
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{compare_coarse_imp_all.eps}
+    \caption{Similar to Fig. \ref{fig:impulse_response}, but showing the real and imaginary parts separately. In this case, the original signal is composed of an impulse (real only), a sinusoid (real only), and noise (both real and imaginary). Furthermore, the result of an inverse FFT is included for comparison. In the residual plots (immediately below the two large panels), the synthesis filter residuals are given a vertical offset to make visual comparison easier.}
+    \label{fig:imp_sin_noise}
+\end{figure}
+The input function consists of a single-bin impulse, a sinusoid, and Gaussian noise.
+Both the PFB synthesis and the inverse FFT are able to reproduce the impulse and the sinusoid, but less perfectly in the case of the inverse FFT method, as evidenced by the residuals.
+Both methods show a similar amount of error in the construction of the Gaussian noise---this is not surprising as replication and quantisation are present at this level.
 
-Note that in this test, the FPGA-based fine PFB was used; thus, the errors shown in Fig. \ref{fig:compare_timeseries} do not contain any replication error.
+As a further verification, we also made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
+The fine channels from one polarisation of a single tile were extracted and subjected to the synthesis filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data (see Fig. \ref{fig:compare_timeseries}).
 However, the synthesis filter used in production uses an arbitrary scaling factor in order to make better use of the dynamic range afforded by VDIF's (8+8)-bit depth.
 The reconstructed samples shown in the figure have been rescaled by eye for the purposes of visual comparison.
+Because the FPGA-based fine PFB was used in this test, the errors shown in Fig. \ref{fig:compare_timeseries} do not contain any replication error.
+Without replication error, it is readily apparent that the analysis-synthesis pair is able to reproduce the noise remarkably well.
 
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{compare_timeseries.eps}
-    \caption{128 high time resolution ($1.28\,$MHz) samples from a single coarse channel and a single polarisation of one MWA tile. The real (top) and imaginary (bottom) components are shown separately. The original coarse channel data (black boxes) are overlaid with the reconstructed data (red lines and dots), with the differences plotted in the lower panels.}
+    \caption{128 high time resolution ($1.28\,$MHz) samples from a single coarse channel and a single polarisation of one MWA tile. The real (top) and imaginary (bottom) components are shown separately. The original coarse channel data (black boxes) are overlaid with the reconstructed data (red lines and dots), with the residuals plotted in the lower panels.}
     \label{fig:compare_timeseries}
 \end{figure}
 
@@ -362,8 +372,8 @@ This is evidence that the errors introduced by the analysis-synthesis filter do 
 
 The MWA-VCS telescope system outputs dynamic spectra with a frequency resolution of $10\,$kHz and a time resolution of $100\,\mu$s, which is suitable for many pulsar applications, as demonstrated in several pulsar science papers published to date.
 In this paper, we have presented an algorithm to undo the fine channelisation stage (fine PFB) of the VCS pipeline by using a synthesis polyphase filter, implemented as part of our processing software suite, \vcstools{}.
-The result is a high-fidelity reconstruction of the coarse channelised (pre-PFB) time series, suitable for high-time resolution studies of MSPs and other rapid transient signals.
-Although the reconstruction is not perfect, the introduced errors are quantified (up to $-10\,$dB in certain samples).
+The result is a reconstructed, coarse channelised (pre-PFB) time series, suitable for high-time resolution studies of MSPs and other rapid transient signals.
+Although the reconstruction is not perfect, the introduced errors are quantified (up to $-10\,$dB in certain samples, and no more than $-20\,$dB elsewhere).
 The most significant artefacts, the ``temporal echoes'' of the impulse response, can be identified by virtue of the known timescale of their recurrence ($50\,\mu$s).
 
 We have further verified our system by observing PSRs \psrkaurJ{}, \psrbhatJ{}, and \psrslowB{}, all of which are known to exhibit structures on microsecond timescales.

@@ -1,8 +1,7 @@
 Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
-Creation-Date: 2020-01-24T10:29:31+08:00
+Creation-Date: 2020-01-24T10:28:27+08:00
 
 ====== Figure 7 ======
 
-Provided by Ramesh. See email From rameshbhatnd@gmail.com to sammy.mcsweeney@gmail.com on 5 Dec 2019, 13:25.
-
+Provided by Dilpreet.

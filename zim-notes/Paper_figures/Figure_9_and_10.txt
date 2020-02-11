@@ -2,7 +2,7 @@ Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
 Creation-Date: 2020-01-24T10:35:10+08:00
 
-====== Figure 8 and 9 ======
+====== Figure 9 and 10 ======
 
 {{{code: lang="sh" linenumbers="False"
 # Do the beamforming on Galaxy

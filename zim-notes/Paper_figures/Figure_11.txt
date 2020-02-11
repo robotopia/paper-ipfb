@@ -2,7 +2,7 @@ Content-Type: text/x-zim-wiki
 Wiki-Format: zim 0.4
 Creation-Date: 2020-01-24T10:48:22+08:00
 
-====== Figure 10 ======
+====== Figure 11 ======
 Created Friday 24 January 2020
 
 {{~/documents/papers/ipfb/pre_fft_distributions.png}}
