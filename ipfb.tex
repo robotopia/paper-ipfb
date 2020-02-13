@@ -15,7 +15,7 @@
 \title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via a polyphase synthesis filter}
 
 \author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$, B. W. Meyers$^{1,2,3}$, S. E. Tremblay, J. Jones$^1$, B. Crosse$^1$
-\affil{$^1$International Centre for Radio Astronomy Research (ICRAR), GPO Box U1987, Perth, WA 6845, Australia}%
+\affil{$^1$International Centre for Radio Astronomy Research (ICRAR), Curtin University, 1 Turner Avenue, Technology Park, Bentley, 6102, W.A., Australia}
 \affil{$^2$CSIRO Astronomy and Space Science, PO Box 76, Epping, NSW 1710, Australia}
 \affil{$^3$Department of Physics and Astronomy, University of British Columbia, 6224 Agricultural Road, Vancouver, BC V6T 1Z1, Canada}
 }
@@ -59,7 +59,7 @@ All of these examples serve to illustrate the scientifically important and still
 The Murchison Widefield Array \citep[MWA;][]{Tingay2013} is a low-frequency ($\sim80$ to $300\,$MHz) aperture array telescope located at the Murchison Radio Observatory (MRO) in Western Australia.
 Now in its second phase of development \citep[Phase II;][]{Wayth2018}, it consists of 256 `tiles' (sets of $4\times4$ cross-dipole antennas) distributed over an area approximately $5.3\,$km in diameter, 128 of which can be used at a single time to form an interferometer.
 Originally conceived as an imaging telescope (which requires only the time-averaged cross-correlation products of the tiles, or `visibilities', to be retained on disk), it was subsequently augmented with the functionality to capture the raw complex voltages of each tile, known as the Voltage Capture System \citep[VCS;][]{Tremblay2015}.
-This system has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars.
+This system has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars \citep[e.g.][]{Bhat2016,McSweeney2017,Meyers2018}.
 
 Although the tile voltages are sampled at a (Nyquist) rate of $655.36\,$MHz, these data undergo several stages of processing before finally being written to disk.
 After preliminary filtering and digitisation, the raw voltages are subjected to a two-stage frequency analysis filter, which trades time resolution for increased frequency resolution.
@@ -247,11 +247,11 @@ The major challenge in verifying the fidelity of the back-to-back analysis-synth
 This makes conducting standard impulse response tests impossible, unless the exact performance of the PFB can be reproduced.
 We have therefore attempted to replicate the PFB in software; however, the replication was not perfect, causing a small difference between the our model analysis-synthesis back-to-back system, and the analysis-synthesis system used in production.
 
-In the fidelity tests presented in this section, there are therefore a number of sources of error, all of which cause the reconstructed coarse channel time series, $\hat{x}[n]$, to differ from the original input time series, $x[n]$:
+In the fidelity tests presented in this section, we therefore consider a number of sources of error, all of which cause the reconstructed coarse channel time series, $\hat{x}[n]$, to differ from the original input time series, $x[n]$:
 \begin{description}
     \item[``Replication error'':] The imperfect replication of the forward PFB, estimated to contribute noise-like error at the $-20\,$dB level (see Appendix for details);
     \item[``Quantisation error'':] The error associated with the demotion of the input (5+5)-bit complex integers ($x[n]$) to the (4+4)-bit complex integer format output by the PFB (also see Appendix); and
-    \item[``Filter error'':] the error caused by the fact that the synthesis filter ($f[n]$) does not exactly complement the analysis filter ($h[n]$) in the sense described by Eq. \eqref{eqn:invertibility_condition}.
+    \item[``Filter error'':] the error caused by the fact that the synthesis filter ($f[n]$) does not exactly complement the analysis filter ($h[n]$), in the sense described by Eq. \eqref{eqn:invertibility_condition} and Fig. \ref{fig:inverse_condition}.
 \end{description}
 Although knowing the relative contributions of quantisation and filter errors is useful for improving the system (since the latter may be mitigated by identifying a better synthesis filter), it is only necessary to know their joint contribution for the purposes of characterising the analysis-synthesis system.
 This contribution is revealed in an impulse response test, the results of which are shown in Fig. \eqref{fig:impulse_response}.
@@ -264,10 +264,10 @@ This contribution is revealed in an impulse response test, the results of which 
 
 As revealed by the impulse response test, our system is capable of reproducing the original impulse with high fidelity, despite the fact that the chosen synthesis filter is not ideal.
 The main discrepancy appears in the form of temporal ``echoes'' of the original impulse occurring at intervals of 64 coarse channel samples (i.e. half the size of one tap, equal to $50\,\mu$s for our sampling rate of $1.28\,$MHz) on either side of the reconstructed impulse.
-Although the power in the echoes is small compared to the central impulse (at roughly the $-10\,$dB level), the echoes always appear at the same locations relative to it.
+Although the power in the echoes is small compared to the central impulse (roughly $-10\,$dB level for the innermost echoes), the echoes always appear at the same locations relative to it.
 The asymmetry seen in Fig. \ref{fig:impulse_response} is due to replication error, quantisation error, the ``phase'' of the impulse with respect to the filter window, or some combination of the above.
 Importantly, echoes arising from strong, periodic individual pulses (e.g. in a pulsar signal) will accumulate in the same phase bins when the time series is folded at the pulsar's rotation period.
-Thus, any structure seen on this time scale must therefore be regarded with suspicion.
+Thus, any structure seen on this time scale ($\sim 50\,\mu$s) must therefore be regarded with suspicion.
 
 We also compared the result of the synthesis filter method with a simple inverse FFT, shown in Fig. \ref{fig:imp_sin_noise}.
 \begin{figure}
@@ -280,12 +280,12 @@ The input function consists of a single-bin impulse, a sinusoid, and Gaussian no
 Both the PFB synthesis and the inverse FFT are able to reproduce the impulse and the sinusoid, but less perfectly in the case of the inverse FFT method, as evidenced by the residuals.
 Both methods show a similar amount of error in the construction of the Gaussian noise---this is not surprising as replication and quantisation are present at this level.
 
-As a further verification, we also made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
+In order to mitigate the replication error, we made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
 The fine channels from one polarisation of a single tile were extracted and subjected to the synthesis filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data (see Fig. \ref{fig:compare_timeseries}).
-However, the synthesis filter used in production uses an arbitrary scaling factor in order to make better use of the dynamic range afforded by VDIF's (8+8)-bit depth.
+Because the FPGA-based fine PFB was used in this test, the result is devoid of any replication error.
+However, the synthesis filter used in production uses an arbitrary scaling factor in order to make better use of the dynamic range afforded by VDIF's (8+8)-bit depth, and quantisation error is still present (and, in fact, dominates).
 The reconstructed samples shown in the figure have been rescaled by eye for the purposes of visual comparison.
-Because the FPGA-based fine PFB was used in this test, the errors shown in Fig. \ref{fig:compare_timeseries} do not contain any replication error.
-Without replication error, it is readily apparent that the analysis-synthesis pair is able to reproduce the noise remarkably well.
+Despite this, it is readily apparent that the analysis-synthesis pair is able to reproduce the noise characteristics remarkably well.
 
 \begin{figure}
     \centering
@@ -294,23 +294,23 @@ Without replication error, it is readily apparent that the analysis-synthesis pa
     \label{fig:compare_timeseries}
 \end{figure}
 
-\section{Verification with pulsar observations}
+\section{Verification using pulsar observations}
 \label{sec:pulsardata}
 
-Pilot observations of three pulsars are presented here to validate the synthesis filter as a useful tool for undertaking high time resolution studies of pulsars: MSPs \psrkaurJ{} and \psrbhatJ{}, and the bright PSR \psrslowB{}.
+Observations of three pulsars are presented here to validate the synthesis filter as a useful tool for undertaking high time resolution studies of pulsars with the MWA: MSPs \psrkaurJ{} and \psrbhatJ{}, and the bright, long-period PSR \psrslowB{}.
 
 \subsection{PSR \psrkaurJ{}}
 
-\psrkaurJ{} has a rotation period of $2.2\,$ms and a dispersion measure (DM) of $11.4\,\dmunits$.
+\psrkaurJ{} has a rotation period of $2.18\,$ms and a dispersion measure (DM) of $11.41\,\dmunits$.
 The resulting dispersion smear across $10\,$kHz channels at the central observing frequency of $150.4\,$MHz is approximately $0.2\,$ms, or $45^\circ$ of rotation phase, consistent with the width of the average profile formed from incoherently de-dispersed, fine channelised data recorded with the MWA-VCS system (Fig. \ref{fig:J2241_profiles}, top panel).
-Upon applying the synthesis filter and coherently de-dispersing the reconstructed time series sampled at the much higher rate of $1.28\,$MHz, the same data revealed exquisite detail in the average profile, including a pair of pre-cursor components only marginally visible (if at all) at higher frequencies (Fig. \ref{fig:J2241_profiles}, bottom panel).
-Moreover, these new, low-frequency observations have enabled the DM of this pulsar to be measured to unprecedented precision, with important consequences for measuring DM chromaticity and evaluating its effect on pulsar timing experiments.
+Upon applying the synthesis filter and coherently de-dispersing the reconstructed time series sampled at the much higher rate of $1.28\,$MHz, the same data revealed exquisite detail in the average profile, including a pair of pre-cursor components that are only marginally visible (if at all) at higher frequencies (Fig. \ref{fig:J2241_profiles}, bottom panel).
+Moreover, these new, low-frequency observations have enabled the DM of this pulsar to be measured to unprecedented precision ($\sim (2$-$6) \times 10^{-6}\,\dmunits$), with important consequences for measuring DM chromaticity and evaluating its effect on pulsar timing experiments.
 These results are discussed in detail in \citet{Kaur2019}.
 
 The resemblance of the newly-sighted precursor components to the temporal artefacts induced by the synthesis filter naturally raises questions about their authenticity.
 The fact that the components only appear on the leading side of the main pulse is a point in favour of them being real, since the temporal artefacts are expected to appear on both leading and trailing sides.
-In addition, the time interval between the main pulse and the closest component is $\sim150\,\mu$s, which, although it corresponds to the expected location of the third-order artefact, is not expected to be brighter than the first two; however, no evidence of the lower-order artefacts is seen.
-Finally, recent independent follow-up observations made by some of the authors using Band 3 ($250$ to $500\,$MHz) of the upgraded Giant Metrewave Radio Telescope (uGMRT) have confirmed that at least the innermost component is real (Kaur et al., in prep).
+In addition, the time interval between the main pulse and the closest component is $\sim150\,\mu$s, which, although it corresponds to the expected location of the third-order artefact, is not expected to be brighter than the first two (see Fig. \ref{fig:impulse_response}); however, no evidence of the lower-order artefacts is seen.
+Furthermore, our recent (independent) follow-up observations using the Band 3 receiver ($250$ to $500\,$MHz) of the upgraded Giant Metrewave Radio Telescope (uGMRT) have confirmed that at least the innermost component is real (Kaur et al., in prep).
 
 \begin{figure}[t!]
     \centering
@@ -322,7 +322,7 @@ Finally, recent independent follow-up observations made by some of the authors u
 
 \subsection{PSR \psrbhatJ{}}
 
-PSR \psrbhatJ{} is a nearby MSP (distance $d \approx 157\,$pc; period $P \approx 5.76\,$ms) and an established target for pulsar timing array (PTA) applications.
+PSR \psrbhatJ{} is a nearby MSP (distance $\approx 157\,$pc; period $P \approx 5.76\,$ms) and an established target for pulsar timing array (PTA) applications.
 It boasts a complex, multi-component polarimetric profile (Fig. \ref{fig:0437}) that spans more than half of its rotation period \citep[cf.][]{Yan2011}.
 It was used in Paper I as a verification of the beamforming method employed in the VCS processing pipeline, although there is a noticeable difference between the circular polarisation published in that work and that shown here (see the Figure caption for details).
 
@@ -340,7 +340,7 @@ As evident from Fig. \ref{fig:0437}, the application of the synthesis filter suc
 
 \subsection{PSR \psrslowB{}}
 
-\psrslowB{} is a bright, slow ($P = 0.253\,$s) pulsar known to exhibit microstructure \citep{Popov2002,Kuzmin2003}.
+\psrslowB{} is a bright, long-period ($P = 0.253\,$s) pulsar known to exhibit microstructure \citep{Popov2002,Kuzmin2003}.
 A total of eighty seconds (315 pulses) of data ($128 \times 10\,$kHz fine channels) were recorded, beamformed, and subjected to the polyphase synthesis filter.
 The mean profile formed from the entire data set is shown in Fig. \ref{fig:0950_80_secs}.
 Several individual pulses were sufficiently bright to see substructure.
@@ -362,7 +362,8 @@ One such pulse is showcased in Fig. \ref{fig:0950_single_pulse} at three differe
     \label{fig:0950_single_pulse}
 \end{figure}
 
-Despite the proximity of this timescale to the temporal ``echoes'' induced by the synthesis filter ($50\mu$s), we were able to clearly identify the ($\sim 60\mu$s) microstructure reported by \citet{Kuzmin2003} at $102.5\,$MHz.
+Using observations at $102.5\,$MHz, \citet{Kuzmin2003} report microstructure with a characteristic timescale of $\sim 60\mu$s.
+Despite the proximity of this timescale to the temporal ``echoes'' induced by the synthesis filter ($50\,\mu$s), we are able to unambiguously identify the $\sim 60\,\mu$s microstructure.
 We also suggest that the finest observable structures (Fig. \ref{fig:0950_single_pulse}, bottom plot) might correspond to the $\sim 10\,\mu$s structures reported by \citet{Popov2002} at $1.65\,$GHz.
 However, \citet{Kuzmin2003} used only a single linear polarisation feed, and \citet{Popov2002}, only a left-handed circularly polarised feed.
 With the benefit of full Stokes polarimetry, we are able to verify that on the smallest time scales, the emission is almost 100\% polarised---mostly linear, but with a small amount of circular polarisation during the brightest part of the pulse.
@@ -370,20 +371,23 @@ This is evidence that the errors introduced by the analysis-synthesis filter do 
 
 \section{Conclusion}
 
-The MWA-VCS telescope system outputs dynamic spectra with a frequency resolution of $10\,$kHz and a time resolution of $100\,\mu$s, which is suitable for many pulsar applications, as demonstrated in several pulsar science papers published to date.
+The MWA-VCS telescope system outputs voltage data with a frequency resolution of $10\,$kHz and a time resolution of $100\,\mu$s, which is suitable for many pulsar applications, as demonstrated in several pulsar science papers published to date.
 In this paper, we have presented an algorithm to undo the fine channelisation stage (fine PFB) of the VCS pipeline by using a synthesis polyphase filter, implemented as part of our processing software suite, \vcstools{}.
 The result is a reconstructed, coarse channelised (pre-PFB) time series, suitable for high-time resolution studies of MSPs and other rapid transient signals.
 Although the reconstruction is not perfect, the introduced errors are quantified (up to $-10\,$dB in certain samples, and no more than $-20\,$dB elsewhere).
 The most significant artefacts, the ``temporal echoes'' of the impulse response, can be identified by virtue of the known timescale of their recurrence ($50\,\mu$s).
 
-We have further verified our system by observing PSRs \psrkaurJ{}, \psrbhatJ{}, and \psrslowB{}, all of which are known to exhibit structures on microsecond timescales.
-In each case, our results have been shown to be consistent with observations at higher radio frequencies.
+We have further verified our system by observing PSRs \psrkaurJ{}, \psrbhatJ{}, and \psrslowB{}, all of which are known to exhibit structures on $\sim 1$-$10\,\mu$s timescales.
+In each case, our results have been shown to be consistent with observations at other radio frequencies.
 In particular, we have demonstrated that the errors introduced by the imperfect analysis-synthesis filter pair are negligible compared to the pulsar signals themselves, which have been reconstructed with full polarisation at the faster sampling rate ($1.28\,$MHz) with high fidelity.
-The advent of the VCS high time resolution observing mode thus distinguishes the MWA as a premier low-frequency instrument for studying pulsars and other transients at microsecond precision, with important implications for studies of the pulsar emission mechanism, the characterisation of the ISM in the ongoing search for gravitational waves, and others.
+The advent of the VCS high time resolution observing mode thus distinguishes the MWA as a premier low-frequency instrument for studying pulsars and other transients at microsecond resolution, with important implications for studies of the pulsar emission mechanism, the characterisation of the ISM in the ongoing search for gravitational waves, and others.
 
 \begin{acknowledgements}
 This scientific work uses data obtained from the Murchison Radio-astronomy Observatory. We acknowledge the Wajarri Yamatji people as the traditional owners of the Observatory site.
-This work was supported by resources provided by the Pawsey Supercomputing Centre with funding from the Australian Government and the Government of Western Australia.
+Support for the operation of the MWA is provided by the Australian Government (NCRIS), under a contract with Curtin University administered by Astronomy Australia Limited.
+SM acknowledges the contribution of an Australian Government Research Training Program Scholarship in supporting this research.
+DK acknowledges support from both the Curtin International Postgraduate Research Scheme and the NANOGrav project, which receives support from NSF Physics Frontier Center award number 1430284.
+This work was further supported by resources provided by the Pawsey Supercomputing Centre with funding from the Australian Government and the Government of Western Australia.
 \end{acknowledgements}
 
 \begin{appendix}
