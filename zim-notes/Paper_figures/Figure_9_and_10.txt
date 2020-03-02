@@ -27,22 +27,22 @@ galaxy> psradd -o pulse_all.ar pulse_4252597*.ar
 > pav -g 50ms_res.ps/cps --publnc -SFC -z 0.45,0.55 -b 66 pulse_4252597337.ar
 > pav -g 5ms_res.ps/cps --publnc -SFC -z 0.495,0.505 -b 6 pulse_4252597337.ar
 
-> convert 1024bins_profile.ps -flatten -rotate 90 1024bins_profile.png
-> convert 200ms_res.ps -flatten -rotate 90 200ms_res.png
-> convert 50ms_res.ps -flatten -rotate 90 50ms_res.png
-> convert 5ms_res.ps -flatten -rotate 90 5ms_res.png
+> convert -density 100 1024bins_profile.ps -flatten -rotate 90 1024bins_profile.png
+> convert -density 100 200ms_res.ps -flatten -rotate 90 200ms_res.png
+> convert -density 100 50ms_res.ps -flatten -rotate 90 50ms_res.png
+> convert -density 100 5ms_res.ps -flatten -rotate 90 5ms_res.png
 }}}
 
 
 {{~/documents/fine-pfb-reconstruction/B0950+08/rec/1024bins_profile.png}}
 **200 ms resolution:**
-{{~/documents/fine-pfb-reconstruction/B0950+08/rec/200ms_res.png}}
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/200ms_res.png?width=640}}
 
 **50 ms resolution:**
-{{~/documents/fine-pfb-reconstruction/B0950+08/rec/50ms_res.png}}
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/50ms_res.png?width=640}}
 
 **5 ms resolution:**
-{{~/documents/fine-pfb-reconstruction/B0950+08/rec/5ms_res.png}}
+{{~/documents/fine-pfb-reconstruction/B0950+08/rec/5ms_res.png?width=640}}
 
 **Versions:**
 {{{code: lang="sh" linenumbers="False"
