@@ -1,0 +1,78 @@
+reset
+
+dat = "cartoon.dat"
+
+myfont = ",28"
+
+unset key
+unset tics
+
+# The PFB parameters. These should match the parameters used in cartoon.m
+N = 1536
+ntaps = 4
+tapsize = N/ntaps
+
+set multiplot
+
+set lmargin at screen 0.02
+set rmargin at screen 0.98
+set bmargin at screen 0.80
+set tmargin at screen 0.98
+
+set xrange [0:3*N]
+
+# Labels and arrows
+H = 0.75
+set label 1 "N" at screen 0.27,H center
+set arrow 1 from screen 0.25,H to screen 0.02,H
+set arrow 2 from screen 0.29,H to screen 0.52,H
+
+H = 0.69
+set label 2 "M=K" at screen 0.4575,H center
+set arrow 3 from screen 0.4175,H to screen 0.395,H
+set arrow 4 from screen 0.4975,H to screen 0.52,H
+
+set label 3 "P = 4" at screen 0.75, 0.55 font ',24'
+set label 4 "..." at screen 0.875, 0.1 font ',24'
+
+set arrow 5 from screen 0.02 ,0.64 to screen 0.02 ,0.80 nohead dt 3
+set arrow 6 from screen 0.395,0.64 to screen 0.395,0.80 nohead dt 3
+set arrow 7 from screen 0.52 ,0.64 to screen 0.52 ,0.80 nohead dt 3
+
+# The signal plot
+plot dat index 0 using 0:1        w l ls 1, \
+     ''  index 0 using (2*N-$0-1):1   w l ls 1, \
+     ''  index 0 using ($0+2*N):1 w l ls 1
+
+# The filter plots
+
+unset label
+unset arrow
+
+set xrange [0:N-1]
+set yrange [-0.25:1.1]
+
+do for [i=0:2] {
+
+    # Position the plots
+    # Everything here in screen units
+    W = 0.5
+    H = 0.18
+    P = W / 4.0
+    L =  0.02 + P*(2-i)
+    R = L + W
+    B = 0.02 + i*(H + 0.04)
+    T = B + H
+
+    set lmargin at screen L
+    set rmargin at screen R
+    set bmargin at screen B
+    set tmargin at screen T
+
+    set for [a=1:3] arrow a from graph 0.25*a,0 to graph 0.25*a,1 nohead dt 3 lc rgb "black"
+
+    plot dat index 0 using 0:2 w l ls 1
+
+}
+
+unset multiplot

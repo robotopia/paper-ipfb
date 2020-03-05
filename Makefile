@@ -1,12 +1,16 @@
 EPS = inverse_condition.eps \
 	  filter.eps \
 	  pre_fft_distributions.eps \
-	  cartoon.eps
+	  cartoon.eps \
+	  cartoon-top.eps
 
 all_eps: $(EPS)
 
 cartoon.eps: cartoon.gpi cartoon.dat
 	gnuplot -e "set terminal epscairo size 4,5; set output '$@'" $<
+
+cartoon-top.eps: cartoon-top.gpi cartoon.dat
+	gnuplot -e "set terminal epscairo size 4,2.5; set output '$@'" $<
 
 cartoon.dat: cartoon.m
 	octave $<
