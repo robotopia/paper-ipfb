@@ -59,7 +59,7 @@ All of these examples serve to illustrate the scientifically important and still
 The Murchison Widefield Array \citep[MWA;][]{Tingay2013} is a low-frequency ($\sim80$ to $300\,$MHz) aperture array telescope located at the Murchison Radio Observatory (MRO) in Western Australia.
 Now in its second phase of development \citep[Phase II;][]{Wayth2018}, it consists of 256 `tiles' (sets of $4\times4$ cross-dipole antennas) distributed over an area approximately $5.3\,$km in diameter, 128 of which can be used at a single time to form an interferometer.
 Originally conceived as an imaging telescope (which requires only the time-averaged cross-correlation products of the tiles, or `visibilities', to be retained on disk), it was subsequently augmented with the functionality to capture the raw complex voltages of each tile, known as the Voltage Capture System \citep[VCS;][]{Tremblay2015}.
-This system has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars \citep[e.g.][]{Bhat2016,McSweeney2017,Meyers2018}.
+This system has enabled the MWA to be used as a premier instrument for high-time resolution studies of transient signals, especially pulsars \citep[e.g.][]{Bhat2016,McSweeney2017,Meyers2018,Kirsten2019}.
 
 Although the tile voltages are sampled at a (Nyquist) rate of $655.36\,$MHz, these data undergo several stages of processing before finally being written to disk.
 After preliminary filtering and digitisation, the raw voltages are subjected to a two-stage frequency analysis filter, which trades time resolution for increased frequency resolution.
@@ -111,7 +111,7 @@ Eq. \eqref{eqn:wdft} describes the action of performing DFTs on short, windowed 
 $M$ is the number of samples that the window is translated along $x[n]$ between successive DFT operations; thus, the index of $h[mM - n]$ represents the shift required in order to produce the spectrum at time $m$.
 If $M < K$ then the windows overlap and the resulting channelisation is \textit{oversampled}; if $M = K$, then it is \textit{critically sampled}.
 The choice of $h[n]$ is motivated by the shape of its \textit{frequency response} (i.e. its Fourier pair), whose characteristics (e.g. width, location of sidelobes) are chosen according to the advantages they carry in particular contexts.
-Leaving $x[n]$ ``unweighted'' is equivalent to choosing $h[n] = w_R[n]$, in which case Eq. \eqref{eqn:wdft} is also called the short-time Fourier transform (STFT).
+Leaving $x[n]$ ``unweighted'' is equivalent to choosing $h[n] = w_R[n]$, in which case Eq. \eqref{eqn:wdft} merely describes a DFT performed on each successive window, which in this context is also called a short-time Fourier transform (STFT).
 On the other hand, choosing $h[n]$ to be the $\sinc$ function will result in a frequency response that approximates a rectangular window.
 
 It is well known that scaling a function in the time domain produces the inverse scaling in the Fourier domain.
@@ -136,10 +136,13 @@ where
 \end{equation*}
 A short proof of this equivalence is given in \citet{Harris2011}.
 The procedure described by Eq. \eqref{eqn:pfb} is called the \textit{weighted overlap-add} algorithm, and is illustrated in Fig. \ref{fig:pfb}.
-\begin{figure}[t]
+\begin{figure}[p]
     \centering
+    (a) \\
+    \includegraphics[width=\columnwidth]{cartoon-top.eps} \\
+    (b) \\
     \includegraphics[width=\columnwidth]{cartoon.eps}
-    \caption{A diagrammatic representation of the weighted overlap-add algorithm, as defined in Eq. \eqref{eqn:pfb}. A discrete signal containing a sinusoid and noise (top row) is multiplied by a filter (second and third rows), and each ``tap'' (represented by columns) is summed (bottom left) and Fourier transformed to produce the final spectrum (bottom right).}
+    \caption{A diagrammatic representation of the weighted overlap-add algorithm, as defined in Eq. \eqref{eqn:pfb}. Panel (a) shows the filter window being translated along a discretely sampled signal (in this case, containing a sinusoid and noise) with a step size of one tap. At each step, panel (b) shows how the signal (first row) is multiplied by a filter (second and third rows), and each tap is summed (bottom left) and Fourier transformed to produce the final spectrum (bottom right).}
     \label{fig:pfb}
 \end{figure}
 
@@ -243,9 +246,9 @@ The combined GPU-accelerated calculations for both beamforming and coarse channe
 \subsection{Fidelity of reconstructed time series}
 \label{sec:fidelity}
 
-The major challenge in verifying the fidelity of the back-to-back analysis-synthesis filter pair is the fact that the analysis PFB only exists on the FPGAs used in production and not as stand-alone software than can be fed arbitrary input.
+The major challenge in verifying the fidelity of the back-to-back analysis-synthesis filter pair is the fact that the analysis PFB only exists on the FPGAs used in production and not as stand-alone software that can be fed arbitrary input.
 This makes conducting standard impulse response tests impossible, unless the exact performance of the PFB can be reproduced.
-We have therefore attempted to replicate the PFB in software; however, the replication was not perfect, causing a small difference between the our model analysis-synthesis back-to-back system, and the analysis-synthesis system used in production.
+We have therefore attempted to replicate the PFB in software; however, the replication was not perfect, causing a small difference between the model analysis-synthesis back-to-back system, and the analysis-synthesis system used in production.
 
 In the fidelity tests presented in this section, we therefore consider a number of sources of error, all of which cause the reconstructed coarse channel time series, $\hat{x}[n]$, to differ from the original input time series, $x[n]$:
 \begin{description}
@@ -269,28 +272,33 @@ The asymmetry seen in Fig. \ref{fig:impulse_response} is due to replication erro
 Importantly, echoes arising from strong, periodic individual pulses (e.g. in a pulsar signal) will accumulate in the same phase bins when the time series is folded at the pulsar's rotation period.
 Thus, any structure seen on this time scale ($\sim 50\,\mu$s) must therefore be regarded with suspicion.
 
-We also compared the result of the synthesis filter method with a simple inverse FFT, shown in Fig. \ref{fig:imp_sin_noise}.
+We also compared the result of the synthesis filter method with a simple 128-point inverse FFT, shown in Fig. \ref{fig:imp_sin_noise}.
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{compare_coarse_imp_all.eps}
-    \caption{Similar to Fig. \ref{fig:impulse_response}, but showing the real and imaginary parts separately. In this case, the original signal is composed of an impulse (real only), a sinusoid (real only), and noise (both real and imaginary). Furthermore, the result of an inverse FFT is included for comparison. In the residual plots (immediately below the two large panels), the synthesis filter residuals are given a vertical offset to make visual comparison easier.}
+    \caption{Similar to Fig. \ref{fig:impulse_response}, but showing the real and imaginary parts separately. In this case, the original signal is composed of an impulse (real only), a sinusoid (real only), and noise (both real and imaginary), and subsequently quantised. The results of both the PFB synthesis and the inverse FFT are plotted for comparison. For each series, a vertical offset is added to make visual comparison easier. The PFB synthesis method is better at reconstructing the impulse and the sinusoid, but quantisation error dominates the noise for both PFB and FFT methods.}
     \label{fig:imp_sin_noise}
 \end{figure}
 The input function consists of a single-bin impulse, a sinusoid, and Gaussian noise.
 Both the PFB synthesis and the inverse FFT are able to reproduce the impulse and the sinusoid, but less perfectly in the case of the inverse FFT method, as evidenced by the residuals.
-Both methods show a similar amount of error in the construction of the Gaussian noise---this is not surprising as replication and quantisation are present at this level.
+The difference between the two methods can be understood as the direct consequence of the differences between the spectral response of the forward PFB and an ordinary FFT.
+Another way to say this is that the synthesis filter, $f[n]$, that corresponds to the inverse FFT is even less well matched to the analysis PFB filter, in the sense of Eq. \eqref{eqn:invertibility_condition}, than the synthesis filter defined in Eq. \eqref{eqn:synthesisfilter}.
+Notably, if an FFT had been used in the MWA's fine channelisation stage (i.e. instead of the PFB), the inverse FFT would exactly reproduce the original high time resolution time series, even though the spectrum produced by the forward FFT would be a less perfect representation of the true spectrum, due to more prevalent spectral leakage (i.e. compared to the PFB).
+Finally, note that both the synthesis filter method and the inverse FFT show a similar amount of error in the construction of the Gaussian noise (cf. the imaginary component shown in Fig. \ref{fig:imp_sin_noise})---this is not surprising as replication and quantisation errors are present at this level.
 
 In order to mitigate the replication error, we made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
 The fine channels from one polarisation of a single tile were extracted and subjected to the synthesis filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data (see Fig. \ref{fig:compare_timeseries}).
 Because the FPGA-based fine PFB was used in this test, the result is devoid of any replication error.
 However, the synthesis filter used in production uses an arbitrary scaling factor in order to make better use of the dynamic range afforded by VDIF's (8+8)-bit depth, and quantisation error is still present (and, in fact, dominates).
-The reconstructed samples shown in the figure have been rescaled by eye for the purposes of visual comparison.
-Despite this, it is readily apparent that the analysis-synthesis pair is able to reproduce the noise characteristics remarkably well.
+Nevertheless, the agreement between the reconstructed samples and the original is very good, with both real and imaginary components having a correlation coefficient of approximately $0.94$.
+
+Despite the errors in the reconstruction, the analysis-synthesis pair is able to reproduce the noise characteristics well enough for the errors not to significantly affect sufficiently bright pulsar signals, as demonstrated in the next section.
+However, these errors may become significant when observing low SNR pulsar emission. In these cases, the errors may be mitigated by averaging over multiple time bins (e.g. a coarser time resolution, or averaging many pulses together).
 
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{compare_timeseries.eps}
-    \caption{128 high time resolution ($1.28\,$MHz) samples from a single coarse channel and a single polarisation of one MWA tile. The real (top) and imaginary (bottom) components are shown separately. The original coarse channel data (black boxes) are overlaid with the reconstructed data (red lines and dots), with the residuals plotted in the lower panels.}
+    \caption{128 high time resolution ($1.28\,$MHz) samples from a single coarse channel and a single polarisation of one MWA tile. The real (top) and imaginary (bottom) components are shown separately. The original coarse channel data (black) are compared with the reconstructed data (red), with the residuals plotted in the lower panels. Because the VDIF data uses an arbitrary scaling factor, the red line has been rescaled by eye for a better visual comparison.}
     \label{fig:compare_timeseries}
 \end{figure}
 
@@ -304,7 +312,7 @@ Observations of three pulsars are presented here to validate the synthesis filte
 \psrkaurJ{} has a rotation period of $2.18\,$ms and a dispersion measure (DM) of $11.41\,\dmunits$.
 The resulting dispersion smear across $10\,$kHz channels at the central observing frequency of $150.4\,$MHz is approximately $0.2\,$ms, or $45^\circ$ of rotation phase, consistent with the width of the average profile formed from incoherently de-dispersed, fine channelised data recorded with the MWA-VCS system (Fig. \ref{fig:J2241_profiles}, top panel).
 Upon applying the synthesis filter and coherently de-dispersing the reconstructed time series sampled at the much higher rate of $1.28\,$MHz, the same data revealed exquisite detail in the average profile, including a pair of pre-cursor components that are only marginally visible (if at all) at higher frequencies (Fig. \ref{fig:J2241_profiles}, bottom panel).
-Moreover, these new, low-frequency observations have enabled the DM of this pulsar to be measured to unprecedented precision ($\sim (2$-$6) \times 10^{-6}\,\dmunits$), with important consequences for measuring DM chromaticity and evaluating its effect on pulsar timing experiments.
+Moreover, these new, low-frequency observations have allowed us to measure the DM of this pulsar with unprecedented precision ($\sim (2$-$6) \times 10^{-6}\,\dmunits$), with important consequences for measuring DM chromaticity and evaluating its effect on pulsar timing experiments.
 These results are discussed in detail in \citet{Kaur2019}.
 
 The resemblance of the newly-sighted precursor components to the temporal artefacts induced by the synthesis filter naturally raises questions about their authenticity.
@@ -330,8 +338,8 @@ As evident from Fig. \ref{fig:0437}, the application of the synthesis filter suc
 
 \begin{figure}[t!]
     \centering
-    \includegraphics[width=\columnwidth]{mwa0437lowres.png} \\[10pt]
-    \includegraphics[width=\columnwidth]{mwa0437hires.png}
+    \includegraphics[angle=270,width=\columnwidth]{mwa0437lowres.eps} \\[10pt]
+    \includegraphics[angle=270,width=\columnwidth]{mwa0437hires.eps}
     \caption{Profiles of PSR \psrbhatJ{} formed from the same data set. Top: incoherently de-dispersed with $10\,$kHz (fine) frequency channels formed from the standard PFB analysis filter. Bottom: coherently de-dispersed using $1.28\,$MHz (coarse) frequency channels reconstructed using the synthesis filter described in this paper. The higher time resolution profile shows features (e.g. notches in the total intensity profile at pulse phases $\sim 0.54$ and $\sim 0.7$) that are obscured by dispersion smear at the lower time resolution. A comparison with these profiles with that published in Paper I reveals an excess of circular polarisation on both the leading and trailing edges of the profile. The reason for the discrepancy is not clear, but it should be noted that the earlier profiles were published before the polarimetric verification of Paper II was carried out.}
     \label{fig:0437}
 \end{figure}
@@ -388,6 +396,7 @@ Support for the operation of the MWA is provided by the Australian Government (N
 SM acknowledges the contribution of an Australian Government Research Training Program Scholarship in supporting this research.
 DK acknowledges support from both the Curtin International Postgraduate Research Scheme and the NANOGrav project, which receives support from NSF Physics Frontier Center award number 1430284.
 This work was further supported by resources provided by the Pawsey Supercomputing Centre with funding from the Australian Government and the Government of Western Australia.
+We would also like to thank Ian Morrison, Franz Kirsten, and Clancy James for reviewing this manuscript and offering several helpful suggestions to improve it.
 \end{acknowledgements}
 
 \begin{appendix}
