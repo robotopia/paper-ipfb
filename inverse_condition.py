@@ -20,13 +20,34 @@ def h(n):
 # Choose the synthesis filter
 def f(n):
     H = np.sum(h(ns))
-    return h(n)/H
+    return h(-n)
 
 # Calculate λ(s) from h[n] and f[n]
 ns = np.arange(N)
-ss = np.arange(-12,13)
-lmda = np.array([sum(f(ns) * h(ns + s*M)) for s in ss])
+ss = np.arange(-12,12)
+ms = np.arange(M)
+NS, SS, MS = np.meshgrid(ns, ss, ms)
+lmda = np.sum(f(NS - MS*M) * h(MS*M - NS + SS*M), axis=2)
 
+# Make plots
+plt.figure(1)
+ns = np.arange(-N,N)
+plt.plot(ns, h(ns), label='Analysis filter')
+plt.plot(ns,f(ns), label='Synthesis filter')
+plt.legend()
+
+plt.figure(3)
+plt.imshow(lmda, aspect='auto', interpolation='None', origin='lower', extent=[-0.5,N+0.5,ss[0]-0.5,ss[-1]+0.5])
+cb = plt.colorbar()
+plt.xlabel("$n$")
+plt.ylabel("$s$")
+cb.set_label("$\\lambda(s)$")
+#plt.savefig("inverse_condition.eps", bbox_inches='tight')
+
+plt.show()
+
+
+'''
 # Analysis-synthesis response of an impulse
 nsamples = K*64
 x_ntaps  = nsamples//K - ntaps
@@ -45,7 +66,6 @@ NS, KS, MS = np.meshgrid(ns, ks, ms)
 xhat = f(NS-MS*M) / K
 print(xhat.shape)
 
-'''
 fig, ax = plt.subplots(3,1)
 im1 = ax[0].imshow(np.abs(X), aspect='auto')
 im2 = ax[1].imshow(np.angle(X), cmap='hsv', aspect='auto')
@@ -54,10 +74,3 @@ im3 = ax[2].plot(x)
 #plt.colorbar(im2)
 plt.show()
 '''
-
-# Make plots
-plt.plot(ss, lmda, '-xk')
-plt.ylim([-0.1, 1.0])
-plt.xlabel("$s$")
-plt.ylabel("$\\lambda(s)$")
-plt.savefig("inverse_condition.eps", bbox_inches='tight')
