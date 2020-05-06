@@ -57,7 +57,11 @@ axs[0].set_xlim([0,1536])
 
 ctr = N//2 - 1
 f = (np.arange(N) - ctr)/P * 10 # i.e. 10 kHz
-fftr = np.roll(np.abs(np.fft.fft(s*hn)), ctr)
+fft = np.fft.fft(s*hn)
+fftr = np.roll(np.abs(fft), ctr)
+fftth = np.roll(np.angle(fft), ctr)
+fftre = np.roll(np.real(fft), ctr)
+fftim = np.roll(np.imag(fft), ctr)
 dB = 10*np.log10(fftr/max(fftr))
 axs[1].plot(f, dB, 'k-')
 for fshift in [-10, 10]:
@@ -73,3 +77,8 @@ axs[0].legend(loc='upper right')
 #plt.show()
 plt.tight_layout()
 plt.savefig("filter.eps", bbox_inches='tight')
+
+plt.figure(2)
+plt.plot(fftre, fftim, 'r.')
+plt.xlim([-30,30])
+plt.show()
