@@ -1,4 +1,3 @@
-from scipy import hanning
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,7 +15,7 @@ def create_fine_PFB_filter(nchans, ntaps):
     x = (n + 1 - N/2)/nchans
 
     sinc = np.sinc(x)
-    hn   = hanning(N+1)[1:]
+    hn   = np.hanning(N+1)[1:]
     h    = sinc*hn
     return h, n, hn, sinc
 
@@ -59,9 +58,6 @@ ctr = N//2 - 1
 f = (np.arange(N) - ctr)/P * 10 # i.e. 10 kHz
 fft = np.fft.fft(s*hn)
 fftr = np.roll(np.abs(fft), ctr)
-fftth = np.roll(np.angle(fft), ctr)
-fftre = np.roll(np.real(fft), ctr)
-fftim = np.roll(np.imag(fft), ctr)
 dB = 10*np.log10(fftr/max(fftr))
 axs[1].plot(f, dB, 'k-')
 for fshift in [-10, 10]:
@@ -73,12 +69,18 @@ axs[1].set_xlim([-30,30])
 axs[1].set_ylim([-60, 5])
 plt.grid(True)
 
+'''
+# Plot FFT of least squares synthesis filter
+F = np.loadtxt("rinv.txt")
+print(F)
+Ffft = np.fft.fft(F)
+Ffftr = np.roll(np.abs(Ffft), ctr)
+FdB = 10*np.log10(Ffftr/max(Ffftr))
+axs[1].plot(f, FdB, 'b-')
+'''
+
 axs[0].legend(loc='upper right')
 #plt.show()
 plt.tight_layout()
 plt.savefig("filter.eps", bbox_inches='tight')
 
-plt.figure(2)
-plt.plot(fftre, fftim, 'r.')
-plt.xlim([-30,30])
-plt.show()

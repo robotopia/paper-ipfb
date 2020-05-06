@@ -21,7 +21,7 @@ pre_fft_distributions.eps: pre_fft_distributions.py
 inverse_condition.eps: inverse_condition.py
 	python $<
 
-filter.eps: filtercoeffs.py
+filter.eps: filtercoeffs.py rinv.txt
 	python $<
 
 pasa.cls: pasa-template-20170508.zip
@@ -32,3 +32,6 @@ pasa-template-20170508.zip:
 
 %.png: %.eps
 	convert $< $@
+
+rinv.png rinv.txt: find_inverse.py
+	python $<
