@@ -12,6 +12,8 @@
 \newcommand{\psrbhatJ}{J0437$-$4715}
 \newcommand{\dmunits}{\ensuremath{\text{pc}\,\text{cm}^{-3}}}
 
+\newcommand{\changes}[1]{{\color{red}#1}}
+
 \title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via a polyphase synthesis filter}
 
 \author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$, B. W. Meyers$^{1,2,3}$, S. E. Tremblay, J. Jones$^1$, B. Crosse$^1$
@@ -191,22 +193,65 @@ The full details of the FPGA implementation are given in the appendix.
 \section{Synthesis filter}
 \label{sec:ipfb}
 
-\subsection{Design}
-
-The spectral output of the PFB, $X_k[m]$, can be used to reconstruct the time series $\hat{x}[n]$ by means of a \textit{synthesis filter}.
-The hat signifies the fact that the resulting time series does not necessarily equal the original input to the PFB, $x[n]$, since one is free to choose the synthesis filter itself, $f$:
+In order to regain the time resolution lost during analysis, the spectral output of the PFB must be transformed back into the time domain.
+The inverse to the analysis operation defined in Eq. \eqref{eqn:wdft} converts a spectrum $X_k[m]$ into a time series $\hat{x}[n]$ by means of a \textit{synthesis filter}, $f[n]$:
 \begin{equation}
-    \hat{x}[n] = \sum_{m = 0}^{M-1} f[n - mM]\,
+    \hat{x}[n] = \sum_{m = -\infty}^{\infty} f[n - mM]\,
         \frac{1}{K} \sum_{k=0}^{K-1} X_k[m]\,e^{2\pi jkn/K}.
     \label{eqn:ipfb}
 \end{equation}
-The necessary and sufficient condition for exact equality, $\hat{x}[n] = x[n]$, for a critically sampled PFB is \citep[proven in][]{Crochiere1983}:
+In this expression, the index $m$ is allowed to run over all integers in order accommodate an arbitrarily large synthesis filter.
+
+Back-to-back analysis-synthesis filters can be designed so that the original time series can be perfectly reconstructed without any loss of signal (i.e. $\hat{x}[n] = x[n]$ exactly), and the system as a whole can be thought of as an identity operation.
+The condition for perfect reconstruction can be found by substituting the analysed spectrum obtained from Eq. \eqref{eqn:wdft} into the synthesis operation defined in Eq. \eqref{eqn:ipfb}.
+It can be shown that, for a critically sampled system,
 \begin{equation}
-    \lambda(s) = \sum_{m=0}^{M-1} f[n-mM]\,h[mM - n + sM] = \Kron
+    \begin{aligned}
+        \hat{x}[n]
+            &= \sum_{s = -\infty}^{\infty} x[n - sM]
+               \sum_{m = -\infty}^{\infty} f_m[n]\, h_m[sM - n] \\
+            &= x[n] \sum_{m = -\infty}^{\infty} f_m[n]\, h_m[-n] +{} \\
+            &\quad \sum_{\substack{s = -\infty \\ s \ne 0}}^{\infty} x[n - sM]
+               \sum_{m = -\infty}^{\infty} f_m[n]\, h_m[sM - n]
+    \end{aligned}
+    \label{eqn:backtoback}
+\end{equation}
+where, following \citet{Crochiere1983}, we have adopted the shorthand notation
+\begin{equation}
+    \begin{aligned}
+        h_m[n] &\equiv h[n - mM], \\
+        f_m[n] &\equiv f[n - mM].
+    \end{aligned}
+\end{equation}
+It can be seen that perfect reconstruction corresponds to the case when the only non-zero contribution comes from the $s = 0$ term, giving rise to the necessary and sufficient condition
+\begin{equation}
+    \sum_{m = -\infty}^{\infty} f[n-mM]\,h[(m - s)M - n] = \Kron
     \label{eqn:invertibility_condition}
 \end{equation}
 for all values of $n$, where $\Kron$ is the Kronecker delta.
-Eq. \eqref{eqn:invertibility_condition} formally resembles a kind of ``convolution'' of the synthesis filter with the analysis filter, where the translational part of the convolution operation is restricted to step sizes of $M$.
+
+Finding the synthesis filter that perfectly inverts a given analysis filter is tantamount to solving Eq. \eqref{eqn:invertibility_condition} for $f[n]$.
+However, exact solutions do not always exist, and in general, numerical methods must be employed to find a synthesis filter that minimises the reconstruction error.
+
+\subsection{Reconstruction error}
+
+In the context of an astrophysical signal, it is desirable to quantify the reconstruction error in terms of the signal-to-noise ratio (S/N).
+If we assume that individual samples follow, and are dominated by, the same Gaussian noise statistics, then the reduction in S/N of a reconstructed sample can be estimated by considering the fraction of the power of the reconstructed sample that came from the original sample:
+\begin{equation}
+    \frac{[\text{S/N}]_\text{recon}}{[\text{S/N}]_\text{orig}}
+      = \frac{\left(\sum\limits_{m = -\infty}^{\infty} f_m[n]\,h_m[-n]\right)^2}{
+            \sum\limits_{s = -\infty}^{\infty}
+            \left(\sum\limits_{m = -\infty}^{\infty} f_m[n]\,h_m[sM - n]\right)^2
+        }
+\end{equation}
+This expression is invariant under the substitution $n \rightarrow n + \lambda M$, $\lambda \in \mathbb{Z}$, which indicates that the (average) reconstruction error is only a function of where the sample in question falls within a tap.
+Consequently, any synthesis filter (except the exact inverse of the analysis filter, if it exists) will introduce a ``ringing'' effect into the reconstructed time series that has a period equal to the size of the PFB tap.
+
+\subsection{Design constraints}
+
+Eq. \eqref{eqn:backtoback} suggests that a reconstructed time sample potentially contains contributions from up to $P$ original samples, spaced at intervals of one tap.
+
+
 
 Whether this condition is perfectly met clearly depends on the choice of analysis and synthesis filters.
 However, even a synthesis filter which only approximately satisfies Eq. \eqref{eqn:invertibility_condition} for a given analysis filter (i.e. $\lambda(s) \approx \Kron$) will produce a time series that approximates the original coarse channel time series (i.e. $\hat{x}[n] \approx x[n]$).
@@ -221,11 +266,19 @@ where $H = \sum_{n=0}^{N-1} h[n]$ is a normalising factor, meets the invertibili
 With the analysis and synthesis filters thus defined, the value of Eq. \eqref{eqn:invertibility_condition} can be calculated and is illustrated in Fig. \ref{fig:inverse_condition}.
 It is readily seen that $\lambda(s)$ closely approximates, but does not exactly equal, $\Kron$.
 The quantitative effect of this analysis-synthesis pair is discussed in Section \ref{sec:fidelity}.
+
+%\begin{figure}
+%    \centering
+%    \includegraphics[width=\columnwidth]{inverse_condition.eps}
+%    \caption{The condition for invertibility, Eq. \eqref{eqn:invertibility_condition}, demonstrated for the analysis filter given in Eq. \eqref{eqn:filter} and the synthesis filter given in Eq. \eqref{eqn:synthesisfilter}. The fact that $\lambda(s)$ only approximates the delta function gives rise to spurious artefacts (``temporal echoes'') in the time domain, which can be seen in Fig. \ref{fig:impulse_response}.}
+%    \label{fig:inverse_condition}
+%\end{figure}
+
 \begin{figure}
     \centering
-    \includegraphics[width=\columnwidth]{inverse_condition.eps}
-    \caption{The condition for invertibility, Eq. \eqref{eqn:invertibility_condition}, demonstrated for the analysis filter given in Eq. \eqref{eqn:filter} and the synthesis filter given in Eq. \eqref{eqn:synthesisfilter}. The fact that $\lambda(s)$ only approximates the delta function gives rise to spurious artefacts (``temporal echoes'') in the time domain, which can be seen in Fig. \ref{fig:impulse_response}.}
-    \label{fig:inverse_condition}
+    \includegraphics[width=\columnwidth]{snr.eps}
+    \caption{The reconstructed S/N as a function of the position of the reconstructed sample within a tap.}
+    \label{fig:snr}
 \end{figure}
 
 \subsection{Implementation}
