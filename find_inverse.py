@@ -23,73 +23,119 @@ def f(n):
     H = np.sum(h(ns))
     return h(-n)
 
-# Get the least squared solution
-Ftaps = ntaps + 12 # Number of taps in output filter
-Hsize = (2*ntaps - 1, Ftaps)
-Href = (Hsize[0] // 2, Hsize[1] // 2 - ntaps // 2)
+# Find some synthesis filters!
+filter_types = ["Mirror", 12, 18, 24]
+SNR = np.zeros((len(filter_types), K))
 
-Fhat = np.zeros((Hsize[1], K))
-Dhat = np.zeros((Hsize[0], K))
-for n in range(K):
-    # Try and find the inverse to the analysis filter, h(n)
-    # Step 1: Create H array, e.g.,
-    #          <----------------  Hsize[1] ----------------->
-    #    ^     [ h(n+11*M)      0          0         ...    ]
-    #    |     [ h(n+10*M)  h(n+11*M)      0         ...    ]
-    #    |     [ h(n+ 9*M)  h(n+10*M)  h(n+11*M)     ...    ]
-    # Hsize[0] [    ...        ...        ...        ...    ]
-    #    |     [    ...     h(n+ 0*M)  h(n+ 1*M)  h(n+ 2*M) ]
-    #    |     [    ...         0      h(n+ 0*M)  h(n+ 1*M) ]
-    #    v     [    ...         0          0      h(n+ 0*M) ]
-    H = np.zeros(Hsize)
-    Mmat = np.zeros(Hsize)
-    for i in range(Hsize[0]):
-        for j in range(Hsize[1]):
-            m = (j - i) - (Href[1] - Href[0])
-            #Mmat[i,j] = m
-            H[i,j] = h(n + m*M)
+for a in range(len(filter_types)):
 
-    # Now, we want to solve the matrix equation HF = D for F,
-    # where D is the "Kronecker delta"
-    D = np.zeros((Hsize[0], 1))
-    D[ntaps-1] = 1
+    filter_size = filter_types[a]
 
-    # H is non-square
-    HT        = np.transpose(H)
-    HTH       = np.matmul(HT, H)
-    HTD       = np.matmul(HT, D)
-    invHTH    = np.linalg.pinv(HTH)
-    Fhat[:,n:n+1] = np.matmul(invHTH, HTD)
-    #Fhat[:,n] = [h(n + m*M) for m in range(Ftaps)] # Set synth filter = analysis filter
+    if not isinstance(filter_size, int):
+        Ftaps = ntaps
+    else:
+        Ftaps = filter_size
 
-    # Let's see how well the solution does
-    Dhat[:,n:n+1] = np.matmul(H, Fhat[:,n:n+1]) - D
+    Hsize = (2*ntaps - 1, Ftaps)
+    Href = (Hsize[0] // 2, Hsize[1] // 2 - ntaps // 2)
 
-# Plot figures
-plt.figure("Least squares")
-F = Fhat.flatten()
-ns = np.arange(N)
-Fns = np.arange(F.size)
-plt.plot(ns - N//2, h(ns), label='Analysis filter')
-plt.plot(Fns - F.size//2, F, label="Least squares sol'n")
-plt.legend()
-plt.tight_layout()
-plt.savefig("rinv.png")
+    Fhat = np.zeros((Hsize[1], K))
+    Dhat = np.zeros((Hsize[0], K))
+    for n in range(K):
+        # Try and find the inverse to the analysis filter, h(n)
+        # Step 1: Create H array, e.g.,
+        #          <----------------  Hsize[1] ----------------->
+        #    ^     [ h(n+11*M)      0          0         ...    ]
+        #    |     [ h(n+10*M)  h(n+11*M)      0         ...    ]
+        #    |     [ h(n+ 9*M)  h(n+10*M)  h(n+11*M)     ...    ]
+        # Hsize[0] [    ...        ...        ...        ...    ]
+        #    |     [    ...     h(n+ 0*M)  h(n+ 1*M)  h(n+ 2*M) ]
+        #    |     [    ...         0      h(n+ 0*M)  h(n+ 1*M) ]
+        #    v     [    ...         0          0      h(n+ 0*M) ]
+        H = np.zeros(Hsize)
+        Mmat = np.zeros(Hsize)
+        for i in range(Hsize[0]):
+            for j in range(Hsize[1]):
+                m = (j - i) - (Href[1] - Href[0])
+                #Mmat[i,j] = m
+                H[i,j] = h(n + m*M)
 
-plt.figure("Performance")
-plt.imshow(Dhat, origin='lower', aspect='auto', cmap='bwr', extent=(-0.5, M+0.5, -(Hsize[0]+1)//2-0.5, (Hsize[0]+1)//2+0.5))
-cmax = np.max(np.abs(Dhat))
-plt.clim([-cmax, cmax])
-plt.colorbar(label="$\\sum_{m=0}^{M-1}\,f[n-mM]\,h[(m+s)M-n] - \\delta_s^0$")
-plt.xlabel("$n$")
-plt.ylabel("$s$")
-plt.savefig("rinv_perf.png")
+        # Now, we want to solve the matrix equation HF = D for F,
+        # where D is the "Kronecker delta"
+        D = np.zeros((Hsize[0], 1))
+        D[(Hsize[0] + 1)//2 - 1] = 1
 
+        if filter_size == "Mirror":
+            Fhat[:,n] = [h(n + m*M) for m in range(Ftaps)] # Set synth filter = analysis filter
+        elif filter_size == "fft":
+            Fhat[:,n] = 1/Ftaps
+        else:
+            # H is non-square
+            HT        = np.transpose(H)
+            HTH       = np.matmul(HT, H)
+            HTD       = np.matmul(HT, D)
+            invHTH    = np.linalg.pinv(HTH)
+            Fhat[:,n:n+1] = np.matmul(invHTH, HTD)
+
+        # Let's see how well the solution does
+        Dhat[:,n:n+1] = np.matmul(H, Fhat[:,n:n+1])
+
+    # Finally, calculate the relative S/N for each n
+    SNR[a,:] = (Dhat[(Hsize[0] + 1)//2 - 1])**2 / np.sum(Dhat**2, axis=0)
+    SNR[a,:] = 10*np.log10(SNR[a,:])
+
+    # Remove the "correct" answer, to just be left with the errors
+    Dhat[(Hsize[0] + 1)//2 - 1] -= 1
+
+    '''
+    # Plot figures
+    plt.figure("Least squares")
+    F = Fhat.flatten()
+    ns = np.arange(N)
+    Fns = np.arange(F.size)
+    plt.plot(ns - N//2, h(ns), label='Analysis filter')
+    plt.plot(Fns - F.size//2, F, label="Least squares sol'n")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("rinv.png")
+
+    plt.figure("Performance overall")
+    plt.imshow(Dhat, origin='lower', aspect='auto', cmap='bwr', extent=(-0.5, M+0.5, -(Hsize[0]+1)//2-0.5, (Hsize[0]+1)//2+0.5))
+    cmax = np.max(np.abs(Dhat))
+    plt.clim([-cmax, cmax])
+    plt.colorbar(label="$\\sum_{m=0}^{M-1}\,f[n-mM]\,h[(m+s)M-n] - \\delta_s^0$")
+    plt.xlabel("$n$")
+    plt.ylabel("$s$")
+    plt.savefig("rinv_perf.png")
+    '''
+
+    #plt.figure("Performance for " + filter_size)
+    ms = np.arange(M)
+    if isinstance(filter_size, int):
+        label = "Least squares sol'n"
+    elif filter_size == "Mirror":
+        label = "Mirror filter"
+    else:
+        label = "(undefined)"
+    label += ", {0} taps".format(Ftaps)
+    plt.plot(ms, SNR[a,:], label=label)
+    plt.xlabel("$n$")
+    plt.ylabel("Reconstructed S/N (dB)")
+    plt.ylim([-0.65,0.025])
+    plt.tight_layout()
+    plt.legend()
+    plt.savefig("snr.eps")
+
+    '''
+    # Write out the spectrum to rinv.txt
+    header =  "Synthesis filter coefficients obtained by least squares solution to inverse analysis filter"
+    header += "Generated by\n"
+    header += "python" + " ".join(sys.argv)
+    np.savetxt("rinv.txt", F, header=header)
+    '''
+
+'''
 # Show figures
-#plt.show()
-
-# Write out the spectrum to rinv.txt
-header =  "Synthesis filter coefficients obtained by least squares solution to inverse analysis filter"
-header += "Generated by\n"
-header += "python" + " ".join(sys.argv)
-np.savetxt("rinv.txt", F, header=header)
+plt.legend()
+plt.show()
+'''
