@@ -129,12 +129,12 @@ The term ``polyphase'' derives from the fact that each block of $K = N/P$ sample
 One of the great advantages of the critically sampled PFB is the existence of a mathematically equivalent but computationally efficient implementation.
 It can be shown that Eq. \eqref{eqn:wdft} is equivalent to first segmenting the windowed time series into taps, summing their respective samples element-wise, and performing a single DFT on the resulting array (now also of size $K$), i.e.
 \begin{equation}
-    X_k[m] = \sum_{n=0}^{K-1} b[n]\,e^{-2\pi jkn/K},
+    X_k[m] = \sum_{n=0}^{K-1} b_m[n]\,e^{-2\pi jkn/K},
     \label{eqn:pfb}
 \end{equation}
 where
 \begin{equation*}
-    b[n] = \sum_{\rho=0}^{P-1} h[n + K\rho]\,x[n + mM + K\rho].
+    b_m[n] = \sum_{\rho=0}^{P-1} h[K\rho - n]\,x[n + mM - K\rho].
 \end{equation*}
 A short proof of this equivalence is given in \citet{Harris2011}.
 The procedure described by Eq. \eqref{eqn:pfb} is called the \textit{weighted overlap-add} algorithm, and is illustrated in Fig. \ref{fig:pfb}.
@@ -153,6 +153,7 @@ The procedure described by Eq. \eqref{eqn:pfb} is called the \textit{weighted ov
 % See Harris et al. (2011) for a fuller discussion of this point.
 
 \subsection{MWA implementation of the fine PFB}
+\label{sec:mwa_pfb}
 
 The first stage (coarse) PFB is described in \citet{Prabu2015}, and here we only document a few details pertaining to the second stage (fine) PFB.
 A PFB is specified by (1) the number of output channels, $K$, (2) the number of taps, $P$, and (3) the analysis filter, $h[n]$.
@@ -244,13 +245,14 @@ If we assume that individual samples follow, and are dominated by, the same Gaus
             \sum\limits_{s = -\infty}^{\infty}
             \left(\sum\limits_{m = -\infty}^{\infty} f_m[n]\,h_{m-s}[-n]\right)^2
         }.
+    \label{eqn:snr_long}
 \end{equation}
 This expression is invariant under the substitution $n \rightarrow n + \lambda M$, $\lambda \in \mathbb{Z}$, which indicates that the (average) reconstruction error is only a function of where the sample in question falls within a tap.
 Consequently, any synthesis filter (except the exact inverse of the analysis filter, if it exists) will introduce a ``ringing'' effect into the reconstructed time series that has a period equal to the size of the PFB tap.
 
 \subsection{Optimal and sub-optimal filter designs}
 
-Minimising the loss of S/N is equivalent to solving Eq. \eqref{eqn:invertibility_condition} in a least squares sense.
+Minimising the loss of S/N is equivalent to solving Eq. \eqref{eqn:invertibility_condition} using least squares regression.
 Since any given reconstructed sample only receives contributions from samples spaced one tap apart, Eq. \eqref{eqn:invertibility_condition} can be thought of as $M$ independent conditions, one for each tap position, $n = 0, 1, 2, \dots, M-1$.
 Thus, considering each tap position separately, each condition can be expressed as a minimal matrix equation,
 \begin{equation}
@@ -261,7 +263,7 @@ where $H^{(n)}$, $F^{(n)}$, and $D$ are matrices whose elements are given by
     \begin{aligned}
         H^{(n)}_{ij} &= h_{P-1+j-i}[-n], \\
         F^{(n)}_j    &= f_j[n], \\
-        D_i          &= \delta^{P-1}_i,
+        D_i          &= \delta^{(P^\prime+P)/2}_i,
     \end{aligned}
 \end{equation}
 where $P$ is the number of taps in the analysis filter, and the size of $F^{(n)}$ is set to the desired number of (non-zero) taps in the synthesis filter, $P^\prime$.
@@ -271,21 +273,19 @@ The indices are chosen such that, owing to the finite size of the analysis filte
     \begin{bmatrix}
        h_{P-1}[-n] & 0 & \cdots & 0 \\
        h_{P-2}[-n] & h_{P-1}[-n] & \cdots & 0 \\
-       \vdots & & \ddots & \vdots \\
-       h_0[-n] & h_1[-n] & \cdots & h_{P-1}[-n] \\
-       \vdots & & \ddots & \vdots \\
+       \vdots & \ddots & \ddots & \vdots \\
        0 & \cdots & h_0[-n] & h_1[-n] \\
        0 & \cdots & 0 & h_0[-n]
-    \end{bmatrix},
+    \end{bmatrix}
 \end{equation}
-with row number $i = P - 1$ (in $H^{(n)}$ and $D$) corresponding to the $s = 0$ term.
+with row number $i = (P^\prime + P)/2$ (in $H^{(n)}$ and $D$) corresponding to the $s = 0$ term\footnote{Note that since $P = 12$ for the PFB considered here, only the case where $P^\prime$ is even has been considered.}.
 
 Once the matrices $H^{(n)}$, $F^{(n)}$, and $D$ have been defined, solution by least squares regression can proceed in the usual way, yielding the best-fit filter coefficients
 \begin{equation}
     \hat{F}^{(n)} = \left({H^{(n)}}^T H^{(n)}\right)^{-1} {H^{(n)}}^T D,
 \end{equation}
 where ${H^{(n)}}^T$ is the transpose of $H^{(n)}$.
-With this notation, the reconstruction error can be more simply expressed
+With this notation, the reconstruction error can be more concisely expressed
 \begin{equation}
     \frac{[\text{S/N}]_\text{recon}}{[\text{S/N}]_\text{orig}}
       = \frac{(\hat{D}_{P-1})^2}{\hat{D}^T \hat{D}},
@@ -302,10 +302,24 @@ Fig. \ref{fig:synthfilters} shows the solutions found for the MWA's analysis fil
 \end{figure}
 Despite the complexity of the synthesis filters, they all share the same basic form as the analysis filter.
 This suggests that choosing a synthesis filter that is the mirror image of the analysis filter (i.e. $f[n] = h[-n]$), might also yield a reasonably good reconstruction, without having to calculate the optimal solutions numerically.
-The performance of both the mirror filter and the set of optimal solutions (for different choices of $P^\prime$) can be evaluated straightforwardly using Eq. \eqref{eqn:snr_short}.
+The performance of both the (sub-optimal) mirror filter and the (optimal) set of least-squares solutions can be evaluated straightforwardly using Eq. \eqref{eqn:snr_short}.
 However, before comparing the results for various filters, there is another source of reconstruction error, specific to the MWA implementation of the PFB, that must first be considered.
 
 \subsection{Quantisation error}
+
+The MWA implementation of the fine PFB differs from Eq. \eqref{eqn:pfb} in a few important respects, causing a reduction in the reconstructed S/N that would be present even if the synthesis filter perfectly inverted the analysis filter.
+The most significant difference is that both the coefficients $b[n]$ and the final sum undergo a rounding operation, resulting in the approximate (i.e. less precise and biased) spectrum
+\begin{equation}
+    \tilde{X}_k[m] = \left\lfloor\sum_{n=0}^{K-1} \bigg\lfloor b_m[n] \bigg\rfloor_{\text{asym}} e^{-2\pi jkn/K}\right\rfloor,
+\end{equation}
+where $\lfloor\cdot\rfloor$ denotes rounding to the nearest integer, and $\lfloor\cdot\rfloor_{\text{asym}}$ denotes the asymmetrical rounding scheme described in detail in Appendix \ref{sec:fpga_pfb}.
+Under these circumstances, Eq. \eqref{eqn:snr_long} cannot be used in its current form to estimate the signal loss, because it does not follow from the adjusted synthesis operation
+\begin{equation}
+    \hat{x}[n] = \sum_{m = -\infty}^{\infty} f[n - mM]\,
+        \frac{1}{K} \sum_{k=0}^{K-1} \tilde{X}_k[m]\,e^{2\pi jkn/K},
+    \label{eqn:ipfb_adjusted}
+\end{equation}
+which differs from Eq. \eqref{eqn:ipfb} only by the substitution $X_k[m] \rightarrow \tilde{X}_k[m]$.
 
 \subsection{Comparison of various filters}
 
@@ -320,7 +334,7 @@ However, before comparing the results for various filters, there is another sour
 
 \subsection{MWA Implementation}
 
-We have implemented the synthesis filter defined in Eq. \eqref{eqn:synthesisfilter} as an optional component of the MWA-VCS beamforming software, \vcstools{}\footnote{\url{https://github.com/CIRA-Pulsars-and-Transients-Group/vcstools}}, described in \PaperI{}.
+We have implemented the ``mirror'' synthesis filter as an optional component of the MWA-VCS beamforming software, \vcstools{}\footnote{\url{https://github.com/CIRA-Pulsars-and-Transients-Group/vcstools}}, described in \PaperI{}.
 In this mode, a time series reconstructed from the beamformed fine channelised data is written out for each coarse channel as two separate polarisation streams (i.e. without converting to Stokes parameters) in the VDIF file format \citep{Whitney2009}.
 This format was chosen because it is supported by the coherent de-dispersion functionality of DSPSR\footnote{\url{http://dspsr.sourceforge.net/}} \citep{VanStraten2011b}, a software suite for processing pulsar time series.
 
@@ -492,6 +506,7 @@ We would also like to thank Ian Morrison, Franz Kirsten, and Clancy James for re
 \begin{appendix}
 
 \section{The FPGA implementation of the fine PFB}
+\label{sec:fpga_pfb}
 
 Each coarse channel is independently processed by dedicated FPGAs to convert (5+5)-bit complex integers sampled at $1.28\,$MHz into a series of spectra composed of $128\times$(4+4)-bit complex integers sampled at $10\,$kHz.
 The PFB is implemented in two stages: (1) a ``front-end'' stage which prepares the array $b[n]$ (see Eq. \eqref{eqn:pfb}), and (2) the ``FFT'' stage, which calculates the 128-point spectrum, $X_k[m]$.
