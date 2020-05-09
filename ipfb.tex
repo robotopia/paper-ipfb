@@ -190,7 +190,7 @@ The input signal values are signed (5+5)-bit complex integers, and the final out
 The loss of precision associated with the demotion of 1 bit naturally places limits on the ability for any synthesis filter to perfectly reconstruct the original coarse channel time series, which is analysed for our system below.
 The full details of the FPGA implementation are given in the appendix.
 
-\section{Synthesis filter}
+\section{Synthesis filters}
 \label{sec:ipfb}
 
 In order to regain the time resolution lost during analysis, the spectral output of the PFB must be transformed back into the time domain.
@@ -204,28 +204,29 @@ In this expression, the index $m$ is allowed to run over all integers in order a
 
 Back-to-back analysis-synthesis filters can be designed so that the original time series can be perfectly reconstructed without any loss of signal (i.e. $\hat{x}[n] = x[n]$ exactly), and the system as a whole can be thought of as an identity operation.
 The condition for perfect reconstruction can be found by substituting the analysed spectrum obtained from Eq. \eqref{eqn:wdft} into the synthesis operation defined in Eq. \eqref{eqn:ipfb}.
-It can be shown that, for a critically sampled system,
+For a critically sampled system,
 \begin{equation}
     \begin{aligned}
         \hat{x}[n]
             &= \sum_{s = -\infty}^{\infty} x[n - sM]
-               \sum_{m = -\infty}^{\infty} f_m[n]\, h_m[sM - n] \\
+               \sum_{m = -\infty}^{\infty} f_m[n]\, h_{m-s}[-n] \\
             &= x[n] \sum_{m = -\infty}^{\infty} f_m[n]\, h_m[-n] +{} \\
             &\quad \sum_{\substack{s = -\infty \\ s \ne 0}}^{\infty} x[n - sM]
-               \sum_{m = -\infty}^{\infty} f_m[n]\, h_m[sM - n]
+               \sum_{m = -\infty}^{\infty} f_m[n]\, h_{m-s}[-n]
     \end{aligned}
     \label{eqn:backtoback}
 \end{equation}
 where, following \citet{Crochiere1983}, we have adopted the shorthand notation
 \begin{equation}
     \begin{aligned}
-        h_m[n] &\equiv h[n - mM], \\
-        f_m[n] &\equiv f[n - mM].
+        h_\lambda[n] &\equiv h[n - \lambda M], \\
+        f_\lambda[n] &\equiv f[n - \lambda M].
     \end{aligned}
+    \notag
 \end{equation}
 It can be seen that perfect reconstruction corresponds to the case when the only non-zero contribution comes from the $s = 0$ term, giving rise to the necessary and sufficient condition
 \begin{equation}
-    \sum_{m = -\infty}^{\infty} f[n-mM]\,h[(m - s)M - n] = \Kron
+    \sum_{m = -\infty}^{\infty} f_m[n]\,h_{m-s}[-n] = \Kron
     \label{eqn:invertibility_condition}
 \end{equation}
 for all values of $n$, where $\Kron$ is the Kronecker delta.
@@ -241,38 +242,72 @@ If we assume that individual samples follow, and are dominated by, the same Gaus
     \frac{[\text{S/N}]_\text{recon}}{[\text{S/N}]_\text{orig}}
       = \frac{\left(\sum\limits_{m = -\infty}^{\infty} f_m[n]\,h_m[-n]\right)^2}{
             \sum\limits_{s = -\infty}^{\infty}
-            \left(\sum\limits_{m = -\infty}^{\infty} f_m[n]\,h_m[sM - n]\right)^2
-        }
+            \left(\sum\limits_{m = -\infty}^{\infty} f_m[n]\,h_{m-s}[-n]\right)^2
+        }.
 \end{equation}
 This expression is invariant under the substitution $n \rightarrow n + \lambda M$, $\lambda \in \mathbb{Z}$, which indicates that the (average) reconstruction error is only a function of where the sample in question falls within a tap.
 Consequently, any synthesis filter (except the exact inverse of the analysis filter, if it exists) will introduce a ``ringing'' effect into the reconstructed time series that has a period equal to the size of the PFB tap.
 
-\subsection{Design constraints}
+\subsection{Optimal and sub-optimal filter designs}
 
-Eq. \eqref{eqn:backtoback} suggests that a reconstructed time sample potentially contains contributions from up to $P$ original samples, spaced at intervals of one tap.
-
-
-
-Whether this condition is perfectly met clearly depends on the choice of analysis and synthesis filters.
-However, even a synthesis filter which only approximately satisfies Eq. \eqref{eqn:invertibility_condition} for a given analysis filter (i.e. $\lambda(s) \approx \Kron$) will produce a time series that approximates the original coarse channel time series (i.e. $\hat{x}[n] \approx x[n]$).
-In practice, the choice of synthesis filter is often obliged to be a compromise between ease of implementation and an acceptable level of imperfection in the reconstructed time series.
-
-For the analysis filter $h[n]$ defined in Eq. \eqref{eqn:filter}, it is found that choosing the synthesis filter
+Minimising the loss of S/N is equivalent to solving Eq. \eqref{eqn:invertibility_condition} in a least squares sense.
+Since any given reconstructed sample only receives contributions from samples spaced one tap apart, Eq. \eqref{eqn:invertibility_condition} can be thought of as $M$ independent conditions, one for each tap position, $n = 0, 1, 2, \dots, M-1$.
+Thus, considering each tap position separately, each condition can be expressed as a minimal matrix equation,
 \begin{equation}
-    f[n] = \frac{h[-n]}{H}
-    \label{eqn:synthesisfilter}
+    H^{(n)}F^{(n)} = D,
 \end{equation}
-where $H = \sum_{n=0}^{N-1} h[n]$ is a normalising factor, meets the invertibility condition sufficiently closely for our purposes, as demonstrated below.
-With the analysis and synthesis filters thus defined, the value of Eq. \eqref{eqn:invertibility_condition} can be calculated and is illustrated in Fig. \ref{fig:inverse_condition}.
-It is readily seen that $\lambda(s)$ closely approximates, but does not exactly equal, $\Kron$.
-The quantitative effect of this analysis-synthesis pair is discussed in Section \ref{sec:fidelity}.
+where $H^{(n)}$, $F^{(n)}$, and $D$ are matrices whose elements are given by
+\begin{equation}
+    \begin{aligned}
+        H^{(n)}_{ij} &= h_{P-1+j-i}[-n], \\
+        F^{(n)}_j    &= f_j[n], \\
+        D_i          &= \delta^{P-1}_i,
+    \end{aligned}
+\end{equation}
+where $P$ is the number of taps in the analysis filter, and the size of $F^{(n)}$ is set to the desired number of (non-zero) taps in the synthesis filter, $P^\prime$.
+The indices are chosen such that, owing to the finite size of the analysis filter, the smallest $H^{(n)}$ that captures every non-trivial term in Eq. \eqref{eqn:invertibility_condition} is the $(P^\prime+P-1) \times P^\prime$ matrix
+\begin{equation}
+    H^{(n)} =
+    \begin{bmatrix}
+       h_{P-1}[-n] & 0 & \cdots & 0 \\
+       h_{P-2}[-n] & h_{P-1}[-n] & \cdots & 0 \\
+       \vdots & & \ddots & \vdots \\
+       h_0[-n] & h_1[-n] & \cdots & h_{P-1}[-n] \\
+       \vdots & & \ddots & \vdots \\
+       0 & \cdots & h_0[-n] & h_1[-n] \\
+       0 & \cdots & 0 & h_0[-n]
+    \end{bmatrix},
+\end{equation}
+with row number $i = P - 1$ (in $H^{(n)}$ and $D$) corresponding to the $s = 0$ term.
 
-%\begin{figure}
-%    \centering
-%    \includegraphics[width=\columnwidth]{inverse_condition.eps}
-%    \caption{The condition for invertibility, Eq. \eqref{eqn:invertibility_condition}, demonstrated for the analysis filter given in Eq. \eqref{eqn:filter} and the synthesis filter given in Eq. \eqref{eqn:synthesisfilter}. The fact that $\lambda(s)$ only approximates the delta function gives rise to spurious artefacts (``temporal echoes'') in the time domain, which can be seen in Fig. \ref{fig:impulse_response}.}
-%    \label{fig:inverse_condition}
-%\end{figure}
+Once the matrices $H^{(n)}$, $F^{(n)}$, and $D$ have been defined, solution by least squares regression can proceed in the usual way, yielding the best-fit filter coefficients
+\begin{equation}
+    \hat{F}^{(n)} = \left({H^{(n)}}^T H^{(n)}\right)^{-1} {H^{(n)}}^T D,
+\end{equation}
+where ${H^{(n)}}^T$ is the transpose of $H^{(n)}$.
+With this notation, the reconstruction error can be more simply expressed
+\begin{equation}
+    \frac{[\text{S/N}]_\text{recon}}{[\text{S/N}]_\text{orig}}
+      = \frac{(\hat{D}_{P-1})^2}{\hat{D}^T \hat{D}},
+    \label{eqn:snr_short}
+\end{equation}
+where $\hat{D} = H^{(n)} \hat{F}^{(n)}$.
+
+Fig. \ref{fig:synthfilters} shows the solutions found for the MWA's analysis filter defined in Eq. \eqref{eqn:filter}, for 12-, 18-, and 24-tap synthesis filter sizes.
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{example-image-a}
+    \caption{Least-squares solutions for different filter sizes \dots}
+    \label{fig:synthfilters}
+\end{figure}
+Despite the complexity of the synthesis filters, they all share the same basic form as the analysis filter.
+This suggests that choosing a synthesis filter that is the mirror image of the analysis filter (i.e. $f[n] = h[-n]$), might also yield a reasonably good reconstruction, without having to calculate the optimal solutions numerically.
+The performance of both the mirror filter and the set of optimal solutions (for different choices of $P^\prime$) can be evaluated straightforwardly using Eq. \eqref{eqn:snr_short}.
+However, before comparing the results for various filters, there is another source of reconstruction error, specific to the MWA implementation of the PFB, that must first be considered.
+
+\subsection{Quantisation error}
+
+\subsection{Comparison of various filters}
 
 \begin{figure}
     \centering
@@ -281,7 +316,9 @@ The quantitative effect of this analysis-synthesis pair is discussed in Section 
     \label{fig:snr}
 \end{figure}
 
-\subsection{Implementation}
+
+
+\subsection{MWA Implementation}
 
 We have implemented the synthesis filter defined in Eq. \eqref{eqn:synthesisfilter} as an optional component of the MWA-VCS beamforming software, \vcstools{}\footnote{\url{https://github.com/CIRA-Pulsars-and-Transients-Group/vcstools}}, described in \PaperI{}.
 In this mode, a time series reconstructed from the beamformed fine channelised data is written out for each coarse channel as two separate polarisation streams (i.e. without converting to Stokes parameters) in the VDIF file format \citep{Whitney2009}.
