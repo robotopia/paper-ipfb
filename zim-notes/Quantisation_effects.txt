@@ -1,0 +1,22 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-05-12T11:46:03+08:00
+
+====== Quantisation effects ======
+Created Tuesday 12 May 2020
+
+Given that we know that the original coarse channel data were quantised, under what circumstances does quantising our final answer help us out?
+
+We assume that our errors are normally distributed about zero, e.g.
+
+{{~/work/pfb-testing/B0950+08/rec/single/correlated_histogram_mirror_res10.png?width=640}}
+
+Then the variance is just the second moment:
+{{./equation.png?type=equation}}
+However, if we quantise the errors, we get:
+{{./equation001.png?type=equation}}
+
+A comparison between the original standard deviation and the quantised deviation reveals:
+{{~/work/pfb-testing/B0950+08/rec/single/quant_histogram.png?width=640}}
+
+The black dashed line is the "y=x" line, the red dotted line marks the approximate standard deviation using the mirror filter (~0.60), and the blue is with the 12-tap least-squares filter (~0.57). Neither is anywhere near the point where it becomes beneficial to use quantisation, which is about 0.29.

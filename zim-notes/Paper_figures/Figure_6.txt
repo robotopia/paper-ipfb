@@ -4,36 +4,39 @@ Creation-Date: 2020-01-24T10:07:59+08:00
 
 ====== Figure 6 ======
 
-{{~/documents/fine-pfb-reconstruction/B0950+08/rec/single/compare_timeseries.png}}
+{{./compare_timeseries.png}}
 
 {{{code: lang="sh" linenumbers="False"
+# Prepare some handy environment variables
+PSRDIR=/home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08
+
 # Download the needed recombined files
 galaxy> process_vcs.py -m download -o 1260302416 -b 1260302800 -e 1260302800
-> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
+> cd $PSRDIR/rec
 > scp galaxy:/group/mwaops/vcs/1260302416/combined/1260302416_1260302800_ch119.dat .
 > wget http://ws.mwatelescope.org/metadata/fits?obs_id=1260302416 -O metadata.fits
 
 # Download the needed calibration files
-> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec/cal
+> cd $PSRDIR/rec/cal
 > scp galaxy:/group/mwaops/vcs/1260302416/cal/1260305032/rts/DI_JonesMatrices_node011.dat .
 > scp galaxy:/group/mwaops/vcs/1260302416/cal/1260305032/rts/flagged_tiles.txt .
 > echo 72 >> flagged_tiles.txt
 > echo 97 >> flagged_tiles.txt
 
 # Download the needed HTR file
-> cd ~/documents/fine-pfb-reconstruction/B0950+08/htr
+> cd $PSRDIR/htr
 > scp galaxy:/group/mwaops/vcs/1260302416/htr/1260302416_1260302800_11.sub .
 
 # Recombined --> VDIF
-> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec/single
+> cd $PSRDIR/rec/single
 > rm -f C001_1260302416_ch119_u.vdif C001_1260302416_ch119_u.hdr
 > make_beam -o 1260302416 -b 1260302800 -e 1260302800 -z 2019-12-13T20:06:22 \
       -R "09:53:09.31" -D "+07:55:35.75" \
-      -d /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec \
-      -m /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/metadata.fits \
+      -d $PSRDIR/rec \
+      -m $PSRDIR/rec/metadata.fits \
       -f 119 -u -A 43 \
-      -J /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/DI_JonesMatrices_node011.dat \
-      -F /home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08/rec/cal/flagged_tiles.txt
+      -J $PSRDIR/rec/cal/DI_JonesMatrices_node011.dat \
+      -F $PSRDIR/rec/cal/flagged_tiles.txt
 
 # Extract HTR time series from both "raw" and VDIF:
 > ../../src/htr_tilepol -t 0 -p 0 -f vdif C001_1260302416_ch119_u.vdif > vdif_A43.txt

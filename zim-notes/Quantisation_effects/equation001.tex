@@ -1,0 +1,6 @@
+\hat{\sigma}^2
+  &= \int_{-\infty}^\infty [x]^2 \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{x^2}{2\sigma^2}}\,dx \\
+  &= \sum_{k\in\mathbb{Z}}\int_{k-\frac12}^{k+\frac12} k^2 \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{x^2}{2\sigma^2}}\,dx \\
+  &= \sum_{k\in\mathbb{Z}}k^2\left[\frac12\text{erf}\left(\frac{k+\frac12}{\sigma\sqrt{2}}\right) - \frac12\text{erf}\left(\frac{k-\frac12}{\sigma\sqrt{2}}\right)\right] \\
+  &= \sum_{k=1}^{\infty}k^2\left(\text{erf}\left(\frac{k+\frac12}{\sigma\sqrt{2}}\right) - \text{erf}\left(\frac{k-\frac12}{\sigma\sqrt{2}}\right)\right)
+  
