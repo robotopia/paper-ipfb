@@ -296,56 +296,64 @@ where $\hat{D} = H^{(n)} \hat{F}^{(n)}$.
 Fig. \ref{fig:synthfilters} shows the solutions found for the MWA's analysis filter defined in Eq. \eqref{eqn:filter}, for 12-, 18-, and 24-tap synthesis filter sizes.
 \begin{figure}
     \centering
-    \includegraphics[width=\columnwidth]{example-image-a}
-    \caption{Least-squares solutions for different filter sizes \dots}
+    \includegraphics[width=\columnwidth]{inverse_filters.eps}
+    \caption{The coefficients for four different synthesis filter designs: three generated using least-squares optimisation methods, and the sub-optimal mirror filter.}
     \label{fig:synthfilters}
 \end{figure}
 Despite the complexity of the synthesis filters, they all share the same basic form as the analysis filter.
-This suggests that choosing a synthesis filter that is the mirror image of the analysis filter (i.e. $f[n] = h[-n]$), might also yield a reasonably good reconstruction, without having to calculate the optimal solutions numerically.
-The performance of both the (sub-optimal) mirror filter and the (optimal) set of least-squares solutions can be evaluated straightforwardly using Eq. \eqref{eqn:snr_short}.
-However, before comparing the results for various filters, there is another source of reconstruction error, specific to the MWA implementation of the PFB, that must first be considered.
+This resemblance suggests that choosing a synthesis filter that is the mirror image of the analysis filter (i.e. $f[n] = h[-n]$), might also yield a reasonably good reconstruction, without having to calculate the optimal solutions numerically.
 
-\subsection{Quantisation error}
+The performance of both the (sub-optimal) mirror filter and the (optimal) set of least-squares solutions can be evaluated straightforwardly using Eq. \eqref{eqn:snr_short}.
+Fig. \ref{fig:snr} compares the loss of S/N due to each filter (under the assumption of noise-dominated samples), revealing that, as expected, the filters with the larger number of taps perform better, and the mirror filter performs the least well.
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{snr.eps}
+    \caption{The reconstructed S/N, defined in Eqs. \eqref{eqn:snr_long} and \eqref{eqn:snr_short}, as a function of the position of the reconstructed sample within a tap for the filters displayed in Fig. \ref{fig:synthfilters}.}
+    \label{fig:snr}
+\end{figure}
+
+Presumably, one can achieve arbitrarily good performance by choosing a sufficiently long filter.
+However, the better performance of the longer filters is balanced by the increased computational resources and/or time required to apply them, which may exceed the system's design specifications.
+On the other hand, there is no advantage whatsoever gained by using the mirror filter over the least squares filter of the same length.
+
+\subsection{MWA Implementation}
+
+We initially implemented the mirror filter for the purpose of prototyping the synthesis filter, due to the ease of generating the coefficients, and the 12-tap least squares filter was implemented once proof-of-concept had been demonstrated.
+Both of these synthesis filters are available as optional components of the MWA-VCS beamforming software, \vcstools{}\footnote{\url{https://github.com/CIRA-Pulsars-and-Transients-Group/vcstools}}, described in \PaperI{}.
+Even though our system places no stringent limits on computational resources, we have not implemented the larger filters due to the identification of other sources of error that dominate over the reconstruction error defined above, rendering the advantages of the longer filters relatively minor in comparison.
+An analysis of these errors is presented in the following sections.
+
+Viewed as a linear operation, Eq. \eqref{eqn:ipfb} is ideally suited for GPUs, and we have implemented it in \vcstools{} for NVIDIA's CUDA architecture.
+Rather than use existing implementations of the implied inverse DFT, the $N \times K$ exponential terms (the so-called ``twiddle factors'') are pre-calculated and stored in a 2D array of double-precision floating point numbers on the GPUs.
+These are then accessed as required for the calculation of a given sample $\hat{x}[n]$.
+The combined GPU-accelerated calculations for both beamforming and coarse channel reconstruction run faster than real time\footnote{Verified for CUDA compute capability $>3.5$.}.
+
+Once the synthesis filter has been applied to each of the MWA's polarisation streams for each coarse channel, the resulting high-time resolution time series is written out as complex voltages (i.e. without converting to Stokes parameters) in the VDIF file format \citep{Whitney2009}.
+This format was chosen because it is supported by the coherent de-dispersion functionality of DSPSR\footnote{\url{http://dspsr.sourceforge.net/}} \citep{VanStraten2011b}, a software suite for processing pulsar time series.
+The VDIF format requires each sample to fit into a signed 8-bit complex integer data type, which is performed as the final step before writing to disk.
+
+\subsection{System performance}
 
 The MWA implementation of the fine PFB differs from Eq. \eqref{eqn:pfb} in a few important respects, causing a reduction in the reconstructed S/N that would be present even if the synthesis filter perfectly inverted the analysis filter.
 The most significant difference is that both the coefficients $b[n]$ and the final sum undergo a rounding operation, resulting in the approximate (i.e. less precise and biased) spectrum
 \begin{equation}
     \tilde{X}_k[m] = \left\lfloor\sum_{n=0}^{K-1} \bigg\lfloor b_m[n] \bigg\rfloor_{\text{asym}} e^{-2\pi jkn/K}\right\rfloor,
+    \label{eqn:rounded}
 \end{equation}
-where $\lfloor\cdot\rfloor$ denotes rounding to the nearest integer, and $\lfloor\cdot\rfloor_{\text{asym}}$ denotes the asymmetrical rounding scheme described in detail in Appendix \ref{sec:fpga_pfb}.
-Under these circumstances, Eq. \eqref{eqn:snr_long} cannot be used in its current form to estimate the signal loss, because it does not follow from the adjusted synthesis operation
+where $\lfloor\cdot\rfloor$ denotes a symmetric, and $\lfloor\cdot\rfloor_{\text{asym}}$, an asymmetric rounding operation, both of which are described in detail in Appendix \ref{sec:fpga_pfb}.
+
+The loss of precision implied by Eq. \eqref{eqn:rounded} naturally introduces further reconstruction errors in the back-to-back system.
+Unfortunately, Eq. \eqref{eqn:snr_long} cannot be used in its current form to estimate the signal loss, because it does not follow from the adjusted synthesis operation
 \begin{equation}
     \hat{x}[n] = \sum_{m = -\infty}^{\infty} f[n - mM]\,
         \frac{1}{K} \sum_{k=0}^{K-1} \tilde{X}_k[m]\,e^{2\pi jkn/K},
     \label{eqn:ipfb_adjusted}
 \end{equation}
 which differs from Eq. \eqref{eqn:ipfb} only by the substitution $X_k[m] \rightarrow \tilde{X}_k[m]$.
+Therefore, to estimate the performance of our system, we made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
+The fine channels from one polarisation of a single tile were extracted and subjected to both the mirror filter and the 12-tap least squares filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data (see Fig. \ref{fig:compare_timeseries}).
 
-\subsection{Comparison of various filters}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\columnwidth]{snr.eps}
-    \caption{The reconstructed S/N as a function of the position of the reconstructed sample within a tap.}
-    \label{fig:snr}
-\end{figure}
-
-
-
-\subsection{MWA Implementation}
-
-We have implemented the ``mirror'' synthesis filter as an optional component of the MWA-VCS beamforming software, \vcstools{}\footnote{\url{https://github.com/CIRA-Pulsars-and-Transients-Group/vcstools}}, described in \PaperI{}.
-In this mode, a time series reconstructed from the beamformed fine channelised data is written out for each coarse channel as two separate polarisation streams (i.e. without converting to Stokes parameters) in the VDIF file format \citep{Whitney2009}.
-This format was chosen because it is supported by the coherent de-dispersion functionality of DSPSR\footnote{\url{http://dspsr.sourceforge.net/}} \citep{VanStraten2011b}, a software suite for processing pulsar time series.
-
-The final stage before writing out the time series to file is the conversion from the complex floating point output of the synthesis operation into a signed 8-bit complex integer format required by the VDIF format.
-Each second of data is independently mean-subtracted and normalised in order to avoid clipping errors.
-It is worth noting that the mean-subtraction will mitigate to some degree the mean offset introduced by rounding errors in the analysis PFB (see the Appendix for details).
-
-Viewed as a linear operation, Eq. \eqref{eqn:ipfb} is ideally suited for GPUs, and we have implemented it in \vcstools{} for NVIDIA's CUDA architecture.
-Rather than use existing implementations of the implied inverse DFT, the $N \times K$ exponential terms (the so-called ``twiddle factors'') are pre-calculated and stored in a 2D array of double-precision floating point numbers on the GPUs.
-These are then accessed as required for the calculation of a given sample $\hat{x}[n]$.
-The combined GPU-accelerated calculations for both beamforming and coarse channel reconstruction run faster than real time\footnote{Verified for CUDA compute capability $>3.5$.}.
+\dots
 
 \subsection{Fidelity of reconstructed time series}
 \label{sec:fidelity}
@@ -390,11 +398,7 @@ Another way to say this is that the synthesis filter, $f[n]$, that corresponds t
 Notably, if an FFT had been used in the MWA's fine channelisation stage (i.e. instead of the PFB), the inverse FFT would exactly reproduce the original high time resolution time series, even though the spectrum produced by the forward FFT would be a less perfect representation of the true spectrum, due to more prevalent spectral leakage (i.e. compared to the PFB).
 Finally, note that both the synthesis filter method and the inverse FFT show a similar amount of error in the construction of the Gaussian noise (cf. the imaginary component shown in Fig. \ref{fig:imp_sin_noise})---this is not surprising as replication and quantisation errors are present at this level.
 
-In order to mitigate the replication error, we made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
-The fine channels from one polarisation of a single tile were extracted and subjected to the synthesis filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data (see Fig. \ref{fig:compare_timeseries}).
-Because the FPGA-based fine PFB was used in this test, the result is devoid of any replication error.
-However, the synthesis filter used in production uses an arbitrary scaling factor in order to make better use of the dynamic range afforded by VDIF's (8+8)-bit depth, and quantisation error is still present (and, in fact, dominates).
-Nevertheless, the agreement between the reconstructed samples and the original is very good, with both real and imaginary components having a correlation coefficient of approximately $0.94$.
+\dots
 
 Despite the errors in the reconstruction, the analysis-synthesis pair is able to reproduce the noise characteristics well enough for the errors not to significantly affect sufficiently bright pulsar signals, as demonstrated in the next section.
 However, these errors may become significant when observing low SNR pulsar emission. In these cases, the errors may be mitigated by averaging over multiple time bins (e.g. a coarser time resolution, or averaging many pulses together).

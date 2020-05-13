@@ -24,8 +24,9 @@ def f(n):
     return h(-n)
 
 # Find some other synthesis filters!
-filter_types = ["Mirror", 12, 18, 24]
-plottable = [3, 2, 1, 0] # The indices for which filters in "filter_types" should be plotted
+filter_types = [24, 18, 12, "Mirror"]
+plottable = [0, 1, 2, 3] # The indices for which filters in "filter_types" should be plotted
+dashtypes = ['k:', 'k-.', 'k--', 'k-'] # These match up with the "filter_types" array
 SNR = np.zeros((len(filter_types), K))
 fig, axs = plt.subplots(len(plottable), sharex=True, gridspec_kw={'hspace': 0}) # Plots for the filter coefficients
 
@@ -89,10 +90,14 @@ for a in range(len(filter_types)):
     # Plot figures
     # The plot for the filter coefficients
     if a in plottable:
-        if filter_types[a] == "Mirror":
-            label = "Mirror filter, {0} taps".format(Ftaps)
+        if isinstance(filter_size, int):
+            label = "Least squares filter"
+        elif filter_size == "Mirror":
+            label = "Mirror filter"
         else:
-            label = "Least squares filter, {0} taps".format(filter_size)
+            label = "(undefined)"
+        label += ", {0} taps".format(Ftaps)
+
         plot_no = plottable.index(a)
         axs[plot_no].plot(Fns - F.size//2, F, 'k-', label=label)
         axs[plot_no].legend()
@@ -119,16 +124,19 @@ for a in range(len(filter_types)):
     header += "python" + " ".join(sys.argv)
     np.savetxt("rinv_{0}.txt".format(filter_size), F, header=header)
 
-    plt.figure("Reconstructed S/N")
     ms = np.arange(M)
-    if isinstance(filter_size, int):
-        label = "Least squares sol'n"
-    elif filter_size == "Mirror":
-        label = "Mirror filter"
-    else:
-        label = "(undefined)"
-    label += ", {0} taps".format(Ftaps)
-    plt.plot(ms, SNR[a,:], label=label)
+    if a in plottable:
+        plt.figure("Reconstructed S/N")
+
+        if isinstance(filter_size, int):
+            label = "Least squares filter"
+        elif filter_size == "Mirror":
+            label = "Mirror filter"
+        else:
+            label = "(undefined)"
+        label += ", {0} taps".format(Ftaps)
+
+        plt.plot(ms, SNR[a,:], dashtypes[a], label=label)
 
 plt.figure("Reconstructed S/N")
 plt.xlabel("Position within tap, $n$")
