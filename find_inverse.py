@@ -25,7 +25,9 @@ def f(n):
 
 # Find some other synthesis filters!
 filter_types = ["Mirror", 12, 18, 24]
+plottable = [0, 1, 2, 3] # The indices for which filters in "filter_types" should be plotted
 SNR = np.zeros((len(filter_types), K))
+fig, axs = plt.subplots(len(plottable), sharex=True, gridspec_kw={'hspace': 0}) # Plots for the filter coefficients
 
 for a in range(len(filter_types)):
 
@@ -80,17 +82,22 @@ for a in range(len(filter_types)):
         # Let's see how well the solution does
         Dhat[:,n:n+1] = np.matmul(H, Fhat[:,n:n+1])
 
-    # Plot figures
-    plt.figure("Filter coefficients")
-    plt.clf()
     F = Fhat.flatten()
     ns = np.arange(N)
     Fns = np.arange(F.size)
-    plt.plot(ns - N//2, h(ns), label='Analysis filter')
-    plt.plot(Fns - F.size//2, F, label="Least squares sol'n")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig("rinv_{0}.eps".format(filter_size))
+
+    # Plot figures
+    # The plot for the filter coefficients
+    if a in plottable:
+        if filter_types[a] == "Mirror":
+            label = "Mirror filter, {0} taps".format(Ftaps)
+        else:
+            label = "Least squares filter, {0} taps".format(filter_size)
+        plot_no = plottable.index(a)
+        axs[plot_no].plot(Fns - F.size//2, F, 'k-', label=label)
+        axs[plot_no].legend()
+        axs[plot_no].set_yticks([0,1])
+        axs[plot_no].set_ylabel(" ")
 
     plt.figure("Performance overall")
     plt.clf()
@@ -130,6 +137,11 @@ plt.ylim([-0.65,0.025])
 plt.tight_layout()
 plt.legend()
 plt.savefig("snr.eps")
+
+axs[-1].set_xlabel("Sample number, $n$")
+fig.text(0.02, 0.5, 'Normalised filter coefficients', va='center', rotation='vertical')
+fig.tight_layout()
+fig.savefig("inverse_filters.eps")
 
 '''
 # Show figures
