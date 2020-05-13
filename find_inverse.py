@@ -25,7 +25,7 @@ def f(n):
 
 # Find some other synthesis filters!
 filter_types = ["Mirror", 12, 18, 24]
-plottable = [0, 1, 2, 3] # The indices for which filters in "filter_types" should be plotted
+plottable = [3, 2, 1, 0] # The indices for which filters in "filter_types" should be plotted
 SNR = np.zeros((len(filter_types), K))
 fig, axs = plt.subplots(len(plottable), sharex=True, gridspec_kw={'hspace': 0}) # Plots for the filter coefficients
 
