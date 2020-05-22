@@ -1,0 +1,26 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2020-05-22T09:21:58+08:00
+
+====== 2020-05-22 ======
+Created Friday 22 May 2020
+
+My impulse response test is rubbish. So, I'm going to have to figure out exactly what's going wrong — whether it's the rounding errors or the imperfectness of my forward PFB that's causing me grief.
+
+First of all, I'd better document my impulse response test.
+
+==== Theoretical impulse response for least squares filter with 12 taps ====
+
+In the paper git repo (on the work desktop, [[~/documents/papers/ipfb]]; on the home desktop, [[~/work/papers/ipfb]]), running
+{{{code: lang="sh" linenumbers="False"
+
+python find_inverse.py
+
+}}}
+
+produces, among other things, the files
+{{{code: lang="sh" linenumbers="False"
+impulse_response_*.txt
+}}}
+
+which contain the theoretical impulse response of the various filters that are considered (mirror filter, and least squares filters with 12, 18, and 24 taps).

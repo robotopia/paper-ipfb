@@ -3,4 +3,4 @@ Wiki-Format: zim 0.4
 Creation-Date: 2019-11-26T16:17:31+08:00
 
 Jake Jones just gave me a whole bunch of notes relating to how there is a quantisation step //before// the FFT stage of the PFB (see "Jake's pre-PFB notes" page), and I incorporated it into my own PFB (git commit a6f0f16), but I'm afraid it hasn't made too much of a difference. Compare this plot with the one shown in the 2019-11-24 entry:
-{{~/documents/fine-pfb-reconstruction/test-data/before/quantisation_plot_03.png?width=600}}
+{{./quantisation_plot_03.png?width=640}}

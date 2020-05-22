@@ -35,3 +35,9 @@ pasa-template-20170508.zip:
 
 rinv.png rinv.txt: find_inverse.py
 	python $<
+
+sample_error_MIRROR.txt sample_error_LSQ12.txt:
+	# Copied from another repo. On my home computer, $@ can be found in:
+	#     ~/work/pfb-testing/B0950+08/rec/single
+	# On my work computer, it is in
+	#     ~/documents/fine-pfb-reconstruction/B0950+08/rec/single

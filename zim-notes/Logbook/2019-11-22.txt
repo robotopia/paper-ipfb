@@ -72,7 +72,7 @@ Trying the same thing as before (where I adjust where the DC bin is put), the ou
 
 I found that my scaling factor (see the SCALING_FACTOR macro in forward_pfb.c) was not large enough (it's now set to 1.0e8). I also introduced "clipping" of values that were too large to fit into the range -16 <= x <= 15. Doing so produces something sensible! (git commit 2353834):
 
-{{~/documents/fine-pfb-reconstruction/test-data/fake_data/coarse_ipfb_05.png}}
+{{./coarse_ipfb_05.png}}
 We're clearly not out of the woods yet. But the next step is clear: I have to make sure that my forward PFB produces **exactly** the same recombined data as the "true" PFB. But now I know exactly what to compare:
 
 ''read_vdif G0024_1213668624_ch117_u.vdif'', antpol #96
@@ -100,20 +100,20 @@ gnuplot> plot 'foo1' matrix with image, 'foo2' matrix using ($1+120):2:3 with im
 }}}
 
 
-{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_01.png?width=600}}
+{{./compare_dynspec_01.png?width=640}}
 And if you try some Magic Eye magic, you should find that the two images match (with some x offset)!!!!
 
 --------------------
 
 Working at home on this lovely Friday evening. I've checked the x offset, and it looks like there is a difference of 12 (fine channel) samples. This apparently means that the filter is applied retrospectively, instead of prospectively, which is how I'm currently implementing it. Making this change yields an almost-perfect match (i.e. except for the odd pixel or two):
 
-{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_02.png}}
+{{./compare_dynspec_02.png}}
 
 The above image is just the reals. What about the imags? Yes, also good!
 
-{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_03.png}}
+{{./compare_dynspec_03.png}}
 
 All that remains is to find the magic scaling factor that gives a perfect match for every pixel. Currently, the difference (of the first 100 samples, including the known-to-be-wrong first 12 samples) is:
-{{~/documents/fine-pfb-reconstruction/test-data/before/compare_dynspec_diff.png}}
+{{./compare_dynspec_diff.png}}
 
 

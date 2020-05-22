@@ -4,13 +4,13 @@ Creation-Date: 2020-01-24T09:05:17+08:00
 
 ====== Figure 4 ======
 
-{{~/documents/fine-pfb-reconstruction/test-data/fake_data/compare_coarse_imp.png?width=480}}
+{{./compare_coarse_imp.png}}
 
 {{{code: lang="sh" linenumbers="False"
 > cd ~/documents/fine-pfb-reconstruction/test-data/fake_data
 
 > make fake_imp.raw
-../../forward-pfb-model/generate_fake_raw 0 0 10000 15.0 0 > fake_imp.raw
+../../forward-pfb-model/generate_fake_raw 0 0 12800 12927 15.0 0 > fake_imp.raw
 
 > ../../forward-pfb-model/forward_pfb fake_imp.raw \
   ../../forward-pfb-model/r.txt 0 0 1213668624_1213668800_ch117.dat
@@ -38,7 +38,7 @@ gnuplot -e "set terminal postscript eps enhanced color font ',24'; set output 'c
 **Versions:**
 {{{code: lang="sh" linenumbers="False"
 > cd ~/documents/fine-pfb-reconstruction
-> git checkout 9460a0f
+> git checkout 55512e0
 
 > cd ~/documents/fine-pfb-reconstruction/forward-pfb-model
 > make generate_fake_raw
@@ -55,7 +55,7 @@ gcc version 9.2.0 (GCC)
 GNU Make 4.2.1
 
 > cd ~/src/vcstools
-> git checkout no_antenna_sum
+> git checkout quantised_vdif # This was most recently run on git commit e468088
 
 > od --version
 od (GNU coreutils) 8.31
