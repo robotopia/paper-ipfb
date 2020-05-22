@@ -18,17 +18,14 @@ def ws(n):
 def h(n):
     return wH(n)*ws(n)*np.logical_and(n >= 0, n < N)
 
-# The mirror synthesis filter
-def f(n):
-    H = np.sum(h(ns))
-    return h(-n)
-
 # Find some other synthesis filters!
 filter_types = [24, 18, 12, "Mirror"]
 plottable = [0, 1, 2, 3] # The indices for which filters in "filter_types" should be plotted
 dashtypes = ['k:', 'k-.', 'k--', 'k-'] # These match up with the "filter_types" array
 NSR = np.zeros((len(filter_types), K))
+
 fig, axs = plt.subplots(len(plottable), sharex=True, gridspec_kw={'hspace': 0}) # Plots for the filter coefficients
+fig_imp, axs_imp = plt.subplots(len(plottable), sharex=True, gridspec_kw={'hspace': 0})
 
 for a in range(len(filter_types)):
 
@@ -86,11 +83,12 @@ for a in range(len(filter_types)):
         #impulse_response[:,n:n+1] = np.matmul...
 
     F = Fhat.flatten()
-    ns = np.arange(N)
     Fns = np.arange(F.size)
+    impulse_response = Dhat.flatten()**2 # Units of power (i.e. not dB)
 
     # Plot figures
-    # The plot for the filter coefficients
+    # Plots for the filter coefficients and the S/N in dB as a function of tap position
+    ns = np.arange(len(impulse_response)) - (Ftaps-1)*M/2
     if a in plottable:
         if isinstance(filter_size, int):
             label = "Least squares filter"
@@ -106,15 +104,11 @@ for a in range(len(filter_types)):
         axs[plot_no].set_yticks([0,1])
         axs[plot_no].set_ylabel(" ")
 
-    # Express the overall response (Dhat) as an impulse response test
-    impulse_response = Dhat.flatten()**2 # Units of power (i.e. not dB)
-    plt.figure("Impulse response")
-    plt.clf()
-    plt.plot(np.arange(len(impulse_response)), 10*np.log10(impulse_response))
-    plt.xlabel("$n$")
-    plt.ylabel("Power (dB)")
-    plt.ylim([-150,10])
-    plt.savefig("rinv_perf_{0}.png".format(filter_size))
+        axs_imp[plot_no].plot(ns/M - 5.5, 10*np.log10(impulse_response), 'k-', label=label)
+        axs_imp[plot_no].legend()
+        axs_imp[plot_no].set_yticks([-60,-30,0])
+        axs_imp[plot_no].set_ylabel(" ")
+        axs_imp[plot_no].set_ylim([-70,5])
 
     # Write out the impulse response to file
     header =  "Impulse response for the {0}-tap filter\n".format(filter_size)
@@ -123,7 +117,7 @@ for a in range(len(filter_types)):
     np.savetxt("impulse_response_{0}.txt".format(filter_size), impulse_response, header=header)
 
     # Finally, calculate the relative S/N for each n
-    NSR[a,:] = np.sum(Dhat**2, axis=0) / (Dhat[(Hsize[0] + 1)//2 - 1])**2 - 1 # noise-to-signal ratio
+    NSR[a,:] = 1 / (Dhat[(Hsize[0] + 1)//2 - 1])**2 - 1 # noise-to-signal ratio
 
     # Write out the spectrum to rinv.txt
     header =  "Synthesis filter coefficients for the {0}-tap filter\n".format(filter_size)
@@ -131,23 +125,11 @@ for a in range(len(filter_types)):
     header += "python" + " ".join(sys.argv)
     np.savetxt("rinv_{0}.txt".format(filter_size), F, header=header)
 
-    # Plot the S/N in dB as a function of tap position
-    ms = np.arange(M)
-    if a in plottable:
-        plt.figure("Reconstructed S/N")
 
-        if isinstance(filter_size, int):
-            label = "Least squares filter"
-        elif filter_size == "Mirror":
-            label = "Mirror filter"
-        else:
-            label = "(undefined)"
-        label += ", {0} taps".format(Ftaps)
-
-        plt.plot(ms, -10*np.log10(1 + NSR[a,:]), dashtypes[a], label=label)
 
     # Plot the ACTUAL S/N (i.e. measured using real data)
     # Only for MIRROR filter and LSQ12
+    ms = np.arange(M)
     if Ftaps == 12:
         plt.figure("Measured S/N")
         if isinstance(filter_size, int):
@@ -164,13 +146,11 @@ for a in range(len(filter_types)):
         plt.plot(ms, -10*np.log10(1 + NSR_measured), linecolor+'-', label=label)
         plt.plot(ms, -10*np.log10(1 + (NSR_measured - NSR[a,:])), linecolor+'--', label=label+" (filter-subtracted)")
 
-plt.figure("Reconstructed S/N")
-plt.xlabel("Position within tap, $n$")
-plt.ylabel("Reconstructed S/N (dB)")
-plt.ylim([-0.65,0.025])
-plt.tight_layout()
-plt.legend()
-plt.savefig("snr.eps")
+axs_imp[-1].set_xlabel("Tap number")
+fig_imp.text(0.01, 0.5, 'Power (dB)', va='center', rotation='vertical')
+#fig_imp.set_size_inches([12.8,4.8])
+fig_imp.tight_layout()
+fig_imp.savefig("impulse_response.eps")
 
 plt.figure("Measured S/N")
 plt.xlabel("Position within tap, $n$")

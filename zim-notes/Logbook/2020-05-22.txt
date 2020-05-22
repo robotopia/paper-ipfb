@@ -13,7 +13,14 @@ First of all, I'd better document my impulse response test.
 
 In the paper git repo (on the work desktop, [[~/documents/papers/ipfb]]; on the home desktop, [[~/work/papers/ipfb]]), running
 {{{code: lang="sh" linenumbers="False"
+# Go to the repo directory and checkout the appropriate version
+cd ~/documents/papers/ipfb
+# or
+cd ~/work/papers/ipfb
 
+git checkout 7b04401
+
+# Run the script
 python find_inverse.py
 
 }}}
@@ -24,3 +31,64 @@ impulse_response_*.txt
 }}}
 
 which contain the theoretical impulse response of the various filters that are considered (mirror filter, and least squares filters with 12, 18, and 24 taps).
+
+Then, before running the impulse response test, make sure to checkout the following version of vcstools:
+{{{code: lang="sh" linenumbers="False"
+cd ~/src/vcstools
+git checkout e468088
+# ... and then see Scripts and Code:vcstools installation in these notes for
+# building instructions 
+
+}}}
+
+
+Then, go to the PFB replication repo (either [[~/documents/fine-pfb-reconstruction]] or [[~/work/pfb-testing]]), and do
+{{{code: lang="sh" linenumbers="False"
+# Go to the repo directory, make symbolic links to the theoretical impulse
+# responses, and checkout the appropriate version
+cd ~/documents/fine-pfb-reconstruction/test-data/fake_data
+ln -s ~/documents/papers/ipfb/impulse_response_12.txt
+ln -s ~/documents/papers/ipfb/impulse_response_Mirror.txt
+# or
+cd ~/work/pfb-testing/test-data/fake_data
+ln -s ~/work/papers/ipfb/impulse_response_12.txt
+ln -s ~/work/papers/ipfb/impulse_response_Mirror.txt
+
+git checkout db53c3c
+
+# Run the command
+make compare_coarse_imp.eps
+
+}}}
+
+It is important that the scaling number given in the Makefile rule for fake_imp.raw matches the number in compare_coarse_imp.gpi:
+**Makefile:**
+{{{code: lang="makefile" linenumbers="False"
+fake_imp.raw:
+    ../../forward-pfb-model/generate_fake_raw 0 0 12800 12927 10.0 0 > $@
+#                                                             ^^^^
+
+}}}
+
+compare_coarse_imp.gpi:
+{{{code: lang="sh" linenumbers="False"
+p 'impulse_response_12.txt' u ($0 - 11*128):(10*log10($1)) w l lc rgb "red" notitle, \
+  'imp2' u ($1-12800):(dB($2/fact, $3/fact, 10.0)):(3) w l lc rgb "black" notitle
+#                                           ^^^^
+
+}}}
+
+
+The result looks something like this:
+{{{code: lang="sh" linenumbers="False"
+gnuplot
+load 'compare_coarse_imp.gpi'
+
+}}}
+
+{{./impulse_response_lsq12_01.png?width=640}}
+This is very surprising because the previous tests done with noise data indicate that the "on-pulse" response is in the range -0.25 dB to -0.6 dB, instead of the ~-10 dB I'm seeing here.
+
+Test to see if 
+
+
