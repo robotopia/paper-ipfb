@@ -9,6 +9,9 @@ Creation-Date: 2020-01-24T10:07:59+08:00
 {{{code: lang="sh" linenumbers="False"
 # Prepare some handy environment variables
 PSRDIR=/home/smcsweeney/documents/fine-pfb-reconstruction/B0950+08
+# or, if at home,
+#PSRDIR=/home/smcsweeney/work/pfb-testing/B0950+08
+
 
 # Download the needed recombined files
 galaxy> process_vcs.py -m download -o 1260302416 -b 1260302800 -e 1260302800
