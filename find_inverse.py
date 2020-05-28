@@ -104,11 +104,14 @@ for a in range(len(filter_types)):
         axs[plot_no].set_yticks([0,1])
         axs[plot_no].set_ylabel(" ")
 
+        xlims = [-18.5,18.5]
+        axs_imp[plot_no].plot(xlims,[-25,-25], color='gray', linestyle='dashed')
         axs_imp[plot_no].plot(ns/M - 5.5, 10*np.log10(impulse_response), 'k-', label=label)
         axs_imp[plot_no].legend()
-        axs_imp[plot_no].set_yticks([-60,-30,0])
+        axs_imp[plot_no].set_yticks([-50,-25,0])
         axs_imp[plot_no].set_ylabel(" ")
         axs_imp[plot_no].set_ylim([-70,5])
+        axs_imp[plot_no].set_xlim(xlims)
 
         plt.figure("Impulse response (zoom)")
         plt.plot(ns - 5.5*M, 10*np.log10(impulse_response), dashtypes[a], label=label)
