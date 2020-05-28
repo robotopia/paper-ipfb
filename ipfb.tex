@@ -225,7 +225,7 @@ where, following \citet{Crochiere1983}, we have adopted the shorthand notation
     \end{aligned}
     \notag
 \end{equation}
-It can be seen that perfect reconstruction corresponds to the case when the only non-zero contribution comes from the $s = 0$ term, giving rise to the necessary and sufficient condition
+Perfect reconstruction corresponds to the case when the only non-zero contribution comes from the $s = 0$ term, giving rise to the necessary and sufficient condition
 \begin{equation}
     \sum_{m = -\infty}^{\infty} f_m[n]\,h_{m-s}[-n] = \Kron
     \label{eqn:invertibility_condition}
@@ -240,7 +240,7 @@ However, exact solutions do not always exist, and in general, numerical methods 
 In the context of an astrophysical signal, it is desirable to quantify the reconstruction error in terms of the signal-to-noise ratio (S/N).
 If we assume that individual samples follow, and are dominated by, the same Gaussian noise statistics, then the reduction in S/N of a reconstructed sample can be estimated by considering the fraction of the power of the reconstructed sample that came from the original sample:
 \begin{equation}
-    \frac{[\text{S/N}]_\text{recon}}{[\text{S/N}]_\text{orig}}
+    [\text{S/N}]_\text{recon}
       = \frac{\left(\sum\limits_{m = -\infty}^{\infty} f_m[n]\,h_m[-n]\right)^2}{
             \sum\limits_{s = -\infty}^{\infty}
             \left(\sum\limits_{m = -\infty}^{\infty} f_m[n]\,h_{m-s}[-n]\right)^2
@@ -249,6 +249,17 @@ If we assume that individual samples follow, and are dominated by, the same Gaus
 \end{equation}
 This expression is invariant under the substitution $n \rightarrow n + \lambda M$, $\lambda \in \mathbb{Z}$, which indicates that the (average) reconstruction error is only a function of where the sample in question falls within a tap.
 Consequently, any synthesis filter (except the exact inverse of the analysis filter, if it exists) will introduce a ``ringing'' effect into the reconstructed time series that has a period equal to the size of the PFB tap.
+
+The ``leakage'' of power into other samples implied by Eq. \eqref{eqn:snr_long} can also manifest itself as spurious imaging of a ``true'' signal at intervals of one tap.
+This can be seen by considering the effect of a single-sample impulse, with a power much greater than the ambient noise, on the reconstructed time series.
+The sample itself, say, $x[n]$, will be reconstructed with high fidelity, as the reconstructed error is only comprised of contributions from the (relatively) low-level noise.
+The reconstruction error of the sample $x[n+K]$, however, will be dominated by the term in Eq. \eqref{eqn:backtoback} involving $x[n]$, according to the relative weighting introduced by the analysis and synthesis filters.
+Thus, the impulse will reappear at intervals of one tap, but where the relative power of each appearance is given by
+\begin{equation}
+    p(s) = \left(\sum\limits_{m = -\infty}^{\infty} f_m[n]\,h_{m-s}[-n]\right)^2.
+    \label{eqn:ringing}
+\end{equation}
+This effect, termed temporal imaging, is discussed further in the context of specific filters.
 
 \subsection{Optimal and sub-optimal filter designs}
 
@@ -287,8 +298,8 @@ Once the matrices $H^{(n)}$, $F^{(n)}$, and $D$ have been defined, solution by l
 where ${H^{(n)}}^T$ is the transpose of $H^{(n)}$.
 With this notation, the reconstruction error can be more concisely expressed
 \begin{equation}
-    \frac{[\text{S/N}]_\text{recon}}{[\text{S/N}]_\text{orig}}
-      = \frac{(\hat{D}_{P-1})^2}{\hat{D}^T \hat{D}},
+    [\text{S/N}]_\text{recon}
+      = \frac{(\hat{D}_{(P^\prime+P)/2})^2}{\hat{D}^T \hat{D}},
     \label{eqn:snr_short}
 \end{equation}
 where $\hat{D} = H^{(n)} \hat{F}^{(n)}$.
@@ -307,14 +318,20 @@ The performance of both the (sub-optimal) mirror filter and the (optimal) set of
 Fig. \ref{fig:snr} compares the loss of S/N due to each filter (under the assumption of noise-dominated samples), revealing that, as expected, the filters with the larger number of taps perform better, and the mirror filter performs the least well.
 \begin{figure}
     \centering
-    \includegraphics[width=\columnwidth]{snr.eps}
-    \caption{The reconstructed S/N, defined in Eqs. \eqref{eqn:snr_long} and \eqref{eqn:snr_short}, as a function of the position of the reconstructed sample within a tap for the filters displayed in Fig. \ref{fig:synthfilters}.}
+    \includegraphics[width=\columnwidth]{snr.eps} \\[10pt]
+    \includegraphics[width=\columnwidth]{impulse_response.eps}
+    \caption{\textit{Top}: The reconstructed S/N, defined in Eqs. \eqref{eqn:snr_long} and \eqref{eqn:snr_short}, as a function of the position of the reconstructed sample within a tap for the filters displayed in Fig. \ref{fig:synthfilters}. \textit{Bottom}: The effect of temporal imaging, quantified in Eq. \eqref{eqn:ringing}, demonstrating how power ``leaks'' across adjacent taps during reconstruction. A grey dashed line is drawn at $-25\,$dB to aid visual comparison.}
     \label{fig:snr}
 \end{figure}
 
-Presumably, one can achieve arbitrarily good performance by choosing a sufficiently long filter.
-However, the better performance of the longer filters is balanced by the increased computational resources and/or time required to apply them, which may exceed the system's design specifications.
-On the other hand, there is no advantage whatsoever gained by using the mirror filter over the least squares filter of the same length.
+Fig. \ref{fig:snr} suggests that one can achieve arbitrarily good performance by choosing a sufficiently long filter.
+However, the better performance of the longer filters is offset by the increased computational resources and/or time required to apply them, which may exceed the system's design specifications.
+Note that the mirror filter, being the same size as the 12-tap least squares filter, offers no advantage in terms of minimising the reconstruction error.
+On the other hand, the way that the signal power is distributed across multiple taps is markedly different for the two filter types, as shown in the bottom panel of Fig. \ref{fig:snr}.
+The mirror filter performs slightly worse in nearby taps, but drops off more quickly further out.
+For applications where the samples are signal-dominated, and minimising temporal imaging is more important than measuring the S/N of the signal precisely, the mirror filter may therefore offer some advantage over the least squares solution.
+However, observations of pulsars only rarely fall into this regime, even for observations of single pulses, where typically many samples must be averaged before the signal becomes more significant than the noise.
+A more detailed analysis of these effects are therefore outside the scope of the present work.
 
 \subsection{MWA Implementation}
 
@@ -335,80 +352,84 @@ The VDIF format requires each sample to fit into a signed 8-bit complex integer 
 \subsection{System performance}
 
 The MWA implementation of the fine PFB differs from Eq. \eqref{eqn:pfb} in a few important respects, causing a reduction in the reconstructed S/N that would be present even if the synthesis filter perfectly inverted the analysis filter.
-The most significant difference is that both the coefficients $b[n]$ and the final sum undergo a rounding operation, resulting in the approximate (i.e. less precise and biased) spectrum
+The most significant difference is that both the coefficients $b[n]$ and the final sum undergo a rounding operation, resulting in the approximate (i.e. both less precise and biased) spectrum
 \begin{equation}
     \tilde{X}_k[m] = \left\lfloor\sum_{n=0}^{K-1} \bigg\lfloor b_m[n] \bigg\rfloor_{\text{asym}} e^{-2\pi jkn/K}\right\rfloor,
     \label{eqn:rounded}
 \end{equation}
-where $\lfloor\cdot\rfloor$ denotes a symmetric, and $\lfloor\cdot\rfloor_{\text{asym}}$, an asymmetric rounding operation, both of which are described in detail in Appendix \ref{sec:fpga_pfb}.
+where $\lfloor\cdot\rfloor$ and $\lfloor\cdot\rfloor_{\text{asym}}$ denote symmetric and asymmetric rounding operations respectively, described in Appendix \ref{sec:fpga_pfb}.
 
-The loss of precision implied by Eq. \eqref{eqn:rounded} naturally introduces further reconstruction errors in the back-to-back system.
-Unfortunately, Eq. \eqref{eqn:snr_long} cannot be used in its current form to estimate the signal loss, because it does not follow from the adjusted synthesis operation
-\begin{equation}
-    \hat{x}[n] = \sum_{m = -\infty}^{\infty} f[n - mM]\,
-        \frac{1}{K} \sum_{k=0}^{K-1} \tilde{X}_k[m]\,e^{2\pi jkn/K},
-    \label{eqn:ipfb_adjusted}
-\end{equation}
-which differs from Eq. \eqref{eqn:ipfb} only by the substitution $X_k[m] \rightarrow \tilde{X}_k[m]$.
-Therefore, to estimate the performance of our system, we made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
-The fine channels from one polarisation of a single tile were extracted and subjected to both the mirror filter and the 12-tap least squares filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data (see Fig. \ref{fig:compare_timeseries}).
+The non-linearity of the back-to-back system induced by Eq. \eqref{eqn:rounded} implies that there is no single impulse response test that can adequately characterise the whole system.
+To wit, the results of an impulse response test depend sensitively on at least three factors: the magnitude of the impulse; its position within a tap; and the arbitrary scaling factor and quantisation applied at the end of the test required by the integer-based output formats.
+For example, an impulse at tap position $n = 0$ will be perfectly reproduced if its magnitude is chosen to minimise the amount of rounding that takes place during analysis.
+One the other hand, an impulse at $n = 64$ can be chosen such that the response is significantly worse than that implied by Fig. \ref{fig:snr}.
 
-\dots
-
-\subsection{Fidelity of reconstructed time series}
-\label{sec:fidelity}
-
-The major challenge in verifying the fidelity of the back-to-back analysis-synthesis filter pair is the fact that the analysis PFB only exists on the FPGAs used in production and not as stand-alone software that can be fed arbitrary input.
-This makes conducting standard impulse response tests impossible, unless the exact performance of the PFB can be reproduced.
-We have therefore attempted to replicate the PFB in software; however, the replication was not perfect, causing a small difference between the model analysis-synthesis back-to-back system, and the analysis-synthesis system used in production.
-
-In the fidelity tests presented in this section, we therefore consider a number of sources of error, all of which cause the reconstructed coarse channel time series, $\hat{x}[n]$, to differ from the original input time series, $x[n]$:
-\begin{description}
-    \item[``Replication error'':] The imperfect replication of the forward PFB, estimated to contribute noise-like error at the $-20\,$dB level (see Appendix for details);
-    \item[``Quantisation error'':] The error associated with the demotion of the input (5+5)-bit complex integers ($x[n]$) to the (4+4)-bit complex integer format output by the PFB (also see Appendix); and
-    \item[``Filter error'':] the error caused by the fact that the synthesis filter ($f[n]$) does not exactly complement the analysis filter ($h[n]$), in the sense described by Eq. \eqref{eqn:invertibility_condition} and Fig. \ref{fig:inverse_condition}.
-\end{description}
-Although knowing the relative contributions of quantisation and filter errors is useful for improving the system (since the latter may be mitigated by identifying a better synthesis filter), it is only necessary to know their joint contribution for the purposes of characterising the analysis-synthesis system.
-This contribution is revealed in an impulse response test, the results of which are shown in Fig. \eqref{fig:impulse_response}.
+For this reason, and also because the vast majority of applications of this system falls in the regime of noise-dominated samples, we have decided to forego the traditional impulse response test in favour of a back-to-back test involving real data collected expressly for this purpose.
+This is an empirical test of system that made use of a non-standard observing mode to record a small amount of simultaneous coarse and fine channel data (i.e. both before and after the fine PFB analysis filter stage).
+The fine channels from one polarisation of a single tile were extracted and subjected to both the mirror filter and the 12-tap least squares filter to reconstruct the $1.28\,$MHz coarse channel time series, which could then be compared directly with the original data.
+The real and imaginary parts of the time series resulting from the least squares filter are shown in Fig. \ref{fig:compare_timeseries}.
 \begin{figure}
     \centering
-    \includegraphics[width=\columnwidth]{compare_coarse_imp.eps}
-    \caption{The response of the back-to-back analysis-synthesis system to a finite impulse. The coarse-channelised (reconstructed) output has been arbitrarily scaled to have a comparable magnitude to the original (5+5)-bit impulse, and the original impulse has been shifted slightly to the left for visual clarity. The spurious artefacts seen on either side of the central pulse at intervals of 64 samples are dominated by the so-called ``filter error'' (see text).}
-    \label{fig:impulse_response}
-\end{figure}
-
-As revealed by the impulse response test, our system is capable of reproducing the original impulse with high fidelity, despite the fact that the chosen synthesis filter is not ideal.
-The main discrepancy appears in the form of temporal ``echoes'' of the original impulse occurring at intervals of 64 coarse channel samples (i.e. half the size of one tap, equal to $50\,\mu$s for our sampling rate of $1.28\,$MHz) on either side of the reconstructed impulse.
-Although the power in the echoes is small compared to the central impulse (roughly $-10\,$dB level for the innermost echoes), the echoes always appear at the same locations relative to it.
-The asymmetry seen in Fig. \ref{fig:impulse_response} is due to replication error, quantisation error, the ``phase'' of the impulse with respect to the filter window, or some combination of the above.
-Importantly, echoes arising from strong, periodic individual pulses (e.g. in a pulsar signal) will accumulate in the same phase bins when the time series is folded at the pulsar's rotation period.
-Thus, any structure seen on this time scale ($\sim 50\,\mu$s) must therefore be regarded with suspicion.
-
-We also compared the result of the synthesis filter method with a simple 128-point inverse FFT, shown in Fig. \ref{fig:imp_sin_noise}.
-\begin{figure}
-    \centering
-    \includegraphics[width=\columnwidth]{compare_coarse_imp_all.eps}
-    \caption{Similar to Fig. \ref{fig:impulse_response}, but showing the real and imaginary parts separately. In this case, the original signal is composed of an impulse (real only), a sinusoid (real only), and noise (both real and imaginary), and subsequently quantised. The results of both the PFB synthesis and the inverse FFT are plotted for comparison. For each series, a vertical offset is added to make visual comparison easier. The PFB synthesis method is better at reconstructing the impulse and the sinusoid, but quantisation error dominates the noise for both PFB and FFT methods.}
-    \label{fig:imp_sin_noise}
-\end{figure}
-The input function consists of a single-bin impulse, a sinusoid, and Gaussian noise.
-Both the PFB synthesis and the inverse FFT are able to reproduce the impulse and the sinusoid, but less perfectly in the case of the inverse FFT method, as evidenced by the residuals.
-The difference between the two methods can be understood as the direct consequence of the differences between the spectral response of the forward PFB and an ordinary FFT.
-Another way to say this is that the synthesis filter, $f[n]$, that corresponds to the inverse FFT is even less well matched to the analysis PFB filter, in the sense of Eq. \eqref{eqn:invertibility_condition}, than the synthesis filter defined in Eq. \eqref{eqn:synthesisfilter}.
-Notably, if an FFT had been used in the MWA's fine channelisation stage (i.e. instead of the PFB), the inverse FFT would exactly reproduce the original high time resolution time series, even though the spectrum produced by the forward FFT would be a less perfect representation of the true spectrum, due to more prevalent spectral leakage (i.e. compared to the PFB).
-Finally, note that both the synthesis filter method and the inverse FFT show a similar amount of error in the construction of the Gaussian noise (cf. the imaginary component shown in Fig. \ref{fig:imp_sin_noise})---this is not surprising as replication and quantisation errors are present at this level.
-
-\dots
-
-Despite the errors in the reconstruction, the analysis-synthesis pair is able to reproduce the noise characteristics well enough for the errors not to significantly affect sufficiently bright pulsar signals, as demonstrated in the next section.
-However, these errors may become significant when observing low SNR pulsar emission. In these cases, the errors may be mitigated by averaging over multiple time bins (e.g. a coarser time resolution, or averaging many pulses together).
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\columnwidth]{compare_timeseries.eps}
-    \caption{128 high time resolution ($1.28\,$MHz) samples from a single coarse channel and a single polarisation of one MWA tile. The real (top) and imaginary (bottom) components are shown separately. The original coarse channel data (black) are compared with the reconstructed data (red), with the residuals plotted in the lower panels. Because the VDIF data uses an arbitrary scaling factor, the red line has been rescaled by eye for a better visual comparison.}
+    \includegraphics[width=\columnwidth]{compare_timeseries_LSQ12.eps}
+    \caption{128 high time resolution ($1.28\,$MHz) samples from a single coarse channel and a single polarisation of one MWA tile. The real (top) and imaginary (bottom) components are shown separately. The original coarse channel data (black) are compared with the data reconstructed using the 12-tap least squares filter (red), with the residuals plotted in the lower panels. Because the VDIF data uses an arbitrary scaling factor, the red line has been rescaled by eye for a better visual comparison.}
     \label{fig:compare_timeseries}
 \end{figure}
+
+With the original and reconstructed time series in hand, we estimated the S/N loss for each tap position by comparing the variance of the original time series (the `signal'), $\sigma_S^2$, with the variance of the residuals (the `noise'), $\sigma_N^2$.
+In analogy with Eq. \eqref{eqn:snr_long},
+\begin{equation}
+    [\text{S/N}]_\text{recon}
+      = \frac{\sigma_S^2}{\sigma_S^2 + \sigma_N^2}.
+    \label{eqn:snr_measured}
+\end{equation}
+Recognising that some of the noise variance is due to the synthesis filter (cf. Fig. \ref{fig:snr}), we have estimated the contribution due to rounding errors (and any other implementation-specific effects) by calculating the ``filter-subtracted'' S/N loss:
+\begin{equation}
+    [\text{S/N}]_\text{recon}
+      = \frac{\sigma_S^2}{\sigma_S^2 + (\sigma_N^2 - \sigma_\text{filter}^2)},
+    \label{eqn:snr_filter_subtracted}
+\end{equation}
+where $\sigma_\text{filter}$ is derived from Eq. \eqref{eqn:snr_long}.
+
+Fig. \ref{fig:snr_measured} shows the results for just under one second's worth of data ($1278464 \times 0.78\,\mu$s samples), where 1536 samples (one tap) were excised due to the synthesis filter being applied to zero-padded data beyond the edge of the second.
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{snr_measured.eps}
+    \caption{The S/N loss as a function of the position of the reconstructed sample within a tap for both the mirror filter and the 12-tap least squares filter. Both the total S/N loss (solid lines) and the S/N loss due to rounding and other implementation-specific effects (dashed lines) are plotted (cf. Eqs. \eqref{eqn:snr_measured} and \eqref{eqn:snr_filter_subtracted}).}
+    \label{fig:snr_measured}
+\end{figure}
+The remaining samples were sorted into their respective tap positions, and the variances calculated for each set (containing $1278464/128 = 9988$ samples).
+Near the edges of the tap, the rounding errors dominate the reconstruction noise, which we estimate contributes roughly $-0.26\,$dB of signal loss at all tap positions.
+In more central tap positions, however, the contributions from the rounding errors and the filters are comparable, and significant improvements could made by using longer filters.
+Nevertheless, unless there is a way to mitigate the rounding errors during the application of the analysis filter (explored below), it is unlikely that we will be able to achieve a total S/N loss better than approximately $-0.26\,$dB at any tap position.
+
+\subsubsection{Mitigating rounding errors}
+
+The original (i.e. before applying the fine PFB) high-time resolution samples are (5+5)-bit complex integers, scaled such that the bit occupancy is not so low that information is lost, and not so high that individual samples are clipped.
+Interestingly, one may question whether or not this known quantisation can be used to recover some of the information lost by the imperfect back-to-back system.
+If the errors are sufficiently small, then re-quantising the reconstructed samples will correct more errors than it introduces, giving overall better performance.
+
+In this section, we offer a short proof of the condition for which re-quantisation results in a net recovery of S/N for samples following Gaussian statistics.
+As before, let $\sigma_N^2$ be the variance of the residuals which are assumed to be drawn from a normal distribution with zero mean.
+The effect of re-quantisation on the variance is that every sample between $k-\frac12$ and $k+\frac12$, for any integer $k$, gets ``counted'' as if it had the value $k$.
+The adjusted variance, $\hat{\sigma}_N^2$, can then be expressed in terms of $\sigma_N^2$ via the second moment,
+\begin{equation}
+    \begin{aligned}
+        \hat{\sigma}_N^2
+         &= \sum_{k \in \mathbb{Z}} \int_{k-\frac12}^{k+\frac12} k^2
+            \frac{1}{\sigma_N\sqrt{2\pi}} e^{-\frac{x^2}{2\sigma_N^2}}\,dx, \\
+         &= \sum_{k \in \mathbb{Z}} k^2
+            \left[\frac12\text{erf}\left(\frac{k+\frac12}{\sigma_N\sqrt{2}}\right) -
+            \frac12\text{erf}\left(\frac{k-\frac12}{\sigma_N\sqrt{2}}\right)\right] \\
+         &= \sum_{k=1}^{\infty} k^2
+            \left[\text{erf}\left(\frac{k+\frac12}{\sigma_N\sqrt{2}}\right) -
+            \text{erf}\left(\frac{k-\frac12}{\sigma_N\sqrt{2}}\right)\right],
+    \end{aligned}
+\end{equation}
+where the last equality takes advantage of the symmetry of the error function.
+
+Re-quantisation is beneficial precisely when $\hat{\sigma}_N^2 < \sigma_N^2$, which can be shown by numerical methods to occur when $\sigma_N^2 \lesssim 0.29$.
+The MWA test data set presented above has a variance of approximately $6.7$, which implies that the total S/N loss of the back-to-back system would have to be smaller than $-0.05\,$dB before re-quantisation would improve the signal reconstruction.
+As Fig. \ref{fig:snr_measured} shows, this is not met for any tap position, so we did not pursue this possibility further.
 
 \section{Verification using pulsar observations}
 \label{sec:pulsardata}
@@ -420,17 +441,18 @@ Observations of three pulsars are presented here to validate the synthesis filte
 \psrkaurJ{} has a rotation period of $2.18\,$ms and a dispersion measure (DM) of $11.41\,\dmunits$.
 The resulting dispersion smear across $10\,$kHz channels at the central observing frequency of $150.4\,$MHz is approximately $0.2\,$ms, or $45^\circ$ of rotation phase, consistent with the width of the average profile formed from incoherently de-dispersed, fine channelised data recorded with the MWA-VCS system (Fig. \ref{fig:J2241_profiles}, top panel).
 Upon applying the synthesis filter and coherently de-dispersing the reconstructed time series sampled at the much higher rate of $1.28\,$MHz, the same data revealed exquisite detail in the average profile, including a pair of pre-cursor components that are only marginally visible (if at all) at higher frequencies (Fig. \ref{fig:J2241_profiles}, bottom panel).
-Moreover, these new, low-frequency observations have allowed us to measure the DM of this pulsar with unprecedented precision ($\sim (2$-$6) \times 10^{-6}\,\dmunits$), with important consequences for measuring DM chromaticity and evaluating its effect on pulsar timing experiments.
+These have since been confirmed during follow-up observations (Kaur et al., in prep) using the Band 3 receiver ($250$ to $500\,$MHz) of the upgraded Giant Metrewave Radio Telescope (uGMRT).
+In addition, these new, low-frequency observations have allowed us to measure the DM of this pulsar with unprecedented precision ($\sim (2$-$6) \times 10^{-6}\,\dmunits$), with important consequences for measuring DM chromaticity and evaluating its effect on pulsar timing experiments.
 These results are discussed in detail in \citet{Kaur2019}.
 
-The resemblance of the newly-sighted precursor components to the temporal artefacts induced by the synthesis filter naturally raises questions about their authenticity.
-The fact that the components only appear on the leading side of the main pulse is a point in favour of them being real, since the temporal artefacts are expected to appear on both leading and trailing sides.
-In addition, the time interval between the main pulse and the closest component is $\sim150\,\mu$s, which, although it corresponds to the expected location of the third-order artefact, is not expected to be brighter than the first two (see Fig. \ref{fig:impulse_response}); however, no evidence of the lower-order artefacts is seen.
-Furthermore, our recent (independent) follow-up observations using the Band 3 receiver ($250$ to $500\,$MHz) of the upgraded Giant Metrewave Radio Telescope (uGMRT) have confirmed that at least the innermost component is real (Kaur et al., in prep).
+%The resemblance of the newly-sighted precursor components to the temporal artefacts induced by the synthesis filter naturally raises questions about their authenticity.
+%The fact that the components only appear on the leading side of the main pulse is a point in favour of them being real, since the temporal artefacts are expected to appear on both leading and trailing sides.
+%In addition, the time interval between the main pulse and the closest component is $\sim150\,\mu$s, which, although it corresponds to the expected location of the third-order artefact, is not expected to be brighter than the first two (see Fig. \ref{fig:impulse_response}); however, no evidence of the lower-order artefacts is seen.
+%Furthermore, our recent (independent) follow-up observations using the Band 3 receiver ($250$ to $500\,$MHz) of the upgraded Giant Metrewave Radio Telescope (uGMRT) have confirmed that at least the innermost component is real (Kaur et al., in prep).
 
 \begin{figure}[t!]
     \centering
-    \includegraphics[angle=270,width=\columnwidth]{J2241_063-172_FITS_profile.eps}
+    \includegraphics[angle=270,width=\columnwidth]{J2241_063-172_FITS_profile.eps} \\[10pt]
     \includegraphics[angle=270,width=\columnwidth]{J2241_063-172_vdif_profile.eps}
     \caption{Profiles of PSR \psrkaurJ{} made using incoherently de-dispersed, $10\,$kHz fine channels (top) and coherently de-dispersed, reconstructed coarse channels (bottom) from the same data set \citep{Kaur2019} (the flux scales are arbitrary). The possibility that the two small components on the leading side of the main pulse are artefacts of the synthesis filter has been ruled out (see accompanying text).}
     \label{fig:J2241_profiles}
@@ -535,13 +557,6 @@ The rounding scheme and its effect on the distribution are illustrated in Fig. \
 
 The second stage calculates the spectrum of $b[n]$ using the standard fixed point FFT algorithm that is implemented on (Xilinx Virtex4 XC4VSX35) FPGAs.
 The output values are scaled and (symmetrically) rounded, producing (4+4)-bit output values.
-
-As described in the main text, it was necessary to replicate the function of the fine PFB in software in order to conduct impulse tests of the analysis-synthesis pair.
-Our CPU-based implementation differs from the algorithm described above only by the use of the FFTW library\footnote{\url{http://www.fftw.org/}} for the FFT stage, which uses (and outputs) floating point values.
-Nevertheless the resulting spectrum was found to contain a small number of quantisation ``errors'': slightly under $1\%$ of the output 4-bit values differed from the FPGA-produced values by 1.
-To quantify the effect of these quantisation errors, we recorded a small amount of coarse channel data (dominated by telescope noise) along with the contemporaneous spectrum output by the FPGA PFB.
-We used the GPU-based synthesis filter described in Section \ref{sec:ipfb} to reconstruct the coarse channel data from both the FPGA spectrum and the CPU spectrum generated by our own implementation.
-We found the results to differ from each other at less than the $-20\,$dB power level, which is much less than the estimated difference between the reconstructed coarse channel data and the original.
 
 \end{appendix}
 
