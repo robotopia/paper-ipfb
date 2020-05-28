@@ -1,48 +1,16 @@
-Dear Dr. McSweeney,
+Dear editor & referee,
 
-I am writing regarding manuscript PAS-20016 entitled "MWA tied-array processing III: Microsecond time resolution via a polyphase synthesis filter", which you submitted to PASA. I have now received a report on this paper from an anonymous expert referee, as appended at the bottom of this letter.
+We would like to thank both of you for encouraging us to look more deeply into the justification of the synthesis filter that we were using. The result has been not only an improved paper (hopefully!) but also an improved system. We found it interesting to compare the performance of different kinds of filters, and hope that the extra rigour we've inserted into the "Synthesis filters" section will be acceptable to the referee and useful to the readers. On account of the extra work, several sections of the paper have been completely rewritten, as described below in the detailed comments.
 
-You will see that the referee is very positive about the topic you are tackling, and your general approach. However, they have major concerns about your choice of filter. I agree with this assessment, and recommend that your paper undergo major revisions before it can be considered for publication. I thus invite you to respond to the comments below and to revise your manuscript. [The reviewer's positive view of your overall approach has led to this, rather than a "Reject+resubmit", recommendation - but please ensure that you properly address the major concern relating to your filter choice.]
+----------------------------
 
-To make your revisions, log in to https://mc.manuscriptcentral.com/astro and enter your Author Centre, where you will find this manuscript listed under 'Manuscripts with Decisions'.  Under 'Actions', click on 'Create a Revision'.  Your manuscript number has been appended to denote a revision.
+Referee: This paper present a method for inversion of the 2nd-stage (fine) PFB on data recorded with the Murchison Widefield Array's Voltage Capture System, in order to recover high time resolution instead of the VCS' nominal fine (10kHz) frequency resolution. The authors demonstrate the performance on a trio of pulsars with known short-timescale emission structure. I appreciate very much the effort the authors went to to write up this work, and generally feel that more papers of this sort, covering signal analyses suitable suitable to radio observations, are needed in the literature. Unfortunately, as it stands, I don't see the novelty or scientific impact of this work, and cannot recommend it for publication in a peer-reviewed science journal. I strongly encourage the authors to flesh out their derivations, to justify and characterize the implementation more quantitatively, and re-submit. Detailed comments follow.
 
-You can also click the link below to start the revision process (or continue the process if you have already started your revision) for your manuscript. If you use the link below you will not be required to log in to ScholarOne Manuscripts.
+Referee: The paper begins with a concise review of PFBs. An overview of synthesis filters used to reverse their operation is given, and the problem is overall well motived. I applaud the authors for laying out the task so clearly.
 
-*** PLEASE NOTE: This is a two-step process. After clicking on the link, you will be directed to a webpage to confirm. ***
+Referee: The specific choice of synthesis filter, however, seems completely unmotivated and unjustified in any quantitative sense. The authors seem to simply argue "good enough is good enough," but for the central point of the paper I find this woefully insufficient, particularly when well-justified formulations are easily found online and in the community. A quick google reveals https://github.com/jrs65/pfb-inverse as the top result, where a least-squares solution to the inversion is presented. It appears to operate offline, but solves the artefacts described in this work. If the authors require realtime inversion to make it a part of the MWA VCS pipeline, computationally inexpensive solutions exist which vastly reduce the temporal echoes they see. Given that such solutions are in the community already, I would expect at minimum some proof of optimality for some well-chosen metric.
 
-https://mc.manuscriptcentral.com/astro?URL_MASK=c5a2db8207834bf29f9860bee5b31b89
-
-You will be unable to make your revision on the originally submitted version of the manuscript. You should instead prepare and upload a new revised version. Please highlight the changes to your text in bold or coloured text. Once the revised manuscript is prepared, you can upload it and submit it through your Author Centre.
-
-When submitting your revised manuscript, you will be able to respond to the comments made by the reviewer in the space provided.  You can also use this space to document any other changes you have made to the original manuscript.  In order to expedite the processing of the revised manuscript, please be as specific as possible in your responses.
-
-Inclusion of ADS or DOI/CrossRef links with any referenced article is strongly recommended.
-
-IMPORTANT:  Your original files are available to you when you upload your revised manuscript.  Please delete any redundant files before completing the submission.
-
-Because we are trying to facilitate timely publication of manuscripts submitted to PASA, your revised manuscript should be submitted by 06-Oct-2020.  If it is not possible for you to submit your revision by this date, please let me know.
-
-Once again, thank you for submitting your manuscript to PASA and I look forward to receiving your revision.
-
-Yours sincerely,
-
-Dr. Stas Shabala
-Editor-in-Chief, PASA
-pasa@cambridge.org
-https://mc.manuscriptcentral.com/astro
-
-**********************************
-
-Reviewer(s)' Comments to Author:
-
-Reviewer: 1
-
-Comments to the Author
-This paper present a method for inversion of the 2nd-stage (fine) PFB on data recorded with the Murchison Widefield Array's Voltage Capture System, in order to recover high time resolution instead of the VCS' nominal fine (10kHz) frequency resolution. The authors demonstrate the performance on a trio of pulsars with known short-timescale emission structure. I appreciate very much the effort the authors went to to write up this work, and generally feel that more papers of this sort, covering signal analyses suitable suitable to radio observations, are needed in the literature. Unfortunately, as it stands, I don't see the novelty or scientific impact of this work, and cannot recommend it for publication in a peer-reviewed science journal. I strongly encourage the authors to flesh out their derivations, to justify and characterize the implementation more quantitatively, and re-submit. Detailed comments follow.
-
-The paper begins with a concise review of PFBs. An overview of synthesis filters used to reverse their operation is given, and the problem is overall well motived. I applaud the authors for laying out the task so clearly.
-
-The specific choice of synthesis filter, however, seems completely unmotivated and unjustified in any quantitative sense. The authors seem to simply argue "good enough is good enough," but for the central point of the paper I find this woefully insufficient, particularly when well-justified formulations are easily found online and in the community. A quick google reveals https://github.com/jrs65/pfb-inverse as the top result, where a least-squares solution to the inversion is presented. It appears to operate offline, but solves the artefacts described in this work. If the authors require realtime inversion to make it a part of the MWA VCS pipeline, computationally inexpensive solutions exist which vastly reduce the temporal echoes they see. Given that such solutions are in the community already, I would expect at minimum some proof of optimality for some well-chosen metric.
+Authors: In hindsight, we completely agree that a paper such as this, if it does not attempt to provide a proper justification for the choice of synthesis filter, cannot possibly offer any value to the radio astronomy community who might be interested in replicating, or improving upon, our method. Accordingly, we investigated the least-squares solution that the referee recommended, and have provided a full, quantitative comparison of a multiple synthesis filters, including our original "mirror" filter and a few least-squares solutions of different lengths. In so doing, we inevitably found that the least-squares solution performs better than our original filter, and we provide a metric (with accompanying derivation) for comparing them.
 
 I was glad to see the impulse response to characterize performance, but the comparison to an ifft seems silly except to point out that one should not expect iffts to invert pfbs.
 
