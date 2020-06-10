@@ -1,0 +1,10 @@
+exec fscrunch
+exec bscrunch 4908
+
+set=pub
+
+x:unit=ms
+x:bin=(4000,4400)
+x:origin=-0.87
+pa:y:range=(0.5,1.5)
+flux:below:l=Resolution: 52us
