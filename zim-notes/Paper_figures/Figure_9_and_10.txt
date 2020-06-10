@@ -17,32 +17,80 @@ galaxy> psrcat -e B0950+08 > 0950.par
 galaxy> dspsr -E 0950.par -b 323928 -s -K C001_1260302416_ch119_u.hdr
 galaxy> psradd -o pulse_all.ar pulse_4252597*.ar
 
+# At this point, Keegan measured the RM (1.434) and applied it to the archive(s),
+# putting the result in:
+# /group/mwavcs/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/pulses/pulse_4252597337/pulse_4252597337.ar2
+
 # Download the archives
-> cd ~/documents/fine-pfb-reconstruction/B0950+08/rec
-> scp galaxy:/group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/pulse_4252597337.ar .
-> scp galaxy:/group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/pulse_all.ar .
+> scp galaxy:/group/mwavcs/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/pulses/pulse_4252597337/pulse_4252597337.ar2 .
+> scp galaxy:/group/mwaops/vcs/1260302416/pointings/09:53:09.31_+07:55:35.750/pulses/pulse_all.ar .
 
 > pav -g 1024bins_profile.ps/cps --publnc -SFTC pulse_all.ar
-> pav -g 200ms_res.ps/cps --publnc -SFC -b 264 pulse_4252597337.ar
-> pav -g 50ms_res.ps/cps --publnc -SFC -z 0.45,0.55 -b 66 pulse_4252597337.ar
-> pav -g 5ms_res.ps/cps --publnc -SFC -z 0.495,0.505 -b 6 pulse_4252597337.ar
+> psrplot -D 200us.ps/cps -p S -s 200us.style pulse_4252597337.ar2
+> psrplot -D 50us.ps/cps -p S -s 50us.style pulse_4252597337.ar2
+> psrplot -D 5us.ps/cps -p S -s 5us.style pulse_4252597337.ar2
 
-> convert -density 100 1024bins_profile.ps -flatten -rotate 90 1024bins_profile.png
-> convert -density 100 200ms_res.ps -flatten -rotate 90 200ms_res.png
-> convert -density 100 50ms_res.ps -flatten -rotate 90 50ms_res.png
-> convert -density 100 5ms_res.ps -flatten -rotate 90 5ms_res.png
+> mogrify -format eps -density 100 *us.ps
+> mogrify -format eps -density 100 -rotate 90 -flatten *us.ps
+
 }}}
 
 
 {{~/documents/fine-pfb-reconstruction/B0950+08/rec/1024bins_profile.png}}
-**200 ms resolution:**
-{{~/documents/fine-pfb-reconstruction/B0950+08/rec/200ms_res.png?width=640}}
+**200 μs resolution:**
+**200us.style:**
+{{{code: lang="sh" linenumbers="False"
+exec fscrunch
+exec bscrunch 1227
 
-**50 ms resolution:**
-{{~/documents/fine-pfb-reconstruction/B0950+08/rec/50ms_res.png?width=640}}
+set=pub
 
-**5 ms resolution:**
-{{~/documents/fine-pfb-reconstruction/B0950+08/rec/5ms_res.png?width=640}}
+x:unit=ms
+x:bin=(900,1227)
+x:origin=-0.87
+pa:y:range=(0.5,1.5)
+flux:below:l=
+flux:below:r=Resolution: 206us
+}}}
+
+
+
+{{./200us.png?width=480}}
+
+**50 μs resolution:**
+**50us.style:**
+{{{code: lang="sh" linenumbers="False"
+exec fscrunch
+exec bscrunch 4908
+
+set=pub
+
+x:unit=ms
+x:bin=(4000,4400)
+x:origin=-0.87
+pa:y:range=(0.5,1.5)
+flux:below:l=Resolution: 52us
+}}}
+
+{{./50us.png?width=480}}
+
+**5 μs resolution:**
+**5us.style:**
+{{{code: lang="sh" linenumbers="False"
+exec fscrunch
+exec bscrunch 53988
+
+set=pub
+
+x:unit=ms
+x:bin=(46900,47500)
+x:origin=-0.87
+pa:y:range=(0.5,1.5)
+flux:below:l=
+flux:below:r=Resolution: 4.7us
+}}}
+
+{{./5us.png?width=480}}
 
 **Versions:**
 {{{code: lang="sh" linenumbers="False"
