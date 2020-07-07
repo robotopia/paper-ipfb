@@ -12,11 +12,9 @@
 \newcommand{\psrbhatJ}{J0437$-$4715}
 \newcommand{\dmunits}{\ensuremath{\text{pc}\,\text{cm}^{-3}}}
 
-\newcommand{\changes}[1]{{\color{red}#1}}
-
 \title[MWA tied-array processing III]{MWA tied-array processing III: Microsecond time resolution via a polyphase synthesis filter}
 
-\author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$, B. W. Meyers$^{1,2,3}$, S. E. Tremblay, J. Jones$^1$, B. Crosse$^1$, K. Smith$^1$
+\author[McSweeney et al.]{S. J. McSweeney$^1$, S. M. Ord$^2$, D. Kaur$^1$, N. D. R. Bhat$^1$, B. W. Meyers$^{1,2,3}$, S. E. Tremblay, J. Jones$^1$, B. Crosse$^1$, K. R. Smith$^1$
 \affil{$^1$International Centre for Radio Astronomy Research (ICRAR), Curtin University, 1 Turner Avenue, Technology Park, Bentley, 6102, W.A., Australia}
 \affil{$^2$CSIRO Astronomy and Space Science, PO Box 76, Epping, NSW 1710, Australia}
 \affil{$^3$Department of Physics and Astronomy, University of British Columbia, 6224 Agricultural Road, Vancouver, BC V6T 1Z1, Canada}
@@ -331,7 +329,7 @@ On the other hand, the way that the signal power is distributed across multiple 
 The mirror filter performs slightly worse in nearby taps, but drops off more quickly further out.
 For applications where the samples are signal-dominated, and minimising temporal imaging is more important than measuring the S/N of the signal precisely, the mirror filter may therefore offer some advantage over the least squares solution.
 However, observations of pulsars only rarely fall into this regime, even for observations of single pulses, where typically many samples must be averaged before the signal becomes more significant than the noise.
-A more detailed analysis of these effects are therefore outside the scope of the present work.
+A more detailed analysis of these effects is therefore outside the scope of the present work.
 
 \subsection{MWA Implementation}
 
@@ -482,7 +480,7 @@ As evident from Fig. \ref{fig:0437}, the application of the synthesis filter suc
 
 \psrslowB{} is a bright, long-period ($P = 0.253\,$s) pulsar known to exhibit microstructure \citep{Popov2002,Kuzmin2003}.
 A total of eighty seconds (315 pulses) of data ($128 \times 10\,$kHz fine channels) were recorded, beamformed, and subjected to the polyphase synthesis filter.
-Across the MWA bandwidth, we used PSRCHIVE's RMFIT to measure an approximate rotation measure (RM) of $1.43 \pm 0.15\,$rad m$^{-2}$, which is consistent with previous measurements of this pulsar's RM \citep[e.g.][]{Noutsos2015}.
+Across the MWA bandwidth, we used the RM synthesis technique\footnote{\url{https://github.com/gheald/RMtoolkit}} \citep{Brentjens2005} to measure a rotation measure (RM) of $1.43 \pm 0.15\,$rad m$^{-2}$, which is consistent with previous measurements of this pulsar's RM \citep[e.g.][]{Noutsos2015}.
 The mean profile formed from the one coarse channel is shown in Fig. \ref{fig:0950_80_secs}.
 Several individual pulses were sufficiently bright to see substructure.
 One such pulse is showcased in Fig. \ref{fig:0950_single_pulse}, where all 24 coarse channels were integrated to maximise the S/N.

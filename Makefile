@@ -41,3 +41,7 @@ sample_error_MIRROR.txt sample_error_LSQ12.txt:
 	#     ~/work/pfb-testing/B0950+08/rec/single
 	# On my work computer, it is in
 	#     ~/documents/fine-pfb-reconstruction/B0950+08/rec/single
+
+### PASA's licensing agreement form:
+PAS-LTP-10.pdf:
+	wget -O $@ https://www.cambridge.org/core/services/aop-file-manager/file/5ef0c19da1b13262058f9755/PAS-LTP-10.pdf
