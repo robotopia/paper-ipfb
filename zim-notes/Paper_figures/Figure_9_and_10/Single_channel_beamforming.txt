@@ -1,0 +1,18 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2020-08-02T14:07:13+08:00
+
+====== Single channel beamforming ======
+Created Sunday 02 August 2020
+
+
+
+{{{code: lang="sh" linenumbers="False"
+> cd ~/work/pfb-testing/B0950+08/rec
+> make_beam -o 1260302416 -b 1260302800 -e 1260302800 \
+    -a 128 -n 128 -f 119 \
+    -J cal/DI_JonesMatrices_node011.dat \
+    -d . -P 09:53:09.31_+07:55:35.750 -r 10000 \
+    -m metadata.fits -z 2019-12-13T20:06:22 \
+    -v -F cal/flagged_tiles.txt -S LSQ12
+}}}
