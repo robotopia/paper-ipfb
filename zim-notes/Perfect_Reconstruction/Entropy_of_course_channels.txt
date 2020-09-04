@@ -10,3 +10,32 @@ Each coarse channel sample is a (5+5)-bit complex integer whose value is a round
 {{./equation.png?type=equation}}
 
 (This assumes that the variance is small enough that the number of samples that would exceed the available bits is negligible.)
+
+The entropy (in bits) is then
+
+{{./equation001.png?type=equation}}
+
+It doesn't take many //k// values to sum up before you converge on the sum. The following Octave program produces the plot shown below.
+
+{{{code: lang="octave" linenumbers="True"
+k = [-20:20]';
+s = [0:0.01:5]';
+
+[K,S] = meshgrid(k,s);
+
+ehi = erf((K+0.5)./(S*sqrt(2)));
+elo = erf((K-0.5)./(S*sqrt(2)));
+
+Z = -(0.5*(ehi - elo) .* log2(0.5*(ehi - elo)));
+
+plot(s, nansum(Z,2));
+xlabel("σ");
+ylabel("H(K(σ))");
+
+}}}
+
+
+{{./entropy.png?width=600}}
+[The axis labels didn't work out, apparently :-(. Nevermind, x-axis is "σ", y-axis is "H(K(σ))"].
+
+The upshot is, this provides a way to compare how much information is lost between the coarse and fine channels. It's not enough to just say that the fact that the fine channels are (4+4)-bit values means that we lose a bit of information; instead, it depends on the variance of the fine channel samples. See [[Fine vs Coarse Variance]].

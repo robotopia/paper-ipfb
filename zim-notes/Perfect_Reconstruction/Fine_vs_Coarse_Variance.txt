@@ -1,0 +1,16 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2020-09-04T20:31:18+08:00
+
+====== Fine vs Coarse Variance ======
+Created Friday 04 September 2020
+
+The coarse channels samples are drawn from some particular distribution assumed to be normal with mean μ = 0 and variance σ². (In practice, the variance can vary from tile to tile, but in this section we will consider a only a single distribution.) Given this coarse channel variance, what is the variance of the resulting fine channels after they are put through the fine PFB as implemented on the FPGAs? For simplicity, we will assume, at first, that the final rounding step is symmetrical.
+
+The first stage of the PFB is to multiply the coarse channel samples by a filter, which in our case is 12 taps long, where each tap consists of 128 values, and then summing the taps together, element-wise. This is equivalent to a weighted sum, with 12 values contributing to each sum. A weighted sum of 12 samples will have a probability distribution with mean zero as before, but with variance
+
+{{./equation.png?type=equation}}
+
+where //P// = 12 is the number of taps, //h//[//n//] is the //n//th value of the filter, and //K// = 128 is the size of one tap. For the filter used in the MWA's PFB, this gives a (summed) variance that slightly differs between the 128 tap positions, but not by very much (fractionally speaking).
+
+The final step is division by 2^14

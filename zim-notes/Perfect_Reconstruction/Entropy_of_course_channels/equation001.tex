@@ -1,0 +1,7 @@
+H(K(\sigma)) &= -\sum_{k\in\mathbb{Z}} P(k) \log_2 P(k) \\
+     &= -\sum_{k\in\mathbb{Z}} \left[\int_{k-\frac12}^{k+\frac12} \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{x^2}{2\sigma^2}}\,dx\right]
+                        \log_2 \left[\int_{k-\frac12}^{k+\frac12} \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{x^2}{2\sigma^2}}\,dx\right] \\
+     &= -\sum_{k\in\mathbb{Z}} \frac12 \left[\text{erf}\left(\frac{k+\frac12}{\sqrt{2\sigma^2}}\right) -
+                                             \text{erf}\left(\frac{k-\frac12}{\sqrt{2\sigma^2}}\right)\right]
+                           \log_2\left(\left[\text{erf}\left(\frac{k+\frac12}{\sqrt{2\sigma^2}}\right) -
+                                             \text{erf}\left(\frac{k-\frac12}{\sqrt{2\sigma^2}}\right)\right]\right)
