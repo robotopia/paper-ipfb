@@ -1,0 +1,12 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2020-09-04T19:57:22+08:00
+
+====== Entropy of course channels ======
+Created Friday 04 September 2020
+
+Each coarse channel sample is a (5+5)-bit complex integer whose value is a rounded value (assumed to be) drawn from a normal distribution with mean μ=0 and some variance σ². The probability mass function is therefore
+
+{{./equation.png?type=equation}}
+
+(This assumes that the variance is small enough that the number of samples that would exceed the available bits is negligible.)
